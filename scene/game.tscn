@@ -1,16 +1,9 @@
 [gd_scene load_steps=2 format=3 uid="uid://bc4sqnqyin56v"]
 
-[ext_resource type="Script" path="res://scripts/GameRoot.cs" id="1_root"]
+[ext_resource type="Script" path="res://scripts/GameRoot.gd" id="1_root"]
 
 [node name="GameRoot" type="Node"]
 script = ExtResource("1_root")
-_titleLabelPath = NodePath("Hud/Panel/Title")
-_storyLabelPath = NodePath("Hud/Panel/Story")
-_statusLabelPath = NodePath("Hud/Panel/Status")
-_startButtonPath = NodePath("Hud/Panel/Controls/StartButton")
-_nextButtonPath = NodePath("Hud/Panel/Controls/NextButton")
-_restartButtonPath = NodePath("Hud/Panel/Controls/RestartButton")
-_quitButtonPath = NodePath("Hud/Panel/Controls/QuitButton")
 
 [node name="Hud" type="Control" parent="."]
 layout_mode = 1
@@ -28,6 +21,24 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
+[node name="Background" type="TextureRect" parent="Hud/Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+stretch_mode = 6
+
+[node name="Foreground" type="TextureRect" parent="Hud/Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+stretch_mode = 6
+
 [node name="Title" type="Label" parent="Hud/Panel"]
 layout_mode = 1
 anchors_preset = 12
@@ -40,7 +51,7 @@ offset_top = 16.0
 offset_right = 240.0
 offset_bottom = 56.0
 grow_horizontal = 2
-text = "Nova 4.6 Rewrite"
+text = "Nova 2"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -48,33 +59,69 @@ vertical_alignment = 1
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.02
-anchor_top = 0.18
+anchor_top = 0.10
 anchor_right = 0.98
-anchor_bottom = 0.18
+anchor_bottom = 0.10
 offset_top = 0.0
 offset_bottom = 24.0
-text = "状态：待开始"
+text = "状态：准备中"
+
+[node name="Speaker" type="Label" parent="Hud/Panel"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.05
+anchor_top = 0.76
+anchor_right = 0.95
+anchor_bottom = 0.79
+offset_top = 0.0
+offset_bottom = 24.0
+text = ""
 
 [node name="Story" type="RichTextLabel" parent="Hud/Panel"]
 layout_mode = 1
-anchors_preset = 15
-anchor_left = 0.08
-anchor_top = 0.24
-anchor_right = 0.92
-anchor_bottom = 0.7
-grow_horizontal = 2
-grow_vertical = 2
-bbcode_enabled = true
+anchors_preset = 12
+anchor_left = 0.05
+anchor_top = 0.78
+anchor_right = 0.95
+anchor_bottom = 0.58
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 0.0
+offset_bottom = 0.0
+horizontal_alignment = 0
 text = ""
+fit_content = true
 scroll_active = false
+mouse_filter = 2
+
+[node name="ChapterList" type="VBoxContainer" parent="Hud/Panel"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.32
+anchor_top = 0.16
+anchor_right = 0.68
+anchor_bottom = 0.6
+grow_horizontal = 0
+grow_vertical = 2
+add_theme_constant_override("separation", 16)
+
+[node name="Choices" type="VBoxContainer" parent="Hud/Panel"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.2
+anchor_top = 0.24
+anchor_right = 0.8
+anchor_bottom = 0.58
+visible = false
+add_theme_constant_override("separation", 10)
 
 [node name="Controls" type="HBoxContainer" parent="Hud/Panel"]
 layout_mode = 1
 anchors_preset = -1
-anchor_left = 0.16
-anchor_top = 0.78
-anchor_right = 0.84
-anchor_bottom = 0.9
+anchor_left = 0.20
+anchor_top = 0.62
+anchor_right = 0.80
+anchor_bottom = 0.74
 add_theme_constant_override("separation", 16)
 alignment = 1
 
