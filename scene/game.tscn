@@ -1,68 +1,95 @@
-[gd_scene load_steps=8 format=3 uid="uid://bc4sqnqyin56v"]
+[gd_scene load_steps=2 format=3 uid="uid://bc4sqnqyin56v"]
 
-[ext_resource type="Script" path="res://nova/sources/core/NovaController.cs" id="1_m66ij"]
-[ext_resource type="PackedScene" uid="uid://b2al0jybq7d2a" path="res://scene/view/title_view.tscn" id="2_ndf75"]
-[ext_resource type="PackedScene" uid="uid://dnfa7mjnlnxhk" path="res://scene/view/chapter_select_view.tscn" id="2_wb370"]
-[ext_resource type="PackedScene" uid="uid://68j1ks88y8qg" path="res://scene/view/game_view.tscn" id="3_jnk0y"]
-[ext_resource type="PackedScene" uid="uid://brqss137fqre" path="res://scene/ui/button_ring.tscn" id="5_kflyq"]
-[ext_resource type="Script" path="res://nova/sources/scripts/ObjectBinder.cs" id="5_uri73"]
+[ext_resource type="Script" path="res://scripts/GameRoot.cs" id="1_root"]
 
-[sub_resource type="ViewportTexture" id="ViewportTexture_3lxvl"]
-viewport_path = NodePath("World/MainViewport")
+[node name="GameRoot" type="Node"]
+script = ExtResource("1_root")
+_titleLabelPath = NodePath("Hud/Panel/Title")
+_storyLabelPath = NodePath("Hud/Panel/Story")
+_statusLabelPath = NodePath("Hud/Panel/Status")
+_startButtonPath = NodePath("Hud/Panel/Controls/StartButton")
+_nextButtonPath = NodePath("Hud/Panel/Controls/NextButton")
+_restartButtonPath = NodePath("Hud/Panel/Controls/RestartButton")
+_quitButtonPath = NodePath("Hud/Panel/Controls/QuitButton")
 
-[node name="NovaController" type="Node"]
-script = ExtResource("1_m66ij")
-
-[node name="Canvas" type="Control" parent="."]
-layout_mode = 3
+[node name="Hud" type="Control" parent="."]
+layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="TitleView" parent="Canvas" instance=ExtResource("2_ndf75")]
-visible = false
+[node name="Panel" type="Panel" parent="Hud"]
 layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
-[node name="ChapterSelectView" parent="Canvas" instance=ExtResource("2_wb370")]
-visible = false
+[node name="Title" type="Label" parent="Hud/Panel"]
 layout_mode = 1
+anchors_preset = 12
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_top = 0.02
+anchor_bottom = 0.02
+offset_left = -240.0
+offset_top = 16.0
+offset_right = 240.0
+offset_bottom = 56.0
+grow_horizontal = 2
+text = "Nova 4.6 Rewrite"
+horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="GameView" parent="Canvas" node_paths=PackedStringArray("_buttonRingTrigger") instance=ExtResource("3_jnk0y")]
-visible = false
+[node name="Status" type="Label" parent="Hud/Panel"]
 layout_mode = 1
-_buttonRingTrigger = NodePath("../ButtonRing")
+anchors_preset = -1
+anchor_left = 0.02
+anchor_top = 0.18
+anchor_right = 0.98
+anchor_bottom = 0.18
+offset_top = 0.0
+offset_bottom = 24.0
+text = "状态：待开始"
 
-[node name="Game" parent="Canvas/GameView" index="0"]
-texture = SubResource("ViewportTexture_3lxvl")
-
-[node name="ButtonRing" parent="Canvas" instance=ExtResource("5_kflyq")]
+[node name="Story" type="RichTextLabel" parent="Hud/Panel"]
 layout_mode = 1
+anchors_preset = 15
+anchor_left = 0.08
+anchor_top = 0.24
+anchor_right = 0.92
+anchor_bottom = 0.7
+grow_horizontal = 2
+grow_vertical = 2
+bbcode_enabled = true
+text = ""
+scroll_active = false
 
-[node name="World" type="Node3D" parent="."]
+[node name="Controls" type="HBoxContainer" parent="Hud/Panel"]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.16
+anchor_top = 0.78
+anchor_right = 0.84
+anchor_bottom = 0.9
+add_theme_constant_override("separation", 16)
+alignment = 1
 
-[node name="Background" type="Sprite3D" parent="World"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -5)
-visible = false
-script = ExtResource("5_uri73")
-_bindName = "bg"
+[node name="StartButton" type="Button" parent="Hud/Panel/Controls"]
+layout_mode = 2
+text = "开始"
 
-[node name="Foreground" type="Sprite3D" parent="World"]
-visible = false
-script = ExtResource("5_uri73")
-_bindName = "fg"
+[node name="NextButton" type="Button" parent="Hud/Panel/Controls"]
+layout_mode = 2
+text = "下一句"
 
-[node name="MainViewport" type="SubViewport" parent="World"]
-size = Vector2i(1920, 1080)
+[node name="RestartButton" type="Button" parent="Hud/Panel/Controls"]
+layout_mode = 2
+text = "重开"
 
-[node name="MainCamera" type="Camera3D" parent="World/MainViewport"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 10)
-projection = 1
-size = 10.8
-script = ExtResource("5_uri73")
-_bindName = "cam"
-
-[editable path="Canvas/GameView"]
-[editable path="Canvas/GameView/GameUI/DefaultDialogueBox"]
-[editable path="Canvas/GameView/GameUI/BasicDialogueBox"]
+[node name="QuitButton" type="Button" parent="Hud/Panel/Controls"]
+layout_mode = 2
+text = "退出"

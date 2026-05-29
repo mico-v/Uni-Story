@@ -10,28 +10,23 @@ config_version=5
 
 [application]
 
-config/name="Nova"
+config/name="Nova2 (4.6 Rewrite)"
 run/main_scene="res://scene/game.tscn"
-config/features=PackedStringArray("4.2", "C#", "Mobile")
+config/features=PackedStringArray("4.6", "Mobile")
 config/icon="res://resources/icon.svg"
 
 [display]
 
-window/size/viewport_width=1920
-window/size/viewport_height=1080
-window/size/window_width_override=1152
-window/size/window_height_override=648
+window/size/viewport_width=1280
+window/size/viewport_height=720
+window/size/window_width_override=1280
+window/size/window_height_override=720
 window/stretch/mode="canvas_items"
 
 [dotnet]
 
-project/assembly_name="Nova"
+project/assembly_name="Nova2Rewrite"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/nova_macro/plugin.cfg")
-
-[rendering]
-
-renderer/rendering_method="mobile"
-environment/defaults/default_clear_color=Color(0.301961, 0.301961, 0.301961, 1)
+enabled=PackedStringArray()
