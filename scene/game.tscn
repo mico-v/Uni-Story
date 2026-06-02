@@ -1,11 +1,19 @@
-[gd_scene load_steps=2 format=3 uid="uid://bc4sqnqyin56v"]
+[gd_scene format=3 uid="uid://bc4sqnqyin56v"]
 
-[ext_resource type="Script" path="res://scripts/GameRoot.gd" id="1_root"]
+[ext_resource type="Script" uid="uid://lwwsmtg5ddbd" path="res://scripts/GameRoot.gd" id="1_root"]
 
-[node name="GameRoot" type="Node"]
+[node name="GameRoot" type="Node" unique_id=1208322768]
 script = ExtResource("1_root")
 
-[node name="Hud" type="Control" parent="."]
+[node name="Hud" type="Control" parent="." unique_id=1962860385]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="Panel" parent="Hud" unique_id=1166317217]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -13,24 +21,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Panel" type="Panel" parent="Hud"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="Background" type="TextureRect" parent="Hud/Panel"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-stretch_mode = 6
-
-[node name="Foreground" type="TextureRect" parent="Hud/Panel"]
+[node name="Background" type="TextureRect" parent="Hud/Panel" unique_id=1729414754]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -39,62 +30,63 @@ grow_horizontal = 2
 grow_vertical = 2
 stretch_mode = 6
 
-[node name="Title" type="Label" parent="Hud/Panel"]
+[node name="Foreground" type="TextureRect" parent="Hud/Panel" unique_id=274724576]
 layout_mode = 1
-anchors_preset = 12
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+stretch_mode = 6
+
+[node name="Title" type="Label" parent="Hud/Panel" unique_id=1549664445]
+layout_mode = 1
+anchors_preset = -1
 anchor_left = 0.5
-anchor_right = 0.5
 anchor_top = 0.02
+anchor_right = 0.5
 anchor_bottom = 0.02
 offset_left = -240.0
 offset_top = 16.0
 offset_right = 240.0
 offset_bottom = 56.0
 grow_horizontal = 2
+grow_vertical = 0
 text = "Nova 2"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="Status" type="Label" parent="Hud/Panel"]
+[node name="Status" type="Label" parent="Hud/Panel" unique_id=1681547140]
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.02
-anchor_top = 0.10
+anchor_top = 0.1
 anchor_right = 0.98
-anchor_bottom = 0.10
-offset_top = 0.0
+anchor_bottom = 0.1
 offset_bottom = 24.0
 text = "状态：准备中"
 
-[node name="Speaker" type="Label" parent="Hud/Panel"]
+[node name="Speaker" type="Label" parent="Hud/Panel" unique_id=1218936118]
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.05
 anchor_top = 0.76
 anchor_right = 0.95
 anchor_bottom = 0.79
-offset_top = 0.0
 offset_bottom = 24.0
-text = ""
 
-[node name="Story" type="RichTextLabel" parent="Hud/Panel"]
+[node name="Story" type="RichTextLabel" parent="Hud/Panel" unique_id=730260566]
 layout_mode = 1
-anchors_preset = 12
+anchors_preset = -1
 anchor_left = 0.05
 anchor_top = 0.78
 anchor_right = 0.95
-anchor_bottom = 0.58
-offset_left = 0.0
-offset_top = 0.0
-offset_right = 0.0
-offset_bottom = 0.0
-horizontal_alignment = 0
-text = ""
+anchor_bottom = 0.95
+mouse_filter = 2
 fit_content = true
 scroll_active = false
-mouse_filter = 2
 
-[node name="ChapterList" type="VBoxContainer" parent="Hud/Panel"]
+[node name="ChapterList" type="VBoxContainer" parent="Hud/Panel" unique_id=249228450]
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.32
@@ -103,40 +95,40 @@ anchor_right = 0.68
 anchor_bottom = 0.6
 grow_horizontal = 0
 grow_vertical = 2
-add_theme_constant_override("separation", 16)
+theme_override_constants/separation = 16
 
-[node name="Choices" type="VBoxContainer" parent="Hud/Panel"]
+[node name="Choices" type="VBoxContainer" parent="Hud/Panel" unique_id=1310471019]
+visible = false
 layout_mode = 1
 anchors_preset = -1
 anchor_left = 0.2
 anchor_top = 0.24
 anchor_right = 0.8
 anchor_bottom = 0.58
-visible = false
-add_theme_constant_override("separation", 10)
+theme_override_constants/separation = 10
 
-[node name="Controls" type="HBoxContainer" parent="Hud/Panel"]
+[node name="Controls" type="HBoxContainer" parent="Hud/Panel" unique_id=1530173892]
 layout_mode = 1
 anchors_preset = -1
-anchor_left = 0.20
+anchor_left = 0.2
 anchor_top = 0.62
-anchor_right = 0.80
+anchor_right = 0.8
 anchor_bottom = 0.74
-add_theme_constant_override("separation", 16)
+theme_override_constants/separation = 16
 alignment = 1
 
-[node name="StartButton" type="Button" parent="Hud/Panel/Controls"]
+[node name="StartButton" type="Button" parent="Hud/Panel/Controls" unique_id=908139550]
 layout_mode = 2
 text = "开始"
 
-[node name="NextButton" type="Button" parent="Hud/Panel/Controls"]
+[node name="NextButton" type="Button" parent="Hud/Panel/Controls" unique_id=291038616]
 layout_mode = 2
 text = "下一句"
 
-[node name="RestartButton" type="Button" parent="Hud/Panel/Controls"]
+[node name="RestartButton" type="Button" parent="Hud/Panel/Controls" unique_id=173339712]
 layout_mode = 2
 text = "重开"
 
-[node name="QuitButton" type="Button" parent="Hud/Panel/Controls"]
+[node name="QuitButton" type="Button" parent="Hud/Panel/Controls" unique_id=206302304]
 layout_mode = 2
 text = "退出"

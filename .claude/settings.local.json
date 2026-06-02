@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__godot__list_dir",
+      "mcp__godot__read_scene",
+      "mcp__godot__get_errors",
+      "mcp__godot__run_scene",
+      "mcp__godot__wait",
+      "mcp__godot__stop_scene",
+      "WebFetch(domain:github.com)",
+      "mcp__godot__get_godot_status",
+      "Read(//Users/**)",
+      "Bash(gh issue *)",
+      "mcp__godot__read_file",
+      "mcp__godot__get_project_settings"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "godot"
+  ]
+}
