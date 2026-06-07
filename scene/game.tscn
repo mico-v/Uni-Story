@@ -1,9 +1,9 @@
 [gd_scene format=3 uid="uid://bc4sqnqyin56v"]
 
-[ext_resource type="Script" uid="uid://lwwsmtg5ddbd" path="res://scripts/GameRoot.gd" id="1_root"]
+[ext_resource type="Script" uid="uid://cyslqjc711hg5" path="res://scripts/NovaController.gd" id="1_5kiuu"]
 
 [node name="GameRoot" type="Node" unique_id=1208322768]
-script = ExtResource("1_root")
+script = ExtResource("1_5kiuu")
 
 [node name="Hud" type="Control" parent="." unique_id=1962860385]
 layout_mode = 3
