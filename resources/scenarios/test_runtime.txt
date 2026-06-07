@@ -1,0 +1,41 @@
+@<|
+label("test_runtime", "运行时自检")
+is_unlocked_start()
+set_box()
+|>
+开始自检
+
+<|
+show("bg", "cg/rain_back")
+show("fg", "foregrounds/moon_halo", [0, 0, 0.3])
+|>
+显示背景与立绘
+
+<|
+cam([200, 0, 1.2], null, 0)
+|>
+镜头右移并放大
+
+<|
+cam([0, 0, 1.0], null, 0)
+trans("flash", 0.4)
+|>
+镜头复位并闪白转场
+
+选择一个分支
+@<| branch([
+    { dest="t_branch_a", text="分支A" },
+    { dest="t_branch_b", text="分支B" },
+]) |>
+
+@<| label("t_branch_a") |>
+你选择了分支A
+@<| jump_to("t_branch_end") |>
+
+@<| label("t_branch_b") |>
+你选择了分支B
+@<| jump_to("t_branch_end") |>
+
+@<| label("t_branch_end") |>
+自检结束
+@<| is_end() |>
