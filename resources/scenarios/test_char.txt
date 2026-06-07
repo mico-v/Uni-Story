@@ -1,0 +1,36 @@
+@<|
+label("test_char", "立绘合成测试")
+is_unlocked_start()
+set_box()
+|>
+立绘合成测试开始
+
+<|
+show_char("renna", { body="", face="smile" }, [640, 400, 0.6])
+|>
+显示立绘（身体+微笑）
+
+<|
+set_layer("renna", "face", "surprised")
+|>
+切换表情为惊讶
+
+<|
+set_layer("renna", "face", "smile")
+o.anim.PropertyVector3(o.renna, "position", Vector3(900, 400, 0), 0.6, false)
+|>
+表情切回微笑并移动到右侧
+
+<|
+tint("renna", [0.6, 0.6, 1.0, 1.0])
+|>
+给立绘染上蓝色
+
+<|
+tint("renna", [1, 1, 1, 1])
+hide_char("renna")
+|>
+恢复并隐藏立绘
+
+立绘测试结束
+@<| is_end() |>

@@ -75,6 +75,18 @@ func tint(obj: Variant, color: Variant) -> void:
 	_ctx.graphics.tint(obj, color)
 
 
+# --- character立绘 composition API -------------------------------------------
+
+func show_char(char_name: String, layers: Variant = {}, coord = null, color = null) -> void:
+	_ctx.composer.show_char(char_name, layers, coord, color)
+
+func set_layer(char_name: String, layer: String, key: Variant = "") -> void:
+	_ctx.composer.set_layer(char_name, layer, key)
+
+func hide_char(char_name: String) -> void:
+	_ctx.composer.hide_char(char_name)
+
+
 # --- dialogue box API --------------------------------------------------------
 
 func set_box(pos_name: Variant = "bottom") -> void:

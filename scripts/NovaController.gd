@@ -11,6 +11,7 @@ const SCENARIO_FILES := [
 	"res://resources/scenarios/ch2.txt",
 	"res://resources/scenarios/test_animation.txt",
 	"res://resources/scenarios/test_runtime.txt",
+	"res://resources/scenarios/test_char.txt",
 	"res://resources/scenarios/demo_full.txt",
 ]
 const RESOURCE_ROOT := "res://resources/"
@@ -22,6 +23,7 @@ var script_loader: ScriptLoader
 var game_state: GameState
 var graphics: Graphics
 var animation: AnimationSystem
+var composer: SpriteComposer
 var audio: AudioSystem
 var camera: CameraSystem
 var transition: TransitionSystem
@@ -203,6 +205,7 @@ func _init_subsystems() -> void:
 	game_state = GameState.new(self)
 	graphics = Graphics.new(self)
 	animation = AnimationSystem.new(self)
+	composer = SpriteComposer.new(self)
 	audio = AudioSystem.new(self)
 	camera = CameraSystem.new(self)
 	transition = TransitionSystem.new(self)
