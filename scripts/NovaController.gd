@@ -50,6 +50,12 @@ var _next_btn: Button
 var _restart_btn: Button
 var _quit_btn: Button
 var _overlay: ColorRect
+var _continue_icon: Label
+
+# Typewriter state.
+const TYPE_CPS := 30.0  # characters per second
+var _type_tween: Tween = null
+var _is_typing := false
 
 
 func _ready() -> void:
@@ -149,6 +155,16 @@ func _build_hud() -> void:
 	_story_label.add_theme_font_size_override("normal_font_size", 26)
 	_dbox.add_child(_story_label)
 
+	_continue_icon = Label.new()
+	_continue_icon.name = "ContinueIcon"
+	_continue_icon.text = "▼"
+	_continue_icon.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
+	_continue_icon.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+	_continue_icon.grow_vertical = Control.GROW_DIRECTION_BEGIN
+	_continue_icon.position = Vector2(-20, -12)
+	_continue_icon.visible = false
+	_dbox.add_child(_continue_icon)
+
 	# Choices, centered.
 	_choice_list = VBoxContainer.new()
 	_choice_list.set_anchors_preset(Control.PRESET_CENTER)
@@ -185,7 +201,7 @@ func _build_hud() -> void:
 	_hud.add_child(_overlay)
 
 	_start_btn.pressed.connect(_show_title)
-	_next_btn.pressed.connect(func(): game_state.advance())
+	_next_btn.pressed.connect(_on_next)
 	_restart_btn.pressed.connect(_show_title)
 	_quit_btn.pressed.connect(func(): get_tree().quit())
 
@@ -231,6 +247,8 @@ func _connect_model_signals() -> void:
 # === View ====================================================================
 
 func _show_title() -> void:
+	_kill_typewriter()
+	_continue_icon.visible = false
 	_status_label.text = "状态：选择章节开始"
 	_speaker_label.text = ""
 	_story_label.text = ""
@@ -273,13 +291,62 @@ func _on_chapter_selected(node_name: StringName) -> void:
 
 func _on_dialogue_changed(speaker: String, text: String) -> void:
 	_speaker_label.text = speaker
-	_story_label.text = text
 	_dbox.visible = true
 	_next_btn.visible = true
 	_choice_list.visible = false
+	_start_typewriter(text)
+
+
+func _start_typewriter(text: String) -> void:
+	_kill_typewriter()
+	_story_label.text = text
+	_continue_icon.visible = false
+	var n := text.length()
+	if n <= 0:
+		_finish_typewriter()
+		return
+	_story_label.visible_ratio = 0.0
+	_is_typing = true
+	var duration := float(n) / TYPE_CPS
+	_type_tween = create_tween()
+	_type_tween.tween_method(_set_reveal, 0.0, 1.0, duration)
+	_type_tween.finished.connect(_on_typewriter_done)
+
+
+func _set_reveal(ratio: float) -> void:
+	_story_label.visible_ratio = ratio
+
+
+func _on_typewriter_done() -> void:
+	_is_typing = false
+	_story_label.visible_ratio = 1.0
+	_continue_icon.visible = true
+
+
+func _kill_typewriter() -> void:
+	if _type_tween and _type_tween.is_valid():
+		_type_tween.kill()
+	_type_tween = null
+	_is_typing = false
+
+
+func _finish_typewriter() -> void:
+	_kill_typewriter()
+	_story_label.visible_ratio = 1.0
+	_continue_icon.visible = true
+
+
+## 下一句 / click: if still revealing, fast-forward; otherwise advance the story.
+func _on_next() -> void:
+	if _is_typing:
+		_finish_typewriter()
+		return
+	game_state.advance()
 
 
 func _on_branch_requested(options: Array) -> void:
+	_finish_typewriter()
+	_continue_icon.visible = false
 	_next_btn.visible = false
 	_choice_list.visible = true
 	_clear_children(_choice_list)
@@ -297,6 +364,8 @@ func _on_choice(dest: StringName) -> void:
 
 
 func _on_game_ended() -> void:
+	_finish_typewriter()
+	_continue_icon.visible = false
 	_status_label.text = "状态：章节结束"
 	_next_btn.visible = false
 	_restart_btn.visible = true
