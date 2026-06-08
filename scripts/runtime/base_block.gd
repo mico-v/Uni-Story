@@ -96,6 +96,15 @@ func hide_char(char_name: String) -> void:
 	_ctx.composer.hide_char(char_name)
 
 
+# --- avatar (头像) API --------------------------------------------------------
+
+func set_avatar(char_name: String, key: Variant = "") -> void:
+	_ctx.avatar.set_avatar(char_name, key)
+
+func clear_avatar() -> void:
+	_ctx.avatar.clear_avatar()
+
+
 # --- dialogue box API --------------------------------------------------------
 
 func set_box(pos_name: Variant = "bottom") -> void:

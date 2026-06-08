@@ -28,6 +28,7 @@ var backlog: Backlog
 var graphics: Graphics
 var animation: AnimationSystem
 var composer: SpriteComposer
+var avatar: AvatarSystem
 var audio: AudioSystem
 var camera: CameraSystem
 var transition: TransitionSystem
@@ -57,6 +58,7 @@ var _save_btn: Button
 var _load_btn: Button
 var _overlay: ColorRect
 var _continue_icon: Label
+var _avatar_rect: TextureRect
 
 # Save/load panel.
 var _save_panel: Panel
@@ -155,6 +157,16 @@ func _build_hud() -> void:
 	_dbox.anchor_bottom = 0.95
 	_dbox.visible = false
 	_hud.add_child(_dbox)
+
+	_avatar_rect = TextureRect.new()
+	_avatar_rect.name = "Avatar"
+	_avatar_rect.position = Vector2(14, 14)
+	_avatar_rect.custom_minimum_size = Vector2(96, 96)
+	_avatar_rect.size = Vector2(96, 96)
+	_avatar_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_avatar_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_avatar_rect.visible = false
+	_dbox.add_child(_avatar_rect)
 
 	_speaker_label = Label.new()
 	_speaker_label.name = "Speaker"
@@ -386,6 +398,7 @@ func _init_subsystems() -> void:
 	graphics = Graphics.new(self)
 	animation = AnimationSystem.new(self)
 	composer = SpriteComposer.new(self)
+	avatar = AvatarSystem.new(self)
 	audio = AudioSystem.new(self)
 	camera = CameraSystem.new(self)
 	transition = TransitionSystem.new(self)
@@ -400,12 +413,21 @@ func _register_objects() -> void:
 	object_manager.bind_object("anim", animation)
 	object_manager.bind_object("transition_overlay", _overlay)
 	object_manager.bind_object("default_box", _dbox)
+	object_manager.bind_object("avatar", _avatar_rect)
 
 
 func _connect_model_signals() -> void:
 	game_state.dialogue_changed.connect(_on_dialogue_changed)
 	game_state.branch_requested.connect(_on_branch_requested)
 	game_state.game_ended.connect(_on_game_ended)
+	avatar.avatar_changed.connect(_on_avatar_changed)
+
+
+## Shift the speaker/story text aside when a portrait is shown.
+func _on_avatar_changed(shown: bool) -> void:
+	var left := 124.0 if shown else 24.0
+	_speaker_label.position.x = left
+	_story_label.offset_left = left
 
 
 # === View ====================================================================

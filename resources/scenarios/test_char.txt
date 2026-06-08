@@ -7,8 +7,9 @@ set_box()
 
 <|
 show_char("renna", { body="", face="smile" }, [640, 400, 0.6])
+set_avatar("renna", "smile")
 |>
-显示立绘（身体+微笑）
+显示立绘（身体+微笑）与头像
 
 <|
 set_layer("renna", "face", "surprised")
@@ -29,6 +30,7 @@ tint("renna", [0.6, 0.6, 1.0, 1.0])
 <|
 tint("renna", [1, 1, 1, 1])
 hide_char("renna")
+clear_avatar()
 |>
 恢复并隐藏立绘
 
