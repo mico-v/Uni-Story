@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://ba04u7no07iu6"
-path="res://.godot/imported/rainy_bg.png-7d46b8c5ae3ff2d274f0105279638e2f.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://resources/demo_media/rainy_bg.png"
-dest_files=["res://.godot/imported/rainy_bg.png-7d46b8c5ae3ff2d274f0105279638e2f.ctex"]
 
 [params]
 

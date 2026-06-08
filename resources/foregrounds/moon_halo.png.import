@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bn0unhljdben1"
-path="res://.godot/imported/moon_halo.png-d5d4200af403858f4e4cb0b13f552522.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://resources/foregrounds/moon_halo.png"
-dest_files=["res://.godot/imported/moon_halo.png-d5d4200af403858f4e4cb0b13f552522.ctex"]
 
 [params]
 

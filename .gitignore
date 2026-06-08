@@ -22,3 +22,9 @@ mono_crash.*.json
 
 # IdeaJ
 .idea/*
+
+#cache
+addons/godot_mcp/cache/
+
+#release
+release/

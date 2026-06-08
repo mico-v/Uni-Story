@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://kkmvi3typ18p"
-path="res://.godot/imported/hero_sprite.png-f1bf672bc3098d42f4bf00337000f783.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://resources/demo_media/hero_sprite.png"
-dest_files=["res://.godot/imported/hero_sprite.png-f1bf672bc3098d42f4bf00337000f783.ctex"]
 
 [params]
 

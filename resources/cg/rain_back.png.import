@@ -3,15 +3,11 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://clsxe4hkkewje"
-path="res://.godot/imported/rain_back.png-43e33f3f52ae70acc46c1f53f5621dc1.ctex"
-metadata={
-"vram_texture": false
-}
+valid=false
 
 [deps]
 
 source_file="res://resources/cg/rain_back.png"
-dest_files=["res://.godot/imported/rain_back.png-43e33f3f52ae70acc46c1f53f5621dc1.ctex"]
 
 [params]
 
