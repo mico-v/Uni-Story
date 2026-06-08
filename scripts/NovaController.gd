@@ -24,6 +24,7 @@ var script_loader: ScriptLoader
 var game_state: GameState
 var variables: Variables
 var save_system: SaveSystem
+var backlog: Backlog
 var graphics: Graphics
 var animation: AnimationSystem
 var composer: SpriteComposer
@@ -62,6 +63,12 @@ var _save_panel: Panel
 var _save_panel_title: Label
 var _save_slots: VBoxContainer
 var _save_mode := true  # true = saving, false = loading
+
+# Backlog (text review) panel.
+var _backlog_btn: Button
+var _backlog_panel: Panel
+var _backlog_list: VBoxContainer
+var _backlog_scroll: ScrollContainer
 
 # Typewriter state.
 const TYPE_CPS := 30.0  # characters per second
@@ -199,14 +206,17 @@ func _build_hud() -> void:
 	_restart_btn = _make_button("重开")
 	_save_btn = _make_button("存档")
 	_load_btn = _make_button("读档")
+	_backlog_btn = _make_button("回顾")
 	_quit_btn = _make_button("退出")
 	_controls.add_child(_next_btn)
 	_controls.add_child(_restart_btn)
 	_controls.add_child(_save_btn)
 	_controls.add_child(_load_btn)
+	_controls.add_child(_backlog_btn)
 	_controls.add_child(_quit_btn)
 
 	_build_save_panel()
+	_build_backlog_panel()
 
 	# Full-screen transition overlay on top.
 	_overlay = ColorRect.new()
@@ -222,6 +232,7 @@ func _build_hud() -> void:
 	_restart_btn.pressed.connect(_show_title)
 	_save_btn.pressed.connect(func(): _open_save_panel(true))
 	_load_btn.pressed.connect(func(): _open_save_panel(false))
+	_backlog_btn.pressed.connect(_open_backlog)
 	_quit_btn.pressed.connect(func(): get_tree().quit())
 
 
@@ -299,7 +310,69 @@ func _on_slot_pressed(slot: int) -> void:
 			_next_btn.visible = true
 			_restart_btn.visible = false
 			_save_btn.visible = true
+			_backlog_btn.visible = true
 			_status_label.text = "状态：已读档"
+
+
+func _build_backlog_panel() -> void:
+	_backlog_panel = Panel.new()
+	_backlog_panel.name = "BacklogPanel"
+	_backlog_panel.anchor_left = 0.15
+	_backlog_panel.anchor_right = 0.85
+	_backlog_panel.anchor_top = 0.1
+	_backlog_panel.anchor_bottom = 0.9
+	_backlog_panel.visible = false
+	_hud.add_child(_backlog_panel)
+
+	var vb := VBoxContainer.new()
+	vb.set_anchors_preset(Control.PRESET_FULL_RECT)
+	vb.offset_left = 16
+	vb.offset_top = 16
+	vb.offset_right = -16
+	vb.offset_bottom = -16
+	vb.add_theme_constant_override("separation", 8)
+	_backlog_panel.add_child(vb)
+
+	var title := Label.new()
+	title.text = "文本回顾"
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_font_size_override("font_size", 26)
+	vb.add_child(title)
+
+	_backlog_scroll = ScrollContainer.new()
+	_backlog_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_backlog_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	vb.add_child(_backlog_scroll)
+
+	_backlog_list = VBoxContainer.new()
+	_backlog_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_backlog_list.add_theme_constant_override("separation", 10)
+	_backlog_scroll.add_child(_backlog_list)
+
+	var close_btn := _make_button("关闭")
+	close_btn.pressed.connect(func(): _backlog_panel.visible = false)
+	vb.add_child(close_btn)
+
+
+func _open_backlog() -> void:
+	_clear_children(_backlog_list)
+	for entry in backlog.entries():
+		var lbl := RichTextLabel.new()
+		lbl.bbcode_enabled = true
+		lbl.fit_content = true
+		lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		lbl.custom_minimum_size = Vector2(0, 0)
+		var speaker := str(entry["speaker"])
+		var text := str(entry["text"])
+		if speaker.is_empty():
+			lbl.text = text
+		else:
+			lbl.text = "[b]%s[/b]：%s" % [speaker, text]
+		_backlog_list.add_child(lbl)
+	_backlog_panel.visible = true
+	# Scroll to the newest entry next frame, after layout.
+	await get_tree().process_frame
+	_backlog_scroll.scroll_vertical = int(_backlog_scroll.get_v_scroll_bar().max_value)
 
 
 func _init_subsystems() -> void:
@@ -309,6 +382,7 @@ func _init_subsystems() -> void:
 	game_state = GameState.new(self)
 	variables = Variables.new()
 	save_system = SaveSystem.new(self)
+	backlog = Backlog.new()
 	graphics = Graphics.new(self)
 	animation = AnimationSystem.new(self)
 	composer = SpriteComposer.new(self)
@@ -351,9 +425,11 @@ func _show_title() -> void:
 	_choice_list.visible = false
 	_clear_children(_choice_list)
 	_save_panel.visible = false
+	_backlog_panel.visible = false
 	_next_btn.visible = false
 	_restart_btn.visible = false
 	_save_btn.visible = false
+	_backlog_btn.visible = false
 	_start_btn.visible = false
 	_menu.visible = true
 	_refresh_chapters()
@@ -378,8 +454,10 @@ func _on_chapter_selected(node_name: StringName) -> void:
 	_next_btn.visible = true
 	_restart_btn.visible = false
 	_save_btn.visible = true
+	_backlog_btn.visible = true
 	_status_label.text = "状态：对话中"
 	variables.clear()
+	backlog.clear()
 	game_state.start_node(node_name)
 
 
@@ -388,6 +466,7 @@ func _on_dialogue_changed(speaker: String, text: String) -> void:
 	_dbox.visible = true
 	_next_btn.visible = true
 	_choice_list.visible = false
+	backlog.record(speaker, text)
 	_start_typewriter(text)
 
 
