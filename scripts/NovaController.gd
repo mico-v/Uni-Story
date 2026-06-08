@@ -12,6 +12,7 @@ const SCENARIO_FILES := [
 	"res://resources/scenarios/test_animation.txt",
 	"res://resources/scenarios/test_runtime.txt",
 	"res://resources/scenarios/test_char.txt",
+	"res://resources/scenarios/test_var.txt",
 	"res://resources/scenarios/demo_full.txt",
 ]
 const RESOURCE_ROOT := "res://resources/"
@@ -21,6 +22,7 @@ var object_manager: ObjectManager
 var runtime: GDRuntime
 var script_loader: ScriptLoader
 var game_state: GameState
+var variables: Variables
 var graphics: Graphics
 var animation: AnimationSystem
 var composer: SpriteComposer
@@ -219,6 +221,7 @@ func _init_subsystems() -> void:
 	runtime = GDRuntime.new(self)
 	script_loader = ScriptLoader.new(self)
 	game_state = GameState.new(self)
+	variables = Variables.new()
 	graphics = Graphics.new(self)
 	animation = AnimationSystem.new(self)
 	composer = SpriteComposer.new(self)
@@ -286,6 +289,7 @@ func _on_chapter_selected(node_name: StringName) -> void:
 	_next_btn.visible = true
 	_restart_btn.visible = false
 	_status_label.text = "状态：对话中"
+	variables.clear()
 	game_state.start_node(node_name)
 
 

@@ -1,0 +1,39 @@
+@<|
+label("test_var", "变量系统测试")
+is_unlocked_start()
+set_box()
+|>
+变量系统测试开始
+
+<|
+set_var("score", 0)
+add_var("score", 5)
+add_var("score", 3)
+|>
+设置 score = 0，然后 +5 +3
+
+<|
+print("score = " + str(get_var("score")))
+|>
+当前 score 应为 8（见控制台）
+
+<|
+jump_if(get_var("score") >= 8, "var_high")
+|>
+score >= 8，应跳转到高分节点
+
+这行不应该出现（因为上面已跳转）
+@<| jump_to("var_end") |>
+
+@<| label("var_high") |>
+跳转成功：score 达到 8，进入高分分支
+
+<|
+set_var("flag", true)
+|>
+设置 flag = true
+@<| jump_to("var_end") |>
+
+@<| label("var_end") |>
+变量测试结束（flag = 已设置）
+@<| is_end() |>

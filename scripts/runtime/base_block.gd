@@ -39,7 +39,16 @@ func label(name: String, display_name = null) -> void:
 	_ctx.script_loader.label(name, display_name)
 
 func jump_to(dest: String) -> void:
-	_ctx.script_loader.jump_to(dest)
+	# During play, a lazy block jump redirects the story immediately; during the
+	# eager parse pass it sets the node's fall-through target.
+	if _ctx.game_state.current_node != null and not _ctx.game_state.is_ended:
+		_ctx.game_state.pending_jump = StringName(dest)
+	else:
+		_ctx.script_loader.jump_to(dest)
+
+func jump_if(cond: bool, dest: String) -> void:
+	if cond:
+		jump_to(dest)
 
 func branch(branches: Array) -> void:
 	_ctx.script_loader.branch(branches)
@@ -121,3 +130,18 @@ func trans(kind: String = "fade", duration: float = 0.5) -> void:
 
 func wait(seconds: float) -> void:
 	_ctx.animation.wait(seconds)
+
+
+# --- variables API -----------------------------------------------------------
+
+func set_var(name: String, value: Variant) -> void:
+	_ctx.variables.set_var(name, value)
+
+func get_var(name: String, default: Variant = null) -> Variant:
+	return _ctx.variables.get_var(name, default)
+
+func has_var(name: String) -> bool:
+	return _ctx.variables.has_var(name)
+
+func add_var(name: String, delta: float) -> void:
+	_ctx.variables.add_var(name, delta)

@@ -18,6 +18,10 @@ var current_index: int = -1
 var is_waiting_branch: bool = false
 var is_ended: bool = false
 
+## Set by a lazy block calling jump_if/jump_to at runtime; consumed after the
+## current entry's lazy code runs, redirecting the story immediately.
+var pending_jump: StringName = &""
+
 
 func _init(ctx: Node) -> void:
 	_ctx = ctx
@@ -55,6 +59,12 @@ func advance() -> void:
 		var entry = current_node.entries[current_index]
 		if entry.has_lazy():
 			_ctx.runtime.run_block(entry.lazy_source)
+			# A lazy block may request a runtime jump (jump_if/jump_to).
+			if pending_jump != &"":
+				var dest := pending_jump
+				pending_jump = &""
+				_goto(dest)
+				return
 
 		if entry.is_silent:
 			continue
