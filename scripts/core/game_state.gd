@@ -31,6 +31,48 @@ func setup(graph: FlowChartGraph) -> void:
 	_graph = graph
 
 
+## Capture the model state for saving. Front/back separation means this plus the
+## variables fully describe the playthrough; presentation is rebuilt by replay.
+func snapshot() -> Dictionary:
+	return {
+		"node": String(current_node.name) if current_node else "",
+		"index": current_index,
+		"variables": _ctx.variables.to_dict(),
+	}
+
+
+## Restore a snapshot: set variables, jump to the node, and silently replay the
+## lazy blocks of entries [0, index] to rebuild presentation, then show entry.
+func restore(data: Dictionary) -> bool:
+	var node_name := StringName(data.get("node", ""))
+	if not _graph.has_node_named(node_name):
+		push_warning("GameState: cannot restore unknown node '%s'" % node_name)
+		return false
+
+	_ctx.variables.from_dict(data.get("variables", {}))
+
+	current_node = _graph.get_node_named(node_name)
+	is_waiting_branch = false
+	is_ended = false
+	pending_jump = &""
+	node_changed.emit(node_name)
+
+	var target: int = int(data.get("index", 0))
+	target = clampi(target, 0, current_node.entries.size() - 1)
+
+	# Replay lazy blocks up to and including the target entry to rebuild state.
+	for i in range(0, target + 1):
+		current_index = i
+		var entry = current_node.entries[i]
+		if entry.has_lazy():
+			_ctx.runtime.run_block(entry.lazy_source)
+		pending_jump = &""  # ignore mid-node jumps during replay
+
+	var e = current_node.entries[target]
+	dialogue_changed.emit(e.speaker, e.text)
+	return true
+
+
 func start_node(name: StringName) -> void:
 	if not _graph.has_node_named(name):
 		push_warning("GameState: unknown start node '%s'" % name)

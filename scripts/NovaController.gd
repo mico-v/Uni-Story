@@ -23,6 +23,7 @@ var runtime: GDRuntime
 var script_loader: ScriptLoader
 var game_state: GameState
 var variables: Variables
+var save_system: SaveSystem
 var graphics: Graphics
 var animation: AnimationSystem
 var composer: SpriteComposer
@@ -51,8 +52,16 @@ var _controls: HBoxContainer
 var _next_btn: Button
 var _restart_btn: Button
 var _quit_btn: Button
+var _save_btn: Button
+var _load_btn: Button
 var _overlay: ColorRect
 var _continue_icon: Label
+
+# Save/load panel.
+var _save_panel: Panel
+var _save_panel_title: Label
+var _save_slots: VBoxContainer
+var _save_mode := true  # true = saving, false = loading
 
 # Typewriter state.
 const TYPE_CPS := 30.0  # characters per second
@@ -188,10 +197,16 @@ func _build_hud() -> void:
 
 	_next_btn = _make_button("下一句")
 	_restart_btn = _make_button("重开")
+	_save_btn = _make_button("存档")
+	_load_btn = _make_button("读档")
 	_quit_btn = _make_button("退出")
 	_controls.add_child(_next_btn)
 	_controls.add_child(_restart_btn)
+	_controls.add_child(_save_btn)
+	_controls.add_child(_load_btn)
 	_controls.add_child(_quit_btn)
+
+	_build_save_panel()
 
 	# Full-screen transition overlay on top.
 	_overlay = ColorRect.new()
@@ -205,6 +220,8 @@ func _build_hud() -> void:
 	_start_btn.pressed.connect(_show_title)
 	_next_btn.pressed.connect(_on_next)
 	_restart_btn.pressed.connect(_show_title)
+	_save_btn.pressed.connect(func(): _open_save_panel(true))
+	_load_btn.pressed.connect(func(): _open_save_panel(false))
 	_quit_btn.pressed.connect(func(): get_tree().quit())
 
 
@@ -216,12 +233,82 @@ func _make_button(text: String) -> Button:
 	return b
 
 
+func _build_save_panel() -> void:
+	_save_panel = Panel.new()
+	_save_panel.name = "SavePanel"
+	_save_panel.anchor_left = 0.3
+	_save_panel.anchor_right = 0.7
+	_save_panel.anchor_top = 0.18
+	_save_panel.anchor_bottom = 0.82
+	_save_panel.visible = false
+	_hud.add_child(_save_panel)
+
+	var vb := VBoxContainer.new()
+	vb.set_anchors_preset(Control.PRESET_FULL_RECT)
+	vb.offset_left = 16
+	vb.offset_top = 16
+	vb.offset_right = -16
+	vb.offset_bottom = -16
+	vb.add_theme_constant_override("separation", 8)
+	_save_panel.add_child(vb)
+
+	_save_panel_title = Label.new()
+	_save_panel_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_save_panel_title.add_theme_font_size_override("font_size", 26)
+	vb.add_child(_save_panel_title)
+
+	_save_slots = VBoxContainer.new()
+	_save_slots.add_theme_constant_override("separation", 6)
+	_save_slots.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	vb.add_child(_save_slots)
+
+	var close_btn := _make_button("关闭")
+	close_btn.pressed.connect(_close_save_panel)
+	vb.add_child(close_btn)
+
+
+func _open_save_panel(save_mode: bool) -> void:
+	_save_mode = save_mode
+	_save_panel_title.text = "存档" if save_mode else "读档"
+	_clear_children(_save_slots)
+	for slot in SaveSystem.SLOT_COUNT:
+		var label := "存档位 %d：%s" % [slot + 1, save_system.slot_label(slot)]
+		var b := _make_button(label)
+		b.custom_minimum_size = Vector2(360, 40)
+		if not save_mode and not save_system.has_save(slot):
+			b.disabled = true
+		b.pressed.connect(_on_slot_pressed.bind(slot))
+		_save_slots.add_child(b)
+	_save_panel.visible = true
+
+
+func _close_save_panel() -> void:
+	_save_panel.visible = false
+
+
+func _on_slot_pressed(slot: int) -> void:
+	if _save_mode:
+		if save_system.save(slot):
+			_status_label.text = "状态：已存档到位 %d" % (slot + 1)
+		_close_save_panel()
+	else:
+		_close_save_panel()
+		if save_system.load_slot(slot):
+			_menu.visible = false
+			_dbox.visible = true
+			_next_btn.visible = true
+			_restart_btn.visible = false
+			_save_btn.visible = true
+			_status_label.text = "状态：已读档"
+
+
 func _init_subsystems() -> void:
 	object_manager = ObjectManager.new()
 	runtime = GDRuntime.new(self)
 	script_loader = ScriptLoader.new(self)
 	game_state = GameState.new(self)
 	variables = Variables.new()
+	save_system = SaveSystem.new(self)
 	graphics = Graphics.new(self)
 	animation = AnimationSystem.new(self)
 	composer = SpriteComposer.new(self)
@@ -263,8 +350,10 @@ func _show_title() -> void:
 	_dbox.visible = false
 	_choice_list.visible = false
 	_clear_children(_choice_list)
+	_save_panel.visible = false
 	_next_btn.visible = false
 	_restart_btn.visible = false
+	_save_btn.visible = false
 	_start_btn.visible = false
 	_menu.visible = true
 	_refresh_chapters()
@@ -288,6 +377,7 @@ func _on_chapter_selected(node_name: StringName) -> void:
 	_dbox.visible = true
 	_next_btn.visible = true
 	_restart_btn.visible = false
+	_save_btn.visible = true
 	_status_label.text = "状态：对话中"
 	variables.clear()
 	game_state.start_node(node_name)
