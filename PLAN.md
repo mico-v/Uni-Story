@@ -106,4 +106,3 @@ UI / 系统（演出做完后）：
 - 音频：`play_bgm` `stop_bgm` `play_se` `play_voice`
 - 镜头/转场：`cam` `trans`；对话框：`set_box`
 - 变量：`set_var` `get_var` `has_var` `add_var`；其它：`wait` `print`
-

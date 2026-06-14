@@ -1,0 +1,6 @@
+[gd_scene format=3]
+
+[node name="ButtonRing" type="Button"]
+custom_minimum_size = Vector2(220, 44)
+text = "Button"
+mouse_filter = 0
