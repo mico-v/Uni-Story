@@ -17,7 +17,7 @@ config/icon="res://resources/icon.svg"
 
 [autoload]
 
-MCPRuntime="*uid://b3oea73nx637v"
+MCPRuntime="*res://addons/godot_mcp/runtime/mcp_runtime.gd"
 
 [display]
 

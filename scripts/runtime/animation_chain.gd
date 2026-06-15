@@ -1,5 +1,7 @@
 class_name AnimationChain extends RefCounted
 
+signal finished
+
 ## One sequential animation sequence backed by a single Tween. Chained calls
 ## (`.PropertyVector3(...).PropertyColor(...)`) append steps that play one after
 ## another. A separate `o.anim...` statement builds a separate chain, and Godot
@@ -8,12 +10,14 @@ class_name AnimationChain extends RefCounted
 
 var _ctx: Node
 var _tween: Tween
+var _is_finished := false
 
 
 func _init(ctx: Node) -> void:
 	_ctx = ctx
 	_tween = ctx.get_tree().create_tween()
 	_tween.set_parallel(false)
+	_tween.finished.connect(_on_tween_finished)
 
 
 func _resolve(obj: Variant) -> CanvasItem:
@@ -58,3 +62,31 @@ func PropertyColor(obj: Variant, prop: String, value: Color, duration: float = 0
 func Delay(seconds: float) -> AnimationChain:
 	_tween.tween_interval(seconds)
 	return self
+
+
+## Returns whether the chain is still running.
+func is_running() -> bool:
+	return not _is_finished
+
+
+func stop() -> void:
+	if _tween and _tween.is_valid():
+		_tween.kill()
+	_is_finished = true
+
+
+## Awaitable helper used by runtime wrappers that want to wait for the chain to
+## finish before continuing the story.
+func await_finished() -> void:
+	if _is_finished:
+		return
+	if _tween == null:
+		_is_finished = true
+		return
+	await _tween.finished
+	_is_finished = true
+
+
+func _on_tween_finished() -> void:
+	_is_finished = true
+	emit_signal("finished")

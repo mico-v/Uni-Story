@@ -1,5 +1,6 @@
 [gd_scene format=3 uid="uid://dyuv51hoh1kf6"]
 
+[ext_resource type="Script" uid="uid://b88co7xg1k50b" path="res://scripts/ui/choice_list_controller.gd" id="2_cyfmi"]
 [ext_resource type="PackedScene" uid="uid://c1wreimnd32j2" path="res://scene/ui/dialogue_box.tscn" id="DialogueBoxRes"]
 
 [node name="GameView" type="Control" unique_id=1849883982]
@@ -54,6 +55,7 @@ anchor_bottom = 0.5
 grow_horizontal = 2
 grow_vertical = 2
 alignment = 1
+script = ExtResource("2_cyfmi")
 
 [node name="Controls" type="HBoxContainer" parent="Hud" unique_id=846297658]
 layout_mode = 1

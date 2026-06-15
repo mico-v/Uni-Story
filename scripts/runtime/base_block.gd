@@ -111,34 +111,34 @@ func set_box(pos_name: Variant = "bottom") -> void:
 	_ctx.dialogue_box.set_box(pos_name)
 
 
-# --- audio API ---------------------------------------------------------------
-
-func play_bgm(path: String, fade: float = 0.0) -> void:
-	_ctx.audio.play_bgm(path, fade)
-
-func stop_bgm(fade: float = 0.0) -> void:
-	_ctx.audio.stop_bgm(fade)
-
-func play_se(path: String, volume_db: float = 0.0) -> void:
-	_ctx.audio.play_se(path, volume_db)
-
-func play_voice(path: String) -> void:
-	_ctx.audio.play_voice(path)
-
-
 # --- camera / transition API -------------------------------------------------
 
 func cam(coord: Variant, scale = null, angle = null) -> void:
 	_ctx.camera.move_camera(coord, scale, angle)
 
-func trans(kind: String = "fade", duration: float = 0.5) -> void:
-	_ctx.transition.play(kind, duration)
+func trans(kind: String = "fade", duration: float = 0.5):
+	return _ctx.transition.play(kind, duration)
 
 
 # --- misc --------------------------------------------------------------------
 
-func wait(seconds: float) -> void:
-	_ctx.animation.wait(seconds)
+func wait(seconds: float):
+	return _ctx.animation.wait(seconds)
+
+
+# --- audio API ---------------------------------------------------------------
+
+func play_bgm(path: String, fade: float = 0.0):
+	return _ctx.audio.play_bgm(path, fade)
+
+func stop_bgm(fade: float = 0.0):
+	return _ctx.audio.stop_bgm(fade)
+
+func play_se(path: String, volume_db: float = 0.0) -> void:
+	_ctx.audio.play_se(path, volume_db)
+
+func play_voice(path: String):
+	return _ctx.audio.play_voice(path)
 
 
 # --- variables API -----------------------------------------------------------

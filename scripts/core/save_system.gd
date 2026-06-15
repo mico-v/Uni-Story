@@ -29,6 +29,8 @@ func save(slot: int) -> bool:
 		"chapter": String(_ctx.game_state.current_node.name),
 		"state": _ctx.game_state.snapshot(),
 	}
+	if not data.has("version"):
+		data["version"] = 1
 	var f := FileAccess.open(_slot_path(slot), FileAccess.WRITE)
 	if f == null:
 		push_error("SaveSystem: cannot write slot %d" % slot)

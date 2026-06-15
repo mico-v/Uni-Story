@@ -5,6 +5,13 @@ class_name NovaParser extends RefCounted
 ##   { "type": "lazy",  "content": String }  -- from `<| ... |>`
 ##   { "type": "text",  "content": String }  -- a single non-empty dialogue line
 ##
+## Extensions:
+## - Adds 1-based `line` on all block items.
+## - Adds optional `attrs` on block items: `@[k=v; k2=v2]@<| ... |>` or
+##   `@[k=v; k2=v2]<| ... |>`.
+## - Block attributes are independent of block content and preserved into
+##   ScriptLoader for eager/lazy normalization.
+##
 ## Eager and lazy blocks may span multiple physical lines. Dialogue text is
 ## emitted one block per non-empty line (each line is its own story beat).
 
@@ -15,23 +22,95 @@ static func tokenize(source: String) -> Array:
 	while i < lines.size():
 		var raw := lines[i]
 		var stripped := raw.strip_edges()
+		var start_line := i + 1
+		var header := _parse_block_open(stripped)
 
-		var is_eager := stripped.begins_with("@<|")
-		var is_lazy := (not is_eager) and stripped.begins_with("<|")
+		var block_type: String = header.get("type", "")
+		var open_token: String = header.get("open_token", "")
+		var attrs: Dictionary = header.get("attrs", {})
 
-		if is_eager or is_lazy:
-			var open_token := "@<|" if is_eager else "<|"
+		if block_type != "":
 			var res := _read_block(lines, i, open_token)
 			var body := (res[0] as String).strip_edges()
 			i = res[1] + 1
 			if not body.is_empty():
-				out.append({"type": "eager" if is_eager else "lazy", "content": body})
+				out.append({
+					"type": block_type,
+					"content": body,
+					"attrs": attrs,
+					"line": start_line,
+				})
 			continue
 
 		if not stripped.is_empty():
-			out.append({"type": "text", "content": stripped})
+			out.append({"type": "text", "content": stripped, "attrs": {}, "line": i + 1})
 		i += 1
 	return out
+
+
+## Parse one block opening line and extract optional attrs.
+static func _parse_block_open(line: String) -> Dictionary:
+	var out := {"type": "", "open_token": "", "attrs": {}}
+	if line.is_empty():
+		return out
+
+	# Keep backward-compatible block headers first.
+	if line.begins_with("@<|"):
+		out["type"] = "eager"
+		out["open_token"] = "@<|"
+		return out
+
+	if line.begins_with("<|"):
+		out["type"] = "lazy"
+		out["open_token"] = "<|"
+		return out
+
+	if not line.begins_with("@["):
+		return out
+
+	var close_idx := line.find("]")
+	if close_idx == -1:
+		return out
+
+	var attrs := _parse_attrs(line.substr(2, close_idx - 2))
+	var rest := line.substr(close_idx + 1).strip_edges()
+	if rest.begins_with("@<|"):
+		out["type"] = "eager"
+		out["open_token"] = "@<|"
+		out["attrs"] = attrs
+		return out
+
+	if rest.begins_with("<|"):
+		out["type"] = "lazy"
+		out["open_token"] = "<|"
+		out["attrs"] = attrs
+		return out
+
+	return out
+
+
+## Parse `k=v; k2=v2` block attrs. Bare keys or invalid pairs are ignored.
+static func _parse_attrs(spec: String) -> Dictionary:
+	var attrs: Dictionary = {}
+	var raw_parts := spec.split(";", false)
+	for raw in raw_parts:
+		var trimmed := str(raw).strip_edges()
+		if trimmed.is_empty():
+			continue
+		var sep := trimmed.find("=")
+		if sep == -1:
+			continue
+		var key := trimmed.substr(0, sep).strip_edges()
+		if key.is_empty():
+			continue
+		var value := trimmed.substr(sep + 1).strip_edges()
+		if value.begins_with("\"") and value.ends_with("\"") and value.length() >= 2:
+			value = value.substr(1, value.length() - 2)
+		elif value.begins_with("'") and value.ends_with("'") and value.length() >= 2:
+			value = value.substr(1, value.length() - 2)
+		attrs[key] = value
+
+	return attrs
 
 
 ## Read a `<|`/`@<|` ... `|>` block possibly spanning multiple lines.

@@ -48,6 +48,40 @@ func run_block(source: String) -> Variant:
 	return inst.run()
 
 
+## Compile and run a block, returning a coroutine/awaitable when present.
+func run_block_async(source: String):
+	var script := compile_block(source)
+	if script == null:
+		return null
+	var inst = script.new()
+	inst._ctx = _ctx
+	var result = inst.run()
+	return await _await_possible_async_result(result)
+
+
+func _await_possible_async_result(value: Variant):
+	if value == null:
+		return null
+
+	if value is Signal:
+		await value
+		return null
+
+	if value is Tween:
+		await value.finished
+		return null
+
+	if value is Object and value.get_class() == "GDScriptFunctionState":
+		await value
+		return null
+
+	if value is Object and value.get_class() == "AnimationChain" and value.has_method("await_finished"):
+		await value.await_finished()
+		return null
+
+	return value
+
+
 func _wrap_statements(source: String) -> String:
 	# Indent every line by one tab so it nests under __eval().
 	var body := source.strip_edges()

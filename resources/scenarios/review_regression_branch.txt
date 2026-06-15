@@ -1,0 +1,24 @@
+@<|
+label("review_branch")
+is_start()
+set_var("flag", true)
+set_var("opened", true)
+branch([
+    {"text": "显示可见选项", "dest": "show", "mode": "show", "cond": "has_var('opened')"},
+    {"text": "直接跳转", "dest": "jump", "mode": "jump", "cond": "get_var('flag') == true"},
+    {"text": "无条件禁用", "dest": "hide", "mode": "enable", "cond": "false"}
+])
+|>
+分支展示测试开始
+
+@<| label("show") |>
+显示分支内容
+@<| is_end() |>
+
+@<| label("jump") |>
+跳转到 jump 节点
+@<| is_end() |>
+
+@<| label("hide") |>
+这是不会被显示的分支目标
+@<| is_end() |>

@@ -14,6 +14,8 @@ var _ctx: Node
 var _runtime: GDRuntime
 var _current_node: FlowChartNode = null
 var _pending_lazy: String = ""  # lazy block waiting to attach to the next text
+var load_ok: bool = true
+var _block_attrs: Dictionary = {}
 
 
 func _init(ctx: Node) -> void:
@@ -23,15 +25,22 @@ func _init(ctx: Node) -> void:
 
 func load_all(file_paths: Array) -> void:
 	graph.clear()
+	load_ok = true
 	_runtime = _ctx.runtime
 	for path in file_paths:
 		if not FileAccess.file_exists(path):
 			push_warning("ScriptLoader: missing scenario %s" % path)
+			load_ok = false
 			continue
 		_current_node = null
 		_pending_lazy = ""
+		_block_attrs = {}
 		_parse_file(FileAccess.get_file_as_string(path))
-	graph.sanity_check()
+	var errors := graph.sanity_check()
+	if not errors.is_empty():
+		for e in errors:
+			push_error(str(e))
+		load_ok = false
 
 
 func _parse_file(source: String) -> void:
@@ -39,9 +48,12 @@ func _parse_file(source: String) -> void:
 	for block in blocks:
 		match block["type"]:
 			"eager":
+				_block_attrs = block.get("attrs", {})
 				_flush_pending_lazy_as_silent()
 				_runtime.run_block(block["content"])
+				_block_attrs = {}
 			"lazy":
+				_block_attrs = {}
 				# A lazy block attaches to the dialogue text that follows it.
 				# If one is already pending (back-to-back lazy blocks), flush the
 				# previous as a silent entry first.
@@ -121,11 +133,33 @@ func branch(branches: Array) -> void:
 	var opts: Array = []
 	for b in branches:
 		if b is Dictionary:
+			var src := b.get("mode", _block_attrs.get("mode", FlowChartNode.BranchMode.NORMAL))
+			var cond := str(b.get("cond", _block_attrs.get("cond", ""))).strip_edges()
+			var image := str(b.get("image", _block_attrs.get("image", ""))).strip_edges()
 			opts.append({
 				"dest": StringName(b.get("dest", "")),
 				"text": str(b.get("text", "")),
+				"mode": _parse_branch_mode(src),
+				"cond": cond,
+				"image": image,
 			})
 	_current_node.branches = opts
+
+
+func _parse_branch_mode(value: Variant) -> int:
+	var s := str(value).to_lower()
+	match s:
+		"jump":
+			return FlowChartNode.BranchMode.JUMP
+		"show":
+			return FlowChartNode.BranchMode.SHOW
+		"enable":
+			return FlowChartNode.BranchMode.ENABLE
+		_:
+			if value is int:
+				if int(value) >= FlowChartNode.BranchMode.NORMAL and int(value) <= FlowChartNode.BranchMode.ENABLE:
+					return int(value)
+			return FlowChartNode.BranchMode.NORMAL
 
 
 func is_chapter() -> void:

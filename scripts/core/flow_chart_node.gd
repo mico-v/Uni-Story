@@ -5,6 +5,7 @@ class_name FlowChartNode extends RefCounted
 ## a set of branches) that fires once the node's entries are exhausted.
 
 enum Type { NORMAL, CHAPTER, END }
+enum BranchMode { NORMAL, JUMP, SHOW, ENABLE }
 
 var name: StringName
 var display_name: String
@@ -19,7 +20,13 @@ var entries: Array = []
 ## Set by jump_to(): unconditional next node name. Empty if none.
 var jump_target: StringName = &""
 
-## Array of { "dest": StringName, "text": String }. Set by branch().
+## Array of {
+##   "dest": StringName,
+##   "text": String,
+##   "mode": int,
+##   "cond": String,
+##   "image": String
+## } Set by branch().
 var branches: Array = []
 
 

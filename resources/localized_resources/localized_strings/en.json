@@ -118,5 +118,16 @@
     "title.menu.start": "Start",
     "title.selectchapter.locked": "? ? ?",
     "title.selectchapter.return": "Back",
-    "title.subtitle": "Nova framework example project"
-  }
+    "title.subtitle": "Nova framework example project",
+    "ui.status.ready": "Status: Ready",
+    "ui.status.playing": "Status: In dialogue",
+    "ui.status.ended": "Status: Chapter ended",
+    "ui.status.saved": "Status: Saved slot %d",
+    "ui.status.loaded": "Status: Loaded",
+    "ui.status.load_failed": "Status: Failed to load script",
+    "ui.chapter.empty": "No available chapter",
+    "ui.label.backlog": "Backlog",
+    "ui.button.next": "Next",
+    "ui.button.restart": "Restart",
+    "ui.save.slot_format": "Save slot %d: %s"
+}

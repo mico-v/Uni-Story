@@ -25,5 +25,21 @@ func Delay(seconds: float) -> AnimationChain:
 
 
 ## Used by BaseBlock.wait().
-func wait(seconds: float) -> void:
-	AnimationChain.new(_ctx).Delay(seconds)
+func wait(seconds: float):
+	return AnimationChain.new(_ctx).Delay(seconds)
+
+
+func snapshot() -> Dictionary:
+	# Animation chains are transient by design (one chain per statement).
+	return {
+		"active": false,
+		"active_object": "",
+		"active_property": "",
+		"remaining": 0.0,
+	}
+
+
+func restore(_state: Dictionary) -> void:
+	# Active chains are not reconstructed from snapshot. The resumed path is
+	# represented by GameState replay to the target dialogue entry.
+	return

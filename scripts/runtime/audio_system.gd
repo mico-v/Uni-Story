@@ -39,7 +39,7 @@ func _load_stream(path: String) -> AudioStream:
 	return null
 
 
-func play_bgm(path: String, fade: float = 0.0) -> void:
+func play_bgm(path: String, fade: float = 0.0):
 	var stream := _load_stream(path)
 	if stream == null:
 		return
@@ -54,9 +54,61 @@ func play_bgm(path: String, fade: float = 0.0) -> void:
 		_bgm_player.volume_db = -40.0
 		var t2 := _ctx.get_tree().create_tween()
 		t2.tween_property(_bgm_player, "volume_db", 0.0, fade)
+		await t2.finished
+	return
 
 
-func stop_bgm(fade: float = 0.0) -> void:
+func snapshot() -> Dictionary:
+	var stream_path := ""
+	if _bgm_player.stream:
+		stream_path = _bgm_player.stream.resource_path
+	return {
+		"bgm": {
+			"stream": stream_path,
+			"volume_db": _bgm_player.volume_db,
+			"playing": _bgm_player.playing,
+			"position": _bgm_player.get_playback_position() if _bgm_player.stream else 0.0,
+		},
+		"voice": {
+			"stream": (_voice_player.stream.resource_path if _voice_player.stream else ""),
+			"playing": _voice_player.playing,
+			"volume_db": _voice_player.volume_db,
+		},
+	}
+
+
+func restore(state: Dictionary) -> void:
+	if not (state is Dictionary):
+		return
+
+	var bgm_state: Dictionary = state.get("bgm", {})
+	if bgm_state is Dictionary:
+		var stream_path := str(bgm_state.get("stream", ""))
+		if stream_path != "":
+			var stream := _load_stream(stream_path)
+			if stream != null:
+				_bgm_player.stream = stream
+				_bgm_player.volume_db = float(bgm_state.get("volume_db", 0.0))
+				var pos := float(bgm_state.get("position", 0.0))
+				var play := bool(bgm_state.get("playing", false))
+				if play:
+					# Keep deterministic: use saved playback position as seek seed.
+					_bgm_player.play(pos)
+
+
+	var voice_state: Dictionary = state.get("voice", {})
+	if voice_state is Dictionary:
+		var vs := str(voice_state.get("stream", ""))
+		if vs != "":
+			var stream := _load_stream(vs)
+			if stream != null:
+				_voice_player.stream = stream
+				_voice_player.volume_db = float(voice_state.get("volume_db", 0.0))
+				if bool(voice_state.get("playing", false)):
+					_voice_player.play()
+
+
+func stop_bgm(fade: float = 0.0):
 	if not _bgm_player.playing:
 		return
 	if fade > 0.0:
@@ -64,6 +116,7 @@ func stop_bgm(fade: float = 0.0) -> void:
 		t.tween_property(_bgm_player, "volume_db", -40.0, fade)
 		await t.finished
 	_bgm_player.stop()
+	return
 
 
 func play_se(path: String, volume_db: float = 0.0) -> void:
@@ -82,9 +135,11 @@ func play_se(path: String, volume_db: float = 0.0) -> void:
 	_se_players[0].play()
 
 
-func play_voice(path: String) -> void:
+func play_voice(path: String):
 	var stream := _load_stream(path)
 	if stream == null:
 		return
 	_voice_player.stream = stream
 	_voice_player.play()
+	# Keep async compatibility with lazy call sites; return when dispatch done.
+	return

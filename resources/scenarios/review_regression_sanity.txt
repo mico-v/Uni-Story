@@ -1,0 +1,4 @@
+@<| label("start") |>
+is_start()
+@<| jump_to("MISSING_NODE") |>
+这行不应出现

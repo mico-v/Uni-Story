@@ -51,8 +51,8 @@ func _get_or_create(char_name: String) -> CompositeSprite:
 	var w := _world()
 	if w:
 		w.add_child(cs)
-	_chars[char_name] = cs
-	_ctx.object_manager.bind_object(char_name, cs)
+		_chars[char_name] = cs
+	_ctx.object_manager.bind_object_runtime(char_name, cs)
 	return cs
 
 
