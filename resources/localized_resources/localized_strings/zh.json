@@ -129,5 +129,9 @@
     "ui.label.backlog": "文本回顾",
     "ui.button.next": "下一句",
     "ui.button.restart": "重开",
-    "ui.save.slot_format": "存档位 %d：%s"
+    "ui.save.slot_format": "存档位 %d：%s",
+    "music.play": "播放",
+    "music.stop": "停止",
+    "music.no_tracks": "（暂无曲目）",
+    "gallery.no_items": "（暂无鉴赏内容）"
 }

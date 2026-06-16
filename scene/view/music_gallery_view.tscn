@@ -1,0 +1,89 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/music_gallery_controller.gd" id="1_vc"]
+
+[node name="MusicGalleryView" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_vc")
+
+[node name="HBox" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Sidebar" type="PanelContainer" parent="HBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(280, 0)
+
+[node name="VBox" type="VBoxContainer" parent="HBox/Sidebar"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="HBox/Sidebar/VBox"]
+layout_mode = 2
+text = "音乐鉴赏"
+horizontal_alignment = 1
+
+[node name="Sep" type="HSeparator" parent="HBox/Sidebar/VBox"]
+layout_mode = 2
+
+[node name="BtnBack" type="Button" parent="HBox/Sidebar/VBox"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "返回"
+
+[node name="Content" type="PanelContainer" parent="HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="VBox" type="VBoxContainer" parent="HBox/Content"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Scroll" type="ScrollContainer" parent="HBox/Content/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="TrackList" type="VBoxContainer" parent="HBox/Content/VBox/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+
+[node name="EmptyLabel" type="Label" parent="HBox/Content/VBox/Scroll/TrackList"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "（暂无曲目）"
+horizontal_alignment = 1
+
+[node name="PlayerBar" type="HBoxContainer" parent="HBox/Content/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="BtnPlay" type="Button" parent="HBox/Content/VBox/PlayerBar"]
+custom_minimum_size = Vector2(80, 36)
+layout_mode = 2
+text = "播放"
+
+[node name="BtnStop" type="Button" parent="HBox/Content/VBox/PlayerBar"]
+custom_minimum_size = Vector2(80, 36)
+layout_mode = 2
+text = "停止"
+
+[node name="TrackLabel" type="Label" parent="HBox/Content/VBox/PlayerBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = ""
+
+[node name="BtnMode" type="Button" parent="HBox/Content/VBox/PlayerBar"]
+custom_minimum_size = Vector2(120, 36)
+layout_mode = 2
+text = "列表循环"

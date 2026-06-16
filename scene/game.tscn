@@ -1,49 +1,29 @@
 [gd_scene format=3 uid="uid://bc4sqnqyin56v"]
 
+[ext_resource type="PackedScene" path="res://scene/view/cg_gallery_view.tscn" id="CgGalleryRes"]
 [ext_resource type="PackedScene" uid="uid://c0mp0yhxinipg" path="res://scene/view/chapter_select_view.tscn" id="ChapterViewRes"]
+[ext_resource type="Script" uid="uid://b4fukuskbf86u" path="res://scripts/ui/game_view_controller.gd" id="GameVCScript"]
 [ext_resource type="PackedScene" uid="uid://dyuv51hoh1kf6" path="res://scene/view/game_view.tscn" id="GameViewRes"]
+[ext_resource type="PackedScene" path="res://scene/view/music_gallery_view.tscn" id="MusicGalleryRes"]
 [ext_resource type="Script" uid="uid://cyslqjc711hg5" path="res://scripts/NovaController.gd" id="NovaScript"]
+[ext_resource type="PackedScene" path="res://scene/view/save_load_view.tscn" id="SaveLoadRes"]
+[ext_resource type="PackedScene" path="res://scene/view/settings_view.tscn" id="SettingsViewRes"]
 [ext_resource type="PackedScene" uid="uid://cqdghibhuyigy" path="res://scene/view/title_view.tscn" id="TitleViewRes"]
 
 [node name="GameRoot" type="Node" unique_id=1070618249]
 script = ExtResource("NovaScript")
 
 [node name="TitleView" parent="." unique_id=793599501 instance=ExtResource("TitleViewRes")]
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = 0.0
-offset_top = 0.0
-offset_right = 0.0
-offset_bottom = 0.0
-grow_horizontal = 2
-grow_vertical = 2
-size_flags_horizontal = 4
 
 [node name="ChapterSelectView" parent="." unique_id=1328674703 instance=ExtResource("ChapterViewRes")]
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = 0.0
-offset_top = 0.0
-offset_right = 0.0
-offset_bottom = 0.0
-grow_horizontal = 2
-grow_vertical = 2
 
 [node name="GameView" parent="." unique_id=304719952 instance=ExtResource("GameViewRes")]
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 0.0
-offset_top = 0.0
-offset_right = 0.0
-offset_bottom = 0.0
-grow_horizontal = 2
-grow_vertical = 2
-size_flags_horizontal = 4
-size_flags_vertical = 4
+script = ExtResource("GameVCScript")
+
+[node name="SettingsView" parent="." unique_id=308811666 instance=ExtResource("SettingsViewRes")]
+
+[node name="CgGalleryView" parent="." unique_id=2083502021 instance=ExtResource("CgGalleryRes")]
+
+[node name="MusicGalleryView" parent="." unique_id=91674295 instance=ExtResource("MusicGalleryRes")]
+
+[node name="SaveLoadView" parent="." instance=ExtResource("SaveLoadRes")]

@@ -24,15 +24,16 @@
 - 任务7 与任务8 当前代码层面已通过运行校验，但提交受环境影响尚未完成：`.git/index.lock` 无法创建（环境权限问题）。
 
 ## 3. 当前变更范围
-- 控制层：`scripts/NovaController.gd`
+- 控制层：`scripts/NovaController.gd`（瘦身为协调器）
+- 视图管理：`scripts/core/view_manager.gd`
 - 图构建与校验：`scripts/core/script_loader.gd`, `scripts/core/flow_chart_graph.gd`, `scripts/core/flow_chart_node.gd`
 - 剧情推进与分支决策：`scripts/core/game_state.gd`
 - 已读追踪与存档：`scripts/core/read_tracker.gd`, `scripts/core/save_system.gd`
 - 运行时系统：`scripts/runtime/*`
-- 输入视图控制器：`scripts/ui/chapter_select_view_controller.gd`, `scripts/ui/choice_list_controller.gd`
+- 视图控制器：`scripts/ui/title_view_controller.gd`, `scripts/ui/game_view_controller.gd`, `scripts/ui/settings_view_controller.gd`, `scripts/ui/cg_gallery_controller.gd`, `scripts/ui/music_gallery_controller.gd`, `scripts/ui/chapter_select_view_controller.gd`, `scripts/ui/choice_list_controller.gd`
 - 本地化：`scripts/core/i18n.gd`, `resources/localized_resources/localized_strings/*.json`
 - VFX/Shader：`scripts/runtime/vfx_system.gd`, `resources/shaders/*.gdshader`
-- 场景挂载：`scene/view/chapter_select_view.tscn`, `scene/view/game_view.tscn`
+- 场景：`scene/game.tscn`, `scene/view/title_view.tscn`, `scene/view/chapter_select_view.tscn`, `scene/view/game_view.tscn`, `scene/view/settings_view.tscn`, `scene/view/cg_gallery_view.tscn`, `scene/view/music_gallery_view.tscn`
 - 自检场景：`resources/scenarios/test_vfx.txt`
 - 回归场景：`resources/scenarios/review_regression_*.txt`
 
@@ -42,10 +43,11 @@
 - 2026-06-16：任务8 Step3/4 完成，i18n 文案全部补齐并通过回归；截图确认标题界面 "Nova 2" + "开始游戏" 正确显示，`get_errors` 结果 `error_count=0`。
 - 2026-06-16：VFX/Shader 系统完成，`run_scene(res://scene/game.tscn)` + `get_errors(include_warnings=true)` 结果 `error_count=0`；截图确认标题界面正常。
 - 2026-06-16：自动播放与快进模式完成，`run_scene(res://scene/game.tscn)` + `get_errors(include_warnings=true)` 结果 `error_count=0`；ReadTracker 持久化、Auto/Skip 互斥、存读档集成均已就绪。
+- 2026-06-16：ViewManager + GALGAME 菜单重构完成。新增 `ViewManager` 子系统（fade/slide/instant 过渡动画），`TitleViewController`（GALGAME 左侧列表菜单），`GameViewController`（从 NovaController 提取全部游戏逻辑），`SettingsViewController`（文字速度/音量/全屏/语言/字体大小），`CgGalleryController`（缩略图网格+全屏预览），`MusicGalleryController`（曲目列表+播放控制）。NovaController 从 760 行瘦身为 240 行协调器。`run_scene(res://scene/game.tscn)` + `get_errors(include_warnings=true)` 结果 `error_count=0`。
 
 ## 5. 暂时收尾状态
-- 当前可停点：任务8 全部步骤 + VFX 系统 + 自动/快进模式已完成，运行无 Godot 错误。
-- 下一步优先级：ViewManager、设置界面、脚本热加载。
+- 当前可停点：ViewManager + GALGAME 菜单 + 设置/鉴赏界面 + NovaController 重构已完成，运行无 Godot 错误。
+- 下一步优先级：PrefabLoader、脚本热加载、快捷键系统。
 - 提交策略：待 git 索引可写后，按范围拆分提交。
 
 ## 6. 复用规则

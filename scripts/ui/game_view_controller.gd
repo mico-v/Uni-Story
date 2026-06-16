@@ -1,0 +1,659 @@
+class_name GameViewController extends Control
+
+## GameViewController — owns all gameplay UI logic that was previously inside
+## NovaController: typewriter, dialogue display, choices, auto/skip modes,
+## save/load panel, backlog panel, and HUD state management.
+##
+## Attached to the GameView root node in game_view.tscn.
+## Receives a reference to NovaController (_ctx) for subsystem access.
+
+signal title_requested()
+
+const ButtonRingScene: PackedScene = preload("res://scene/ui/button_ring.tscn")
+
+# ── Context ──────────────────────────────────────────────────────────
+var _ctx: Node  # NovaController
+
+# ── World layer ──────────────────────────────────────────────────────
+var _world: Node2D
+var _bg: Sprite2D
+var _fg: Sprite2D
+
+# ── HUD nodes ────────────────────────────────────────────────────────
+var _hud: Control
+var _status_label: Label
+var _dbox: Panel
+var _speaker_label: Label
+var _story_label: RichTextLabel
+var _choice_list: VBoxContainer
+var _choice_list_controller: ChoiceListController
+var _controls: HBoxContainer
+var _next_btn: Button
+var _restart_btn: Button
+var _quit_btn: Button
+var _save_btn: Button
+var _load_btn: Button
+var _backlog_btn: Button
+var _auto_btn: Button
+var _skip_btn: Button
+var _overlay: ColorRect
+var _post_fx_rect: ColorRect
+var _continue_icon: Label
+var _avatar_rect: TextureRect
+
+# ── Save/load panel ──────────────────────────────────────────────────
+var _save_panel: Panel
+var _save_panel_title: Label
+var _save_slots: VBoxContainer
+var _save_close_btn: Button
+var _save_mode := true
+
+# ── Backlog panel ────────────────────────────────────────────────────
+var _backlog_panel: Panel
+var _backlog_list: VBoxContainer
+var _backlog_scroll: ScrollContainer
+var _backlog_close_btn: Button
+
+# ── Typewriter state ─────────────────────────────────────────────────
+const TYPE_CPS := 30.0
+var _type_tween: Tween = null
+var _is_typing := false
+
+# ── Auto/Skip mode state ─────────────────────────────────────────────
+const AUTO_DELAY := 2.0
+const SKIP_DELAY := 0.05
+var _is_auto := false
+var _is_skip := false
+var _auto_gen := 0
+var _skip_gen := 0
+
+
+# ── Lifecycle ────────────────────────────────────────────────────────
+
+func setup(ctx: Node) -> void:
+	_ctx = ctx
+	_bind_nodes()
+	_apply_ui_defaults()
+	_connect_signals()
+
+
+func _bind_nodes() -> void:
+	_world = get_node_or_null("World") as Node2D
+	_bg = get_node_or_null("World/Background") as Sprite2D
+	_fg = get_node_or_null("World/Foreground") as Sprite2D
+	_hud = get_node_or_null("Hud") as Control
+	if _hud:
+		_status_label = _hud.get_node_or_null("Status") as Label
+		_dbox = _hud.get_node_or_null("DialogueBox") as Panel
+		_speaker_label = _hud.get_node_or_null("DialogueBox/Speaker") as Label
+		_story_label = _hud.get_node_or_null("DialogueBox/Story") as RichTextLabel
+		_continue_icon = _hud.get_node_or_null("DialogueBox/ContinueIcon") as Label
+		_avatar_rect = _hud.get_node_or_null("DialogueBox/Avatar") as TextureRect
+		_choice_list = _hud.get_node_or_null("ChoiceList") as VBoxContainer
+		if _choice_list is ChoiceListController:
+			_choice_list_controller = _choice_list as ChoiceListController
+		_controls = _hud.get_node_or_null("Controls") as HBoxContainer
+		_next_btn = _hud.get_node_or_null("Controls/Next") as Button
+		_restart_btn = _hud.get_node_or_null("Controls/Restart") as Button
+		_save_btn = _hud.get_node_or_null("Controls/Save") as Button
+		_load_btn = _hud.get_node_or_null("Controls/Load") as Button
+		_backlog_btn = _hud.get_node_or_null("Controls/Backlog") as Button
+		_auto_btn = _hud.get_node_or_null("Controls/Auto") as Button
+		_skip_btn = _hud.get_node_or_null("Controls/Skip") as Button
+		_quit_btn = _hud.get_node_or_null("Controls/Quit") as Button
+		_overlay = _hud.get_node_or_null("TransitionOverlay") as ColorRect
+		_save_panel = _hud.get_node_or_null("SavePanel") as Panel
+		_save_panel_title = _hud.get_node_or_null("SavePanel/SavePanelContainer/Title") as Label
+		_save_slots = _hud.get_node_or_null("SavePanel/SavePanelContainer/Slots") as VBoxContainer
+		_save_close_btn = _hud.get_node_or_null("SavePanel/SavePanelContainer/CloseButton") as Button
+		_backlog_panel = _hud.get_node_or_null("BacklogPanel") as Panel
+		_backlog_list = _hud.get_node_or_null("BacklogPanel/BacklogPanelContainer/BacklogScroll/BacklogList") as VBoxContainer
+		_backlog_scroll = _hud.get_node_or_null("BacklogPanel/BacklogPanelContainer/BacklogScroll") as ScrollContainer
+		_backlog_close_btn = _hud.get_node_or_null("BacklogPanel/BacklogPanelContainer/CloseButton") as Button
+	_post_fx_rect = get_node_or_null("PostFXRect") as ColorRect
+
+	# Initial visibility.
+	visible = false
+	if _save_panel:
+		_save_panel.visible = false
+	if _backlog_panel:
+		_backlog_panel.visible = false
+	if _choice_list:
+		_choice_list.visible = false
+	if _dbox:
+		_dbox.visible = false
+	if _overlay:
+		_overlay.visible = false
+	if _next_btn:
+		_next_btn.visible = false
+	if _restart_btn:
+		_restart_btn.visible = false
+	if _save_btn:
+		_save_btn.visible = false
+	if _backlog_btn:
+		_backlog_btn.visible = false
+	if _backlog_scroll:
+		_backlog_scroll.mouse_filter = Control.MOUSE_FILTER_STOP
+
+
+func _apply_ui_defaults() -> void:
+	if _status_label:
+		_status_label.add_theme_font_size_override("font_size", 18)
+	if _speaker_label:
+		_speaker_label.add_theme_font_size_override("font_size", 22)
+		_speaker_label.position = Vector2(24, 10)
+	if _story_label:
+		_story_label.add_theme_font_size_override("normal_font_size", 26)
+		_story_label.bbcode_enabled = true
+		_story_label.visible_ratio = 0.0
+	if _choice_list:
+		_choice_list.alignment = BoxContainer.ALIGNMENT_CENTER
+		_choice_list.add_theme_constant_override("separation", 10)
+	if _controls:
+		_controls.add_theme_constant_override("separation", 10)
+	if _save_panel_title:
+		_save_panel_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		_save_panel_title.add_theme_font_size_override("font_size", 26)
+	if _save_slots:
+		_save_slots.add_theme_constant_override("separation", 6)
+	if _backlog_list:
+		_backlog_list.add_theme_constant_override("separation", 10)
+	if _backlog_panel:
+		var bt := _backlog_panel.get_node_or_null("BacklogPanelContainer/Title")
+		if bt is Label:
+			bt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+			bt.add_theme_font_size_override("font_size", 26)
+
+
+func _connect_signals() -> void:
+	if _next_btn:
+		_next_btn.pressed.connect(_on_next)
+	if _restart_btn:
+		_restart_btn.pressed.connect(func() -> void: title_requested.emit())
+	if _save_btn:
+		_save_btn.pressed.connect(func() -> void: _open_save_panel(true))
+	if _load_btn:
+		_load_btn.pressed.connect(func() -> void: _open_save_panel(false))
+	if _backlog_btn:
+		_backlog_btn.pressed.connect(_open_backlog)
+	if _auto_btn:
+		_auto_btn.pressed.connect(_on_auto_toggled)
+	if _skip_btn:
+		_skip_btn.pressed.connect(_on_skip_toggled)
+	if _quit_btn:
+		_quit_btn.pressed.connect(func() -> void:
+			if _ctx.read_tracker:
+				_ctx.read_tracker.save_to_disk()
+			_ctx.get_tree().quit()
+		)
+	if _save_close_btn:
+		_save_close_btn.pressed.connect(_close_save_panel)
+	if _backlog_close_btn:
+		_backlog_close_btn.pressed.connect(func() -> void:
+			_backlog_panel.visible = false
+		)
+	if _choice_list_controller:
+		if not _choice_list_controller.choice_chosen.is_connected(_on_choice):
+			_choice_list_controller.choice_chosen.connect(_on_choice)
+
+
+# ── Public API ───────────────────────────────────────────────────────
+
+func enter_game(node_name: StringName) -> void:
+	if _ctx.dialogue_box:
+		_ctx.dialogue_box.set_box("bottom")
+	if _dbox:
+		_dbox.visible = true
+	if _next_btn:
+		_next_btn.visible = true
+	if _restart_btn:
+		_restart_btn.visible = false
+	if _save_btn:
+		_save_btn.visible = true
+	if _backlog_btn:
+		_backlog_btn.visible = true
+	if _status_label:
+		_status_label.text = _t("ui.status.playing", "状态：对话中")
+	if _ctx.variables:
+		_ctx.variables.clear()
+	if _ctx.backlog:
+		_ctx.backlog.clear()
+	if _ctx.game_state:
+		_ctx.game_state.start_node(node_name)
+
+
+func load_game() -> void:
+	if _dbox:
+		_dbox.visible = true
+	if _next_btn:
+		_next_btn.visible = true
+	if _restart_btn:
+		_restart_btn.visible = false
+	if _save_btn:
+		_save_btn.visible = true
+	if _backlog_btn:
+		_backlog_btn.visible = true
+	if _status_label:
+		_status_label.text = _t("ui.status.loaded", "状态：已读档")
+
+
+func reset_world() -> void:
+	if _bg:
+		_bg.visible = false
+	if _fg:
+		_fg.visible = false
+	if _world:
+		_world.position = Vector2.ZERO
+		_world.scale = Vector2.ONE
+		_world.rotation_degrees = 0.0
+	if _dbox:
+		_dbox.visible = false
+	if _choice_list:
+		_choice_list.visible = false
+		_clear_children(_choice_list)
+	if _save_panel:
+		_save_panel.visible = false
+	if _backlog_panel:
+		_backlog_panel.visible = false
+	if _next_btn:
+		_next_btn.visible = false
+	if _restart_btn:
+		_restart_btn.visible = false
+	if _save_btn:
+		_save_btn.visible = false
+	if _backlog_btn:
+		_backlog_btn.visible = false
+	# Reset transition overlay and post-fx.
+	if _overlay:
+		_overlay.visible = false
+		var col := _overlay.color
+		col.a = 0.0
+		_overlay.color = col
+	if _post_fx_rect:
+		_post_fx_rect.visible = false
+	_continue_icon_visible(false)
+	_speaker_label_clear()
+	_story_label_clear()
+	_kill_typewriter()
+	_deactivate_modes()
+
+
+func get_world() -> Node2D:
+	return _world
+
+
+func get_bg() -> Sprite2D:
+	return _bg
+
+
+func get_fg() -> Sprite2D:
+	return _fg
+
+
+func get_overlay() -> ColorRect:
+	return _overlay
+
+
+func get_post_fx_rect() -> ColorRect:
+	return _post_fx_rect
+
+
+func get_dbox() -> Panel:
+	return _dbox
+
+
+func get_avatar_rect() -> TextureRect:
+	return _avatar_rect
+
+
+func apply_i18n() -> void:
+	if _ctx == null or _ctx.i18n == null:
+		return
+	var i: I18n = _ctx.i18n
+	if _next_btn:
+		_next_btn.text = i.t("ui.button.next", "下一句")
+	if _restart_btn:
+		_restart_btn.text = i.t("ui.button.restart", "重开")
+	if _save_btn:
+		_save_btn.text = i.t("ingame.save.button", "存档")
+	if _load_btn:
+		_load_btn.text = i.t("ingame.load.button", "读档")
+	if _backlog_btn:
+		_backlog_btn.text = i.t("ingame.log.button", "回顾")
+	if _auto_btn:
+		_auto_btn.text = i.t("ingame.auto.button", "自动")
+	if _skip_btn:
+		_skip_btn.text = i.t("ingame.fastforward.button", "快进")
+	if _quit_btn:
+		_quit_btn.text = i.t("config.quitgame", "退出")
+	if _save_close_btn:
+		_save_close_btn.text = i.t("help.close", "关闭")
+	if _backlog_close_btn:
+		_backlog_close_btn.text = i.t("help.close", "关闭")
+
+
+# ── Model signal handlers (connected by NovaController) ─────────────
+
+func on_dialogue_changed(speaker: String, text: String) -> void:
+	if _speaker_label:
+		_speaker_label.text = speaker
+	if _dbox:
+		_dbox.visible = true
+	if _next_btn:
+		_next_btn.visible = true
+	if _choice_list:
+		_choice_list.visible = false
+	if _ctx.backlog:
+		_ctx.backlog.record(speaker, text)
+	_start_typewriter(text)
+	# Skip mode: fast-forward read entries, stop at unread.
+	if _is_skip and _ctx.game_state and _ctx.game_state.current_node:
+		if _ctx.read_tracker and _ctx.read_tracker.is_read(_ctx.game_state.current_node.name, _ctx.game_state.current_index):
+			_finish_typewriter()
+			var gen := _skip_gen
+			get_tree().create_timer(SKIP_DELAY).timeout.connect(_on_skip_advance.bind(gen))
+		else:
+			_deactivate_modes()
+
+
+func on_branch_requested(options: Array) -> void:
+	_deactivate_modes()
+	_finish_typewriter()
+	_continue_icon_visible(false)
+	if _next_btn:
+		_next_btn.visible = false
+	if _choice_list_controller:
+		if _choice_list:
+			_choice_list.visible = true
+		_choice_list_controller.set_choices(options)
+	else:
+		if _choice_list:
+			_choice_list.visible = true
+			_clear_children(_choice_list)
+		for opt in options:
+			var enabled := bool(opt.get("enabled", true))
+			var b := _make_button(str(opt["text"]))
+			b.disabled = not enabled
+			b.pressed.connect(_on_choice.bind(opt["dest"]))
+			if _choice_list:
+				_choice_list.add_child(b)
+
+
+func on_game_ended() -> void:
+	_deactivate_modes()
+	_finish_typewriter()
+	_continue_icon_visible(false)
+	# Reset transition overlay — trans("fade") may have left it opaque.
+	if _overlay:
+		_overlay.visible = false
+		var col := _overlay.color
+		col.a = 0.0
+		_overlay.color = col
+	if _status_label:
+		_status_label.text = _t("ui.status.ended", "状态：章节结束")
+	if _next_btn:
+		_next_btn.visible = false
+	if _restart_btn:
+		_restart_btn.visible = true
+
+
+func on_avatar_changed(shown: bool) -> void:
+	var left := 124.0 if shown else 24.0
+	if _speaker_label:
+		_speaker_label.position.x = left
+	if _story_label:
+		_story_label.offset_left = left
+
+
+# ── Typewriter ───────────────────────────────────────────────────────
+
+func _start_typewriter(text: String) -> void:
+	_kill_typewriter()
+	if _story_label == null:
+		return
+	_story_label.text = text
+	_continue_icon_visible(false)
+	var n := text.length()
+	if n <= 0:
+		_finish_typewriter()
+		return
+	_story_label.visible_ratio = 0.0
+	_is_typing = true
+	var duration := float(n) / TYPE_CPS
+	_type_tween = create_tween()
+	_type_tween.tween_method(_set_reveal, 0.0, 1.0, duration)
+	_type_tween.finished.connect(_on_typewriter_done)
+
+
+func _set_reveal(ratio: float) -> void:
+	if _story_label:
+		_story_label.visible_ratio = ratio
+
+
+func _on_typewriter_done() -> void:
+	_is_typing = false
+	if _story_label:
+		_story_label.visible_ratio = 1.0
+	_continue_icon_visible(true)
+	if _is_auto and _ctx.game_state and _ctx.game_state.is_waiting_input:
+		var gen := _auto_gen
+		get_tree().create_timer(AUTO_DELAY).timeout.connect(_on_auto_advance.bind(gen))
+
+
+func _kill_typewriter() -> void:
+	if _type_tween and _type_tween.is_valid():
+		_type_tween.kill()
+	_type_tween = null
+	_is_typing = false
+
+
+func _finish_typewriter() -> void:
+	_kill_typewriter()
+	if _story_label:
+		_story_label.visible_ratio = 1.0
+	_continue_icon_visible(true)
+
+
+# ── Next / Choice ────────────────────────────────────────────────────
+
+func _on_next() -> void:
+	if _is_typing:
+		_finish_typewriter()
+		_deactivate_modes()
+		return
+	if _ctx.game_state and _ctx.game_state.is_waiting_input:
+		_deactivate_modes()
+		_ctx.game_state.continue_after_input()
+	else:
+		if _ctx.game_state:
+			_ctx.game_state.advance()
+
+
+func _on_choice(dest: StringName) -> void:
+	if _choice_list:
+		_choice_list.visible = false
+	if _choice_list_controller:
+		_choice_list_controller.clear()
+	else:
+		if _choice_list:
+			_clear_children(_choice_list)
+	if _next_btn:
+		_next_btn.visible = true
+	if _ctx.game_state:
+		_ctx.game_state.choose_branch(dest)
+
+
+# ── Auto / Skip mode ────────────────────────────────────────────────
+
+func _on_auto_toggled() -> void:
+	_is_auto = _auto_btn.button_pressed
+	if _is_auto:
+		_is_skip = false
+		if _skip_btn:
+			_skip_btn.button_pressed = false
+	if not _is_auto:
+		_auto_gen += 1
+
+
+func _on_skip_toggled() -> void:
+	_is_skip = _skip_btn.button_pressed
+	if _is_skip:
+		_is_auto = false
+		if _auto_btn:
+			_auto_btn.button_pressed = false
+		if _ctx.game_state and _ctx.game_state.is_waiting_input and _ctx.game_state.current_node and _ctx.read_tracker:
+			if _ctx.read_tracker.is_read(_ctx.game_state.current_node.name, _ctx.game_state.current_index):
+				_finish_typewriter()
+				var gen := _skip_gen
+				get_tree().create_timer(SKIP_DELAY).timeout.connect(_on_skip_advance.bind(gen))
+			else:
+				_deactivate_modes()
+				return
+	if not _is_skip:
+		_skip_gen += 1
+
+
+func _deactivate_modes() -> void:
+	if _is_auto:
+		_is_auto = false
+		if _auto_btn:
+			_auto_btn.button_pressed = false
+		_auto_gen += 1
+	if _is_skip:
+		_is_skip = false
+		if _skip_btn:
+			_skip_btn.button_pressed = false
+		_skip_gen += 1
+
+
+@warning_ignore("unused_parameter")
+func _on_auto_advance(gen: int) -> void:
+	if gen != _auto_gen or not _is_auto:
+		return
+	if _ctx.game_state and _ctx.game_state.is_waiting_input:
+		_ctx.game_state.continue_after_input()
+
+
+@warning_ignore("unused_parameter")
+func _on_skip_advance(gen: int) -> void:
+	if gen != _skip_gen or not _is_skip:
+		return
+	if _ctx.game_state and _ctx.game_state.is_waiting_input:
+		_ctx.game_state.continue_after_input()
+
+
+# ── Backlog panel ────────────────────────────────────────────────────
+
+func _open_backlog() -> void:
+	_deactivate_modes()
+	var backlog_title := _backlog_panel_title_node()
+	if backlog_title:
+		backlog_title.text = _t("ui.label.backlog", "文本回顾")
+	_clear_children(_backlog_list)
+	if _ctx.backlog:
+		for entry in _ctx.backlog.entries():
+			var lbl := RichTextLabel.new()
+			lbl.bbcode_enabled = true
+			lbl.fit_content = true
+			lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			lbl.custom_minimum_size = Vector2(0, 0)
+			var speaker := str(entry["speaker"])
+			var text := str(entry["text"])
+			if speaker.is_empty():
+				lbl.text = text
+			else:
+				lbl.text = "[b]%s[/b]：%s" % [speaker, text]
+			_backlog_list.add_child(lbl)
+	if _backlog_panel:
+		_backlog_panel.visible = true
+	await get_tree().process_frame
+	if _backlog_scroll:
+		_backlog_scroll.scroll_vertical = int(_backlog_scroll.get_v_scroll_bar().max_value)
+
+
+# ── Save/load panel ──────────────────────────────────────────────────
+
+func _open_save_panel(save_mode: bool) -> void:
+	_deactivate_modes()
+	_save_mode = save_mode
+	if _save_panel_title:
+		_save_panel_title.text = _t("ingame.save.button", "存档") if save_mode else _t("ingame.load.button", "读档")
+	_clear_children(_save_slots)
+	if _ctx.save_system == null:
+		return
+	for slot in _ctx.save_system.SLOT_COUNT:
+		var label := _t("ui.save.slot_format", "存档位 %d：%s") % [slot + 1, _ctx.save_system.slot_label(slot)]
+		var b := _make_button(label)
+		b.custom_minimum_size = Vector2(360, 40)
+		if not save_mode and not _ctx.save_system.has_save(slot):
+			b.disabled = true
+		b.pressed.connect(_on_slot_pressed.bind(slot))
+		_save_slots.add_child(b)
+	if _save_panel:
+		_save_panel.visible = true
+
+
+func _close_save_panel() -> void:
+	if _save_panel:
+		_save_panel.visible = false
+
+
+func _on_slot_pressed(slot: int) -> void:
+	if _ctx.save_system == null:
+		return
+	if _save_mode:
+		if _ctx.save_system.save(slot):
+			if _status_label:
+				_status_label.text = _t("ui.status.saved", "状态：已存档到位 %d") % (slot + 1)
+		_close_save_panel()
+	else:
+		_close_save_panel()
+		if _ctx.save_system.load_slot(slot):
+			load_game()
+
+
+# ── Helpers ──────────────────────────────────────────────────────────
+
+func _continue_icon_visible(v: bool) -> void:
+	if _continue_icon:
+		_continue_icon.visible = v
+
+
+func _speaker_label_clear() -> void:
+	if _speaker_label:
+		_speaker_label.text = ""
+
+
+func _story_label_clear() -> void:
+	if _story_label:
+		_story_label.text = ""
+
+
+func _backlog_panel_title_node() -> Label:
+	if not _backlog_panel:
+		return null
+	var node := _backlog_panel.get_node_or_null("BacklogPanelContainer/Title")
+	if node is Label:
+		return node
+	return null
+
+
+func _make_button(text: String) -> Button:
+	var b := ButtonRingScene.instantiate() as Button
+	if b == null:
+		b = Button.new()
+	b.text = text
+	return b
+
+
+func _clear_children(node: Node) -> void:
+	if node == null:
+		return
+	for c in node.get_children():
+		c.queue_free()
+
+
+func _t(key: String, fallback: String = "") -> String:
+	if _ctx == null or _ctx.i18n == null:
+		return fallback
+	return _ctx.i18n.t(key, fallback)

@@ -129,5 +129,9 @@
     "ui.label.backlog": "Backlog",
     "ui.button.next": "Next",
     "ui.button.restart": "Restart",
-    "ui.save.slot_format": "Save slot %d: %s"
+    "ui.save.slot_format": "Save slot %d: %s",
+    "music.play": "Play",
+    "music.stop": "Stop",
+    "music.no_tracks": "(No tracks)",
+    "gallery.no_items": "(No gallery items)"
 }

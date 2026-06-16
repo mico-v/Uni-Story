@@ -20,13 +20,31 @@ func play(kind: String = "fade", duration: float = 0.5) -> void:
 	if overlay == null:
 		return
 	match kind:
-		"fade", "fade_out":
+		"fade":
+			# Full cross-fade: fade to black, then fade back in.
+			var half := duration * 0.5
+			overlay.visible = true
+			var col := overlay.color
+			col.a = 0.0
+			overlay.color = col
+			var t := _ctx.get_tree().create_tween()
+			t.tween_property(overlay, "color:a", 1.0, max(0.01, half))
+			t.tween_property(overlay, "color:a", 0.0, max(0.01, half))
+			t.tween_callback(func(): overlay.visible = false)
+		"fade_out":
 			_fade(overlay, 0.0, 1.0, duration)
 		"fade_in":
 			_fade(overlay, 1.0, 0.0, duration)
 		"flash":
-			_fade(overlay, 0.0, 1.0, duration * 0.5)
-			_fade(overlay, 1.0, 0.0, duration * 0.5)
+			var half := duration * 0.5
+			overlay.visible = true
+			var col := overlay.color
+			col.a = 0.0
+			overlay.color = col
+			var t := _ctx.get_tree().create_tween()
+			t.tween_property(overlay, "color:a", 1.0, max(0.01, half))
+			t.tween_property(overlay, "color:a", 0.0, max(0.01, half))
+			t.tween_callback(func(): overlay.visible = false)
 		"dissolve":
 			_ctx.vfx.transition("dissolve", duration)
 		"wipe":
