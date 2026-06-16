@@ -120,6 +120,24 @@ func trans(kind: String = "fade", duration: float = 0.5):
 	return _ctx.transition.play(kind, duration)
 
 
+# --- VFX / shader API --------------------------------------------------------
+
+func vfx(effect_name: String, target: Variant, duration: float = 0.5, params: Dictionary = {}):
+	return _ctx.vfx.play(effect_name, target, duration, params)
+
+func clear_vfx(target: Variant, duration: float = 0.3):
+	return _ctx.vfx.clear(target, duration)
+
+func post_fx(effect_name: String, duration: float = 0.5, params: Dictionary = {}):
+	return _ctx.vfx.post(effect_name, duration, params)
+
+func clear_post_fx(duration: float = 0.3):
+	return _ctx.vfx.clear_post(duration)
+
+func shake(intensity: float = 10.0, duration: float = 0.5):
+	return _ctx.vfx.shake(intensity, duration)
+
+
 # --- misc --------------------------------------------------------------------
 
 func wait(seconds: float):

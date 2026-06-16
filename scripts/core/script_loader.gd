@@ -133,7 +133,7 @@ func branch(branches: Array) -> void:
 	var opts: Array = []
 	for b in branches:
 		if b is Dictionary:
-			var src := b.get("mode", _block_attrs.get("mode", FlowChartNode.BranchMode.NORMAL))
+			var src = b.get("mode", _block_attrs.get("mode", FlowChartNode.BranchMode.NORMAL))
 			var cond := str(b.get("cond", _block_attrs.get("cond", ""))).strip_edges()
 			var image := str(b.get("image", _block_attrs.get("image", ""))).strip_edges()
 			opts.append({

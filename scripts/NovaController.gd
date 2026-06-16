@@ -11,6 +11,7 @@ const SCENARIO_FILES := [
 	"res://resources/scenarios/test_runtime.txt",
 	"res://resources/scenarios/test_char.txt",
 	"res://resources/scenarios/test_var.txt",
+	"res://resources/scenarios/test_vfx.txt",
 	"res://resources/scenarios/demo_full.txt",
 ]
 
@@ -47,6 +48,8 @@ var audio: AudioSystem
 var camera: CameraSystem
 var transition: TransitionSystem
 var dialogue_box: DialogueBoxSystem
+var vfx: VFXSystem
+var read_tracker: ReadTracker
 
 # Scene structure nodes.
 var _title_view: Control
@@ -80,7 +83,10 @@ var _quit_btn: Button
 var _save_btn: Button
 var _load_btn: Button
 var _backlog_btn: Button
+var _auto_btn: Button
+var _skip_btn: Button
 var _overlay: ColorRect
+var _post_fx_rect: ColorRect
 var _continue_icon: Label
 var _avatar_rect: TextureRect
 
@@ -105,6 +111,14 @@ const TYPE_CPS := 30.0
 var _type_tween: Tween = null
 var _is_typing := false
 
+# Auto/Skip mode state.
+const AUTO_DELAY := 2.0
+const SKIP_DELAY := 0.05
+var _is_auto := false
+var _is_skip := false
+var _auto_gen := 0
+var _skip_gen := 0
+
 
 func _ready() -> void:
 	_init_subsystems()
@@ -118,6 +132,9 @@ func _ready() -> void:
 
 	if not _bind_nodes():
 		return
+
+	if _post_fx_rect and vfx:
+		vfx.set_post_fx_rect(_post_fx_rect)
 
 	_apply_ui_defaults()
 	_apply_localized_texts()
@@ -198,8 +215,11 @@ func _bind_nodes() -> bool:
 		_save_btn = _hud.get_node_or_null("Controls/Save") as Button
 		_load_btn = _hud.get_node_or_null("Controls/Load") as Button
 		_backlog_btn = _hud.get_node_or_null("Controls/Backlog") as Button
+		_auto_btn = _hud.get_node_or_null("Controls/Auto") as Button
+		_skip_btn = _hud.get_node_or_null("Controls/Skip") as Button
 		_quit_btn = _hud.get_node_or_null("Controls/Quit") as Button
 		_overlay = _hud.get_node_or_null("TransitionOverlay") as ColorRect
+		_post_fx_rect = _game_view.get_node_or_null("PostFXRect") as ColorRect
 		_save_panel = _hud.get_node_or_null("SavePanel") as Panel
 		_save_panel_title = _hud.get_node_or_null("SavePanel/SavePanelContainer/Title") as Label
 		_save_slots = _hud.get_node_or_null("SavePanel/SavePanelContainer/Slots") as VBoxContainer
@@ -277,7 +297,15 @@ func _connect_view_signals() -> void:
 	_save_btn.pressed.connect(func(): _open_save_panel(true))
 	_load_btn.pressed.connect(func(): _open_save_panel(false))
 	_backlog_btn.pressed.connect(_open_backlog)
-	_quit_btn.pressed.connect(func(): get_tree().quit())
+	if _auto_btn:
+		_auto_btn.pressed.connect(_on_auto_toggled)
+	if _skip_btn:
+		_skip_btn.pressed.connect(_on_skip_toggled)
+	_quit_btn.pressed.connect(func():
+		if read_tracker:
+			read_tracker.save_to_disk()
+		get_tree().quit()
+	)
 	_save_close_btn.pressed.connect(_close_save_panel)
 	_backlog_close_btn.pressed.connect(func(): _backlog_panel.visible = false)
 	if _choice_list_controller:
@@ -310,6 +338,8 @@ func _init_subsystems() -> void:
 	camera = CameraSystem.new(self)
 	transition = TransitionSystem.new(self)
 	dialogue_box = DialogueBoxSystem.new(self)
+	vfx = VFXSystem.new(self)
+	read_tracker = ReadTracker.new(self)
 
 
 func _register_objects() -> void:
@@ -334,6 +364,7 @@ func _connect_model_signals() -> void:
 
 func _show_title() -> void:
 	_kill_typewriter()
+	_deactivate_modes()
 	_title_view.visible = true
 	_chapter_view.visible = false
 	_game_view.visible = false
@@ -360,6 +391,7 @@ func _show_title() -> void:
 
 
 func _show_chapter_select() -> void:
+	_deactivate_modes()
 	_title_view.visible = false
 	_chapter_view.visible = true
 	_game_view.visible = false
@@ -402,6 +434,7 @@ func _on_chapter_selected(node_name: StringName) -> void:
 	_title_view.visible = false
 	_chapter_view.visible = false
 	_game_view.visible = true
+	dialogue_box.set_box("bottom")
 	_dbox.visible = true
 	_next_btn.visible = true
 	_restart_btn.visible = false
@@ -420,6 +453,14 @@ func _on_dialogue_changed(speaker: String, text: String) -> void:
 	_choice_list.visible = false
 	backlog.record(speaker, text)
 	_start_typewriter(text)
+	# Skip mode: fast-forward read entries, stop at unread.
+	if _is_skip and game_state.current_node:
+		if read_tracker and read_tracker.is_read(game_state.current_node.name, game_state.current_index):
+			_finish_typewriter()
+			var gen := _skip_gen
+			get_tree().create_timer(SKIP_DELAY).timeout.connect(_on_skip_advance.bind(gen))
+		else:
+			_deactivate_modes()
 
 
 func _start_typewriter(text: String) -> void:
@@ -446,6 +487,9 @@ func _on_typewriter_done() -> void:
 	_is_typing = false
 	_story_label.visible_ratio = 1.0
 	_continue_icon.visible = true
+	if _is_auto and game_state.is_waiting_input:
+		var gen := _auto_gen
+		get_tree().create_timer(AUTO_DELAY).timeout.connect(_on_auto_advance.bind(gen))
 
 
 func _on_avatar_changed(shown: bool) -> void:
@@ -470,14 +514,17 @@ func _finish_typewriter() -> void:
 func _on_next() -> void:
 	if _is_typing:
 		_finish_typewriter()
+		_deactivate_modes()
 		return
 	if game_state.is_waiting_input:
+		_deactivate_modes()
 		game_state.continue_after_input()
 	else:
 		game_state.advance()
 
 
 func _on_branch_requested(options: Array) -> void:
+	_deactivate_modes()
 	_finish_typewriter()
 	_continue_icon.visible = false
 	_next_btn.visible = false
@@ -506,6 +553,7 @@ func _on_choice(dest: StringName) -> void:
 
 
 func _on_game_ended() -> void:
+	_deactivate_modes()
 	_finish_typewriter()
 	_continue_icon.visible = false
 	_status_label.text = _t("ui.status.ended", "状态：章节结束")
@@ -514,6 +562,7 @@ func _on_game_ended() -> void:
 
 
 func _open_backlog() -> void:
+	_deactivate_modes()
 	var backlog_title := _backlog_panel_title()
 	if backlog_title:
 		backlog_title.text = _t("ui.label.backlog", "文本回顾")
@@ -537,6 +586,7 @@ func _open_backlog() -> void:
 
 
 func _open_save_panel(save_mode: bool) -> void:
+	_deactivate_modes()
 	_save_mode = save_mode
 	_save_panel_title.text = _t("ingame.save.button", "存档") if save_mode else _t("ingame.load.button", "读档")
 	_clear_children(_save_slots)
@@ -595,7 +645,7 @@ func _setup_locale() -> void:
 
 func _apply_localized_texts() -> void:
 	if _title_label:
-		_title_label.text = _t("title.subtitle", "Nova2")
+		_title_label.text = _t("title.subtitle", "Nova 2")
 	if _start_btn:
 		_start_btn.text = _t("title.menu.start", "开始")
 	if _chapter_view_controller:
@@ -612,6 +662,10 @@ func _apply_localized_texts() -> void:
 		_load_btn.text = _t("ingame.load.button", "读档")
 	if _backlog_btn:
 		_backlog_btn.text = _t("ingame.log.button", "回顾")
+	if _auto_btn:
+		_auto_btn.text = _t("ingame.auto.button", "自动")
+	if _skip_btn:
+		_skip_btn.text = _t("ingame.fastforward.button", "快进")
 	if _quit_btn:
 		_quit_btn.text = _t("config.quitgame", "退出")
 	if _chapter_back_btn:
@@ -640,6 +694,66 @@ func _backlog_panel_title() -> Label:
 	if node is Label:
 		return node
 	return null
+
+
+# ── Auto / Skip mode ────────────────────────────────────────────────
+
+func _on_auto_toggled() -> void:
+	_is_auto = _auto_btn.button_pressed
+	if _is_auto:
+		_is_skip = false
+		if _skip_btn:
+			_skip_btn.button_pressed = false
+	if not _is_auto:
+		_auto_gen += 1
+
+
+func _on_skip_toggled() -> void:
+	_is_skip = _skip_btn.button_pressed
+	if _is_skip:
+		_is_auto = false
+		if _auto_btn:
+			_auto_btn.button_pressed = false
+		# If already showing dialogue, kick off skip loop immediately.
+		if game_state.is_waiting_input and game_state.current_node and read_tracker:
+			if read_tracker.is_read(game_state.current_node.name, game_state.current_index):
+				_finish_typewriter()
+				var gen := _skip_gen
+				get_tree().create_timer(SKIP_DELAY).timeout.connect(_on_skip_advance.bind(gen))
+			else:
+				_deactivate_modes()
+				return
+	if not _is_skip:
+		_skip_gen += 1
+
+
+func _deactivate_modes() -> void:
+	if _is_auto:
+		_is_auto = false
+		if _auto_btn:
+			_auto_btn.button_pressed = false
+		_auto_gen += 1
+	if _is_skip:
+		_is_skip = false
+		if _skip_btn:
+			_skip_btn.button_pressed = false
+		_skip_gen += 1
+
+
+@warning_ignore("unused_parameter")
+func _on_auto_advance(gen: int) -> void:
+	if gen != _auto_gen or not _is_auto:
+		return
+	if game_state.is_waiting_input:
+		game_state.continue_after_input()
+
+
+@warning_ignore("unused_parameter")
+func _on_skip_advance(gen: int) -> void:
+	if gen != _skip_gen or not _is_skip:
+		return
+	if game_state.is_waiting_input:
+		game_state.continue_after_input()
 
 
 func _clear_children(node: Node) -> void:

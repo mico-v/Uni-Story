@@ -64,7 +64,7 @@ func _load_locale(locale_name: String) -> void:
 		return
 
 	var text := FileAccess.get_file_as_string(path)
-	var parsed := JSON.parse_string(text)
+	var parsed = JSON.parse_string(text)
 	if parsed is Dictionary:
 		_tables[locale_key] = parsed
 	else:
@@ -81,7 +81,7 @@ func t(key: String, default_value: String = "") -> String:
 	for loc in lookup:
 		if not _tables.has(loc):
 			_load_locale(loc)
-		var data := _tables.get(loc, {})
+		var data = _tables.get(loc, {})
 		if data.has(key):
 			return str(data[key])
 

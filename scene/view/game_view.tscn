@@ -5,14 +5,14 @@
 
 [node name="GameView" type="Control" unique_id=1849883982]
 layout_mode = 3
-anchors_preset = 0
-offset_left = 1346.0
-offset_top = 710.0
-offset_right = 1346.0
-offset_bottom = 710.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="World" type="Node2D" parent="." unique_id=2018656476]
-position = Vector2(-65, 11)
+position = Vector2(102, 104)
 
 [node name="Background" type="Sprite2D" parent="World" unique_id=342289632]
 visible = false
@@ -21,6 +21,16 @@ centered = false
 [node name="Foreground" type="Sprite2D" parent="World" unique_id=1260412210]
 visible = false
 centered = false
+
+[node name="PostFXRect" type="ColorRect" parent="." unique_id=1851587181]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 
 [node name="Hud" type="Control" parent="." unique_id=1960596776]
 layout_mode = 1
@@ -32,20 +42,24 @@ grow_vertical = 2
 mouse_filter = 2
 
 [node name="Status" type="Label" parent="Hud" unique_id=1557576252]
-layout_mode = 0
-offset_left = 16.0
-offset_top = 12.0
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 104.0
+grow_horizontal = 2
 
 [node name="DialogueBox" parent="Hud" unique_id=89621010 instance=ExtResource("DialogueBoxRes")]
-layout_mode = 0
-anchors_preset = 0
+layout_mode = 1
+anchors_preset = 15
 anchor_left = 0.0
 anchor_top = 0.0
-anchor_right = 0.0
-anchor_bottom = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="ChoiceList" type="VBoxContainer" parent="Hud" unique_id=1227660917]
-visible = false
+custom_minimum_size = Vector2(100, 100)
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -58,48 +72,73 @@ alignment = 1
 script = ExtResource("2_cyfmi")
 
 [node name="Controls" type="HBoxContainer" parent="Hud" unique_id=846297658]
+layout_direction = 3
 layout_mode = 1
-anchors_preset = 3
-anchor_left = 1.0
+anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = -24.0
-offset_top = -16.0
-offset_right = -24.0
-offset_bottom = -16.0
-grow_horizontal = 0
+offset_top = -44.0
+grow_horizontal = 2
 grow_vertical = 0
 
-[node name="Next" type="Button" parent="Hud/Controls" unique_id=1740931806]
-custom_minimum_size = Vector2(220, 44)
+[node name="Quit" type="Button" parent="Hud/Controls" unique_id=1878893336]
+custom_minimum_size = Vector2(100, 44)
 layout_mode = 2
-text = "下一句"
+size_flags_horizontal = 4
+size_flags_vertical = 8
+text = "退出"
 
 [node name="Restart" type="Button" parent="Hud/Controls" unique_id=2113566389]
-custom_minimum_size = Vector2(220, 44)
+custom_minimum_size = Vector2(100, 44)
 layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 8
 text = "重开"
 
 [node name="Save" type="Button" parent="Hud/Controls" unique_id=1440843677]
-custom_minimum_size = Vector2(220, 44)
+custom_minimum_size = Vector2(100, 44)
 layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 8
 text = "存档"
 
 [node name="Load" type="Button" parent="Hud/Controls" unique_id=1802674086]
-custom_minimum_size = Vector2(220, 44)
+custom_minimum_size = Vector2(100, 44)
 layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 8
 text = "读档"
 
 [node name="Backlog" type="Button" parent="Hud/Controls" unique_id=2093469893]
-custom_minimum_size = Vector2(220, 44)
+custom_minimum_size = Vector2(100, 44)
 layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 8
 text = "回顾"
 
-[node name="Quit" type="Button" parent="Hud/Controls" unique_id=1878893336]
-custom_minimum_size = Vector2(220, 44)
+[node name="Auto" type="Button" parent="Hud/Controls" unique_id=710982097]
+custom_minimum_size = Vector2(100, 44)
 layout_mode = 2
-text = "退出"
+size_flags_horizontal = 4
+size_flags_vertical = 8
+toggle_mode = true
+text = "自动"
+
+[node name="Skip" type="Button" parent="Hud/Controls" unique_id=1138895797]
+custom_minimum_size = Vector2(100, 44)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 8
+toggle_mode = true
+text = "快进"
+
+[node name="Next" type="Button" parent="Hud/Controls" unique_id=1740931806]
+custom_minimum_size = Vector2(100, 44)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 8
+text = "下一句"
 
 [node name="TransitionOverlay" type="ColorRect" parent="Hud" unique_id=2058775679]
 visible = false

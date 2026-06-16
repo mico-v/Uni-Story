@@ -29,6 +29,8 @@ func save(slot: int) -> bool:
 		"chapter": String(_ctx.game_state.current_node.name),
 		"state": _ctx.game_state.snapshot(),
 	}
+	if _ctx.read_tracker:
+		data["read_tracker"] = _ctx.read_tracker.snapshot()
 	if not data.has("version"):
 		data["version"] = 1
 	var f := FileAccess.open(_slot_path(slot), FileAccess.WRITE)
@@ -52,7 +54,12 @@ func load_slot(slot: int) -> bool:
 	if not (parsed is Dictionary) or not parsed.has("state"):
 		push_error("SaveSystem: corrupt save in slot %d" % slot)
 		return false
-	return _ctx.game_state.restore(parsed["state"])
+	var ok = _ctx.game_state.restore(parsed["state"])
+	if ok and _ctx.read_tracker and parsed.has("read_tracker"):
+		var rt_data = parsed["read_tracker"]
+		if rt_data is Dictionary:
+			_ctx.read_tracker.restore(rt_data)
+	return ok
 
 
 func has_save(slot: int) -> bool:

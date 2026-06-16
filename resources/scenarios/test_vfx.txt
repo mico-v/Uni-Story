@@ -1,0 +1,87 @@
+@<|
+label("test_vfx", "VFX 自检")
+is_unlocked_start()
+set_box()
+|>
+
+<|
+show("bg", "demo_media/rainy_bg")
+|>
+VFX 自检开始 —— 先显示背景图
+
+<|
+vfx("blur", "bg", 0.8)
+|>
+对背景施加高斯模糊（amount → 5.0，0.8 秒）
+
+<|
+wait(1.5)
+clear_vfx("bg", 0.5)
+|>
+等待 1.5 秒后清除模糊
+
+<|
+vfx("grayscale", "bg", 1.0)
+|>
+对背景施加灰度效果（amount → 1.0，1.0 秒）
+
+<|
+wait(1.5)
+clear_vfx("bg", 0.5)
+|>
+等待 1.5 秒后清除灰度
+
+<|
+shake(12.0, 0.6)
+|>
+震屏（强度 12，0.6 秒）
+
+<|
+wait(1.0)
+|>
+等待震屏结束
+
+<|
+post_fx("vignette", 0.5)
+|>
+全屏暗角效果
+
+<|
+wait(1.5)
+clear_post_fx(0.5)
+|>
+等待 1.5 秒后清除暗角
+
+<|
+post_fx("chromatic", 0.3)
+|>
+全屏色差效果
+
+<|
+wait(1.5)
+clear_post_fx(0.3)
+|>
+等待 1.5 秒后清除色差
+
+<|
+trans("dissolve", 0.8)
+|>
+溶解转场
+
+<|
+show("bg", "demo_media/rainy_bg")
+|>
+重新显示背景
+
+<|
+trans("wipe", 0.6)
+|>
+擦除转场
+
+<|
+show("bg", "demo_media/rainy_bg")
+|>
+重新显示背景
+
+VFX 自检完成
+@<| is_end() |>

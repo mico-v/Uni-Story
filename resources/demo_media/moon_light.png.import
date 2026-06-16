@@ -3,11 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://caxiy3kgtbfro"
-valid=false
+path="res://.godot/imported/moon_light.png-0289df46f6702ad8b7e9e7e0e5b2bbd9.ctex"
+metadata={
+"vram_texture": false
+}
 
 [deps]
 
 source_file="res://resources/demo_media/moon_light.png"
+dest_files=["res://.godot/imported/moon_light.png-0289df46f6702ad8b7e9e7e0e5b2bbd9.ctex"]
 
 [params]
 

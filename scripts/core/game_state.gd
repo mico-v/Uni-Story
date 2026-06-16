@@ -78,7 +78,7 @@ func restore(data: Dictionary) -> bool:
 		pending_jump = &""  # ignore mid-node jumps during replay
 
 	# Restore subsystem state after replay so playback can continue from a stable model.
-	var systems := data.get("systems", {})
+	var systems = data.get("systems", {})
 	if systems is Dictionary:
 		if _ctx.animation and _ctx.animation.has_method("restore"):
 			_ctx.animation.restore(systems.get("animation", {}))
@@ -143,6 +143,8 @@ func _continue_after_wait() -> void:
 			continue
 
 		is_waiting_input = true
+		if _ctx.read_tracker:
+			_ctx.read_tracker.mark_read(current_node.name, current_index)
 		dialogue_changed.emit(entry.speaker, entry.text)
 		return
 
