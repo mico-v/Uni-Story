@@ -175,6 +175,10 @@ func show_confirm(title: String, message: String):
 	return _ctx.dialog_system.show_confirm(title, message)
 
 
+func preload_asset(path: String) -> void:
+	_ctx.preload_system.preload_asset(path)
+
+
 # --- audio API ---------------------------------------------------------------
 
 func play_bgm(path: String, fade: float = 0.0):

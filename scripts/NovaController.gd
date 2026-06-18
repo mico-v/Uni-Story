@@ -50,6 +50,7 @@ var hot_reload: HotReload
 var shortcut_manager: ShortcutManager
 var video_system: VideoSystem
 var dialog_system: DialogSystem
+var preload_system: PreloadSystem
 
 # ── View management ─────────────────────────────────────────────────
 var view_manager: ViewManager
@@ -123,6 +124,7 @@ func _init_subsystems() -> void:
 	shortcut_manager = ShortcutManager.new(self)
 	video_system = VideoSystem.new(self)
 	dialog_system = DialogSystem.new(self)
+	preload_system = PreloadSystem.new(self)
 
 
 # ── Locale ───────────────────────────────────────────────────────────

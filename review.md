@@ -54,11 +54,12 @@
 - 2026-06-18：视频播放系统完成。新增 `scripts/runtime/video_system.gd`（VideoStreamPlayer 全屏播放，支持 .ogv/.webm，点击/Space/Enter/Esc 跳过，`play_video()` 返回 Signal 供 GDRuntime await）。`NovaController.gd` 注册第 23 个子系统。`base_block.gd` 新增 `play_video(path, skippable)` API。`game_view_controller.gd` 的 `reset_world()` 新增视频清理。`run_scene(res://scene/game.tscn)` + `get_errors` 结果 `error_count=0`。
 - 2026-06-18：鼠标菜单完成。`game_view_controller.gd` 新增右键上下文菜单（PanelContainer + VBoxContainer，8 个菜单项：存档/读档/回顾/设置/自动/快进/标题/退出），`_gui_input()` 处理右键打开/左键关闭，视口边界钳位，`reset_world()` 自动隐藏。i18n 完整接入。`run_scene(res://scene/game.tscn)` + `get_errors` 结果 `error_count=0`。
 - 2026-06-18：警告框/通知框完成。新增 `scripts/ui/dialog_system.gd`（DialogSystem 子系统，Toast 顶部通知自动淡出 + Confirm 模态确认对话框 OK/Cancel）。`NovaController` 注册第 24 个子系统。`base_block.gd` 新增 `show_toast()` / `show_confirm()` API。`game_view_controller.gd`：快速存档 Toast 反馈、Esc/鼠标菜单返回标题确认对话框、退出游戏确认对话框。`run_scene(res://scene/game.tscn)` + `get_errors` 结果 `error_count=0`。
+- 2026-06-18：预加载系统完成。新增 `scripts/core/preload_system.gd`（ResourceLoader 异步后台加载，`preload_asset()` 请求、`is_ready()` 检查、`get_cached()` 获取、`get_progress()` 进度、`clear_cache()` 清理）。`NovaController` 注册第 25 个子系统。`base_block.gd` 新增 `preload_asset()` API。NovaScript 在 eager 块中预加载下一章资源，Godot 内部缓存命中免卡顿。`run_scene(res://scene/game.tscn)` + `get_errors` 结果 `error_count=0`。
 
 ## 5. 暂时收尾状态
-- 当前可停点：ViewManager + GALGAME 菜单 + 设置/鉴赏/独立存读档界面 + NovaController 重构 + is_end() 黑屏修复 + PrefabLoader + 脚本热加载 + 快捷键系统 + TimelineController + 视频系统全部完成，运行无 Godot 错误。24 个子系统。
-- 下一步优先级：预加载系统 / 鼠标菜单 / 警告框通知框。
-- 提交策略：待 git 索引可写后，按范围拆分提交。
+- 当前可停点：所有 PLAN.md 主要功能项完成。25 个子系统。运行无 Godot 错误。
+- 剩余项：随意缩放窗口、对话框完整功能、手柄支持、立绘裁剪工具。
+- 提交策略：按范围拆分提交。
 
 ## 6. 复用规则
 - 验收只采用：`mcp__godot__run_scene` + `mcp__godot__get_errors`。
