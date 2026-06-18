@@ -54,6 +54,10 @@ var _backlog_list: VBoxContainer
 var _backlog_scroll: ScrollContainer
 var _backlog_close_btn: Button
 
+# ── Mouse menu (right-click context menu) ────────────────────────────
+var _mouse_menu: PanelContainer
+var _mouse_menu_items: VBoxContainer
+
 # ── Typewriter state ─────────────────────────────────────────────────
 const TYPE_CPS := 30.0
 var _type_tween: Tween = null
@@ -75,6 +79,7 @@ func setup(ctx: Node) -> void:
 	_bind_nodes()
 	_apply_ui_defaults()
 	_connect_signals()
+	_create_mouse_menu()
 
 
 func _bind_nodes() -> void:
@@ -316,6 +321,7 @@ func reset_world() -> void:
 	# Stop any playing video.
 	if _ctx and _ctx.video_system:
 		_ctx.video_system.stop()
+	_hide_mouse_menu()
 	if _bg:
 		_bg.visible = false
 	if _fg:
@@ -692,6 +698,117 @@ func _on_slot_pressed(slot: int) -> void:
 		_close_save_panel()
 		if _ctx.save_system.load_slot(slot):
 			load_game()
+
+
+# ── Mouse menu (right-click context menu) ────────────────────────────
+
+func _create_mouse_menu() -> void:
+	_mouse_menu = PanelContainer.new()
+	_mouse_menu.visible = false
+	_mouse_menu.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	_mouse_menu.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	_mouse_menu_items = VBoxContainer.new()
+	_mouse_menu_items.add_theme_constant_override("separation", 2)
+	_mouse_menu.add_child(_mouse_menu_items)
+	if _hud:
+		_hud.add_child(_mouse_menu)
+
+
+func _gui_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		var mb := event as InputEventMouseButton
+		if mb.pressed and mb.button_index == MOUSE_BUTTON_RIGHT:
+			if _mouse_menu and _mouse_menu.visible:
+				_hide_mouse_menu()
+			else:
+				_show_mouse_menu(mb.position)
+			accept_event()
+		elif mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
+			if _mouse_menu and _mouse_menu.visible:
+				_hide_mouse_menu()
+
+
+func _show_mouse_menu(at_pos: Vector2) -> void:
+	if _mouse_menu == null:
+		return
+	_deactivate_modes()
+	_clear_children(_mouse_menu_items)
+	var items := [
+		[_t("ingame.save.button", "存档"), _on_mouse_save],
+		[_t("ingame.load.button", "读档"), _on_mouse_load],
+		[_t("ingame.log.button", "回顾"), _on_mouse_backlog],
+		[_t("ingame.config.button", "设置"), _on_mouse_settings],
+		[_t("ingame.auto.button", "自动"), _on_mouse_auto],
+		[_t("ingame.fastforward.button", "快进"), _on_mouse_skip],
+		[_t("ingame.title.button", "标题"), _on_mouse_title],
+		[_t("config.quitgame", "退出"), _on_mouse_quit],
+	]
+	for item in items:
+		var b := _make_button(str(item[0]))
+		b.custom_minimum_size = Vector2(160, 32)
+		b.pressed.connect(item[1])
+		_mouse_menu_items.add_child(b)
+	# Clamp to viewport.
+	var vp_size := get_viewport().get_visible_rect().size
+	var menu_size := Vector2(180, items.size() * 36.0)
+	var pos := at_pos
+	if pos.x + menu_size.x > vp_size.x:
+		pos.x = vp_size.x - menu_size.x
+	if pos.y + menu_size.y > vp_size.y:
+		pos.y = vp_size.y - menu_size.y
+	_mouse_menu.position = pos
+	_mouse_menu.visible = true
+
+
+func _hide_mouse_menu() -> void:
+	if _mouse_menu:
+		_mouse_menu.visible = false
+
+
+func _on_mouse_save() -> void:
+	_hide_mouse_menu()
+	_open_save_panel(true)
+
+
+func _on_mouse_load() -> void:
+	_hide_mouse_menu()
+	_open_save_panel(false)
+
+
+func _on_mouse_backlog() -> void:
+	_hide_mouse_menu()
+	_open_backlog()
+
+
+func _on_mouse_settings() -> void:
+	_hide_mouse_menu()
+
+
+func _on_mouse_auto() -> void:
+	_hide_mouse_menu()
+	if _auto_btn:
+		_auto_btn.button_pressed = not _auto_btn.button_pressed
+	_on_auto_toggled()
+
+
+func _on_mouse_skip() -> void:
+	_hide_mouse_menu()
+	if _skip_btn:
+		_skip_btn.button_pressed = not _skip_btn.button_pressed
+	_on_skip_toggled()
+
+
+func _on_mouse_title() -> void:
+	_hide_mouse_menu()
+	title_requested.emit()
+
+
+func _on_mouse_quit() -> void:
+	_hide_mouse_menu()
+	if _ctx and _ctx.read_tracker:
+		_ctx.read_tracker.save_to_disk()
+	if _ctx:
+		_ctx.get_tree().quit()
 
 
 # ── Helpers ──────────────────────────────────────────────────────────
