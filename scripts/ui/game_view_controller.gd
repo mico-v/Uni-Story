@@ -186,11 +186,7 @@ func _connect_signals() -> void:
 	if _skip_btn:
 		_skip_btn.pressed.connect(_on_skip_toggled)
 	if _quit_btn:
-		_quit_btn.pressed.connect(func() -> void:
-			if _ctx.read_tracker:
-				_ctx.read_tracker.save_to_disk()
-			_ctx.get_tree().quit()
-		)
+		_quit_btn.pressed.connect(_request_quit)
 	if _save_close_btn:
 		_save_close_btn.pressed.connect(_close_save_panel)
 	if _backlog_close_btn:
@@ -265,7 +261,17 @@ func _unhandled_input(event: InputEvent) -> void:
 			_backlog_panel.visible = false
 		get_viewport().set_input_as_handled()
 	elif sm.is_action_pressed("ui_leave"):
-		title_requested.emit()
+		if _ctx.dialog_system:
+			_deactivate_modes()
+			_ctx.dialog_system.show_confirm(
+				_t("ingame.title.button", "标题"),
+				_t("ingame.title.confirm", "要返回标题界面吗？")
+			).connect(func(_confirmed: bool) -> void:
+				if _confirmed:
+					title_requested.emit()
+			, CONNECT_ONE_SHOT)
+		else:
+			title_requested.emit()
 		get_viewport().set_input_as_handled()
 	# Debug-only shortcuts.
 	if OS.is_debug_build():
@@ -800,15 +806,32 @@ func _on_mouse_skip() -> void:
 
 func _on_mouse_title() -> void:
 	_hide_mouse_menu()
-	title_requested.emit()
+	if _ctx.dialog_system:
+		_deactivate_modes()
+		_ctx.dialog_system.show_confirm(
+			_t("ingame.title.button", "标题"),
+			_t("ingame.title.confirm", "要返回标题界面吗？")
+		).connect(func(_confirmed: bool) -> void:
+			if _confirmed:
+				title_requested.emit()
+		, CONNECT_ONE_SHOT)
+	else:
+		title_requested.emit()
 
 
 func _on_mouse_quit() -> void:
 	_hide_mouse_menu()
-	if _ctx and _ctx.read_tracker:
-		_ctx.read_tracker.save_to_disk()
-	if _ctx:
-		_ctx.get_tree().quit()
+	if _ctx and _ctx.dialog_system:
+		_deactivate_modes()
+		_ctx.dialog_system.show_confirm(
+			_t("config.quitgame", "退出"),
+			_t("ingame.quit.confirm", "要退出游戏吗？")
+		).connect(func(_confirmed: bool) -> void:
+			if _confirmed:
+				_do_quit()
+		, CONNECT_ONE_SHOT)
+	else:
+		_do_quit()
 
 
 # ── Helpers ──────────────────────────────────────────────────────────
@@ -864,6 +887,8 @@ const QUICK_SAVE_SLOT := 98
 
 func _quick_save() -> void:
 	if _ctx.save_system and _ctx.save_system.save(QUICK_SAVE_SLOT):
+		if _ctx.dialog_system:
+			_ctx.dialog_system.show_toast(_t("ui.status.quicksaved", "快速存档完成"))
 		if _status_label:
 			_status_label.text = _t("ui.status.quicksaved", "状态：快速存档完成")
 
@@ -889,6 +914,27 @@ func _toggle_fullscreen() -> void:
 func _on_hot_reload() -> void:
 	if _ctx.hot_reload:
 		_ctx.hot_reload.reload()
+
+
+func _request_quit() -> void:
+	if _ctx and _ctx.dialog_system:
+		_deactivate_modes()
+		_ctx.dialog_system.show_confirm(
+			_t("config.quitgame", "退出"),
+			_t("ingame.quit.confirm", "要退出游戏吗？")
+		).connect(func(_confirmed: bool) -> void:
+			if _confirmed:
+				_do_quit()
+		, CONNECT_ONE_SHOT)
+	else:
+		_do_quit()
+
+
+func _do_quit() -> void:
+	if _ctx and _ctx.read_tracker:
+		_ctx.read_tracker.save_to_disk()
+	if _ctx:
+		_ctx.get_tree().quit()
 
 
 func _is_save_panel_visible() -> bool:

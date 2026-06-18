@@ -167,6 +167,14 @@ func play_video(path: String, skippable: bool = true):
 	return _ctx.video_system.play_video(path, skippable)
 
 
+func show_toast(message: String, duration: float = 2.0) -> void:
+	_ctx.dialog_system.show_toast(message, duration)
+
+
+func show_confirm(title: String, message: String):
+	return _ctx.dialog_system.show_confirm(title, message)
+
+
 # --- audio API ---------------------------------------------------------------
 
 func play_bgm(path: String, fade: float = 0.0):
