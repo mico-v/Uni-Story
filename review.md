@@ -49,10 +49,11 @@
 - 2026-06-18：`is_end()` 黑屏修复。`TransitionSystem.play("fade")` 改为完整淡出+淡入（Tween 链式 0→1→0），`flash` 改为顺序 Tween 避免并发冲突。`GameViewController.on_game_ended()` 和 `reset_world()` 新增 overlay 重置（visible=false, color.a=0）。`run_scene(res://scene/game.tscn)` + `get_errors` 结果 `error_count=0`。
 - 2026-06-18：PrefabLoader 子系统完成。新增 `prefab_loader.gd`（幂等加载 .tscn 预制体，注册到 ObjectManager，世界/UI 双挂载，snapshot/restore 支持）。修改 `object_manager.gd`（加 `unbind_object_runtime`）、`NovaController.gd`（注册子系统）、`base_block.gd`（4 个 API：`load_prefab/show_prefab/hide_prefab/destroy_prefab`）、`game_state.gd`（snapshot/restore 集成）、`game_view_controller.gd`（reset_world 清理 + get_hud getter）。新建 `resources/prefabs/test_particles.tscn` 测试预制体。`test_all.txt` 新增 Section 6 Prefab 测试章节。`run_scene(res://scene/game.tscn)` + `get_errors` 结果 `error_count=0`。
 - 2026-06-18：脚本热加载完成。新增 `scripts/core/hot_reload.gd`（轮询 `FileAccess.get_modified_time()` 检测文件变化，debounce 防误触，自动重新解析剧本并返回标题页）。修改 `gd_runtime.gd`（加 `clear_cache()` 清空编译缓存）。`NovaController.gd` 注册第 21 个子系统并在 `_ready()` 末尾启动监听。仅 `OS.is_debug_build()` 时启用。控制台输出 `[HotReload] watching N scenario files`。`run_scene(res://scene/game.tscn)` + `get_errors` 结果 `error_count=0`。
+- 2026-06-18：快捷键系统完成。新增 `scripts/core/shortcut_manager.gd`（可定制键盘快捷键，ConfigFile 持久化到 `user://config/keybinds.cfg`，remap/reset_all API 供未来设置 UI 使用）。`project.godot` 新增 `[input]` 段定义 14 个默认键位。`GameViewController` 新增 `_unhandled_input()` 处理游戏内快捷键（Space 推进、A 自动、S 快进、F5/F7 存读档、F6/F8 快速存取、L 回顾、H 隐藏对话框、F11 全屏、Esc 返回标题、F5 调试重载、U 解锁章节）。`NovaController` 新增 `_unhandled_input()` 处理非游戏视图导航（Esc 从设置/鉴赏/读档返回标题、Space 在标题开始游戏）。面板打开时屏蔽非关键快捷键。`run_scene(res://scene/game.tscn)` + `get_errors` 结果 `error_count=0`。
 
 ## 5. 暂时收尾状态
-- 当前可停点：ViewManager + GALGAME 菜单 + 设置/鉴赏/独立存读档界面 + NovaController 重构 + is_end() 黑屏修复 + PrefabLoader + 脚本热加载全部完成，运行无 Godot 错误。
-- 下一步优先级：快捷键系统、TimelineController / 视频。
+- 当前可停点：ViewManager + GALGAME 菜单 + 设置/鉴赏/独立存读档界面 + NovaController 重构 + is_end() 黑屏修复 + PrefabLoader + 脚本热加载 + 快捷键系统全部完成，运行无 Godot 错误。
+- 下一步优先级：TimelineController / 视频、预加载系统 / 鼠标菜单。
 - 提交策略：待 git 索引可写后，按范围拆分提交。
 
 ## 6. 复用规则

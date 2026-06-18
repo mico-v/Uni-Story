@@ -47,6 +47,7 @@ var vfx: VFXSystem
 var read_tracker: ReadTracker
 var prefab_loader: PrefabLoader
 var hot_reload: HotReload
+var shortcut_manager: ShortcutManager
 
 # ── View management ─────────────────────────────────────────────────
 var view_manager: ViewManager
@@ -117,6 +118,7 @@ func _init_subsystems() -> void:
 	read_tracker = ReadTracker.new(self)
 	prefab_loader = PrefabLoader.new(self)
 	hot_reload = HotReload.new(self)
+	shortcut_manager = ShortcutManager.new(self)
 
 
 # ── Locale ───────────────────────────────────────────────────────────
@@ -315,6 +317,44 @@ func _on_quit() -> void:
 	if read_tracker:
 		read_tracker.save_to_disk()
 	get_tree().quit()
+
+
+# ── Keyboard shortcuts (non-game views + debug) ──────────────────────
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not event is InputEventKey or event.is_echo():
+		return
+	if shortcut_manager == null:
+		return
+	# Navigation for non-game views.
+	if view_manager and view_manager.current() != "game":
+		if shortcut_manager.is_action_pressed("ui_leave"):
+			var view := view_manager.current()
+			match view:
+				"settings", "cg_gallery", "music_gallery", "save_load", "chapter_select":
+					view_manager.switch_to("title")
+				"title":
+					_on_quit()
+			get_viewport().set_input_as_handled()
+			return
+		if shortcut_manager.is_action_pressed("ui_step_forward"):
+			if view_manager.current() == "title":
+				_on_title_new_game()
+				get_viewport().set_input_as_handled()
+				return
+	# Debug shortcuts (any view).
+	if OS.is_debug_build():
+		if shortcut_manager.is_action_pressed("debug_reload"):
+			if hot_reload:
+				hot_reload.reload()
+			get_viewport().set_input_as_handled()
+			return
+		if shortcut_manager.is_action_pressed("debug_unlock"):
+			if script_loader and script_loader.graph:
+				script_loader.graph.unlocked_start_nodes = script_loader.graph.start_nodes.duplicate()
+				_refresh_chapters()
+			get_viewport().set_input_as_handled()
+			return
 
 
 # ── Chapter refresh ─────────────────────────────────────────────────

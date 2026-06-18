@@ -81,8 +81,8 @@ addons/godot_mcp/            # Godot MCP 调试/自动化插件
 
 近期计划优先补齐以下能力：
 
-- 快捷键系统
 - TimelineController / 视频
+- 预加载系统 / 鼠标菜单
 
 更完整的路线图请查看 [PLAN.md](PLAN.md)。
 

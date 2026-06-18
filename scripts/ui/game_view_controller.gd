@@ -197,6 +197,78 @@ func _connect_signals() -> void:
 			_choice_list_controller.choice_chosen.connect(_on_choice)
 
 
+# ── Keyboard shortcuts ───────────────────────────────────────────────
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not event is InputEventKey or event.is_echo():
+		return
+	if _ctx == null or _ctx.shortcut_manager == null:
+		return
+	var sm: ShortcutManager = _ctx.shortcut_manager
+	var panels_open := _is_save_panel_visible() or _is_backlog_panel_visible()
+	# Step forward works even with panels open (closes them first).
+	if sm.is_action_pressed("ui_step_forward"):
+		if panels_open:
+			_close_save_panel()
+			if _backlog_panel:
+				_backlog_panel.visible = false
+		_on_next()
+		get_viewport().set_input_as_handled()
+		return
+	# Block other shortcuts when panels are open.
+	if panels_open:
+		if sm.is_action_pressed("ui_leave"):
+			_close_save_panel()
+			if _backlog_panel:
+				_backlog_panel.visible = false
+			get_viewport().set_input_as_handled()
+		return
+	if sm.is_action_pressed("ui_auto"):
+		if _auto_btn:
+			_auto_btn.button_pressed = not _auto_btn.button_pressed
+		_on_auto_toggled()
+		get_viewport().set_input_as_handled()
+	elif sm.is_action_pressed("ui_skip"):
+		if _skip_btn:
+			_skip_btn.button_pressed = not _skip_btn.button_pressed
+		_on_skip_toggled()
+		get_viewport().set_input_as_handled()
+	elif sm.is_action_pressed("ui_save"):
+		_open_save_panel(true)
+		get_viewport().set_input_as_handled()
+	elif sm.is_action_pressed("ui_load"):
+		_open_save_panel(false)
+		get_viewport().set_input_as_handled()
+	elif sm.is_action_pressed("ui_quick_save"):
+		_quick_save()
+		get_viewport().set_input_as_handled()
+	elif sm.is_action_pressed("ui_quick_load"):
+		_quick_load()
+		get_viewport().set_input_as_handled()
+	elif sm.is_action_pressed("ui_backlog"):
+		_open_backlog()
+		get_viewport().set_input_as_handled()
+	elif sm.is_action_pressed("ui_toggle_dbox"):
+		_toggle_dbox()
+		get_viewport().set_input_as_handled()
+	elif sm.is_action_pressed("ui_fullscreen"):
+		_toggle_fullscreen()
+		get_viewport().set_input_as_handled()
+	elif sm.is_action_pressed("ui_settings"):
+		_close_save_panel()
+		if _backlog_panel:
+			_backlog_panel.visible = false
+		get_viewport().set_input_as_handled()
+	elif sm.is_action_pressed("ui_leave"):
+		title_requested.emit()
+		get_viewport().set_input_as_handled()
+	# Debug-only shortcuts.
+	if OS.is_debug_build():
+		if sm.is_action_pressed("debug_reload"):
+			_on_hot_reload()
+			get_viewport().set_input_as_handled()
+
+
 # ── Public API ───────────────────────────────────────────────────────
 
 func enter_game(node_name: StringName) -> void:
@@ -664,3 +736,44 @@ func _t(key: String, fallback: String = "") -> String:
 	if _ctx == null or _ctx.i18n == null:
 		return fallback
 	return _ctx.i18n.t(key, fallback)
+
+
+# ── Shortcut helpers ──────────────────────────────────────────────────
+
+const QUICK_SAVE_SLOT := 98
+
+func _quick_save() -> void:
+	if _ctx.save_system and _ctx.save_system.save(QUICK_SAVE_SLOT):
+		if _status_label:
+			_status_label.text = _t("ui.status.quicksaved", "状态：快速存档完成")
+
+
+func _quick_load() -> void:
+	if _ctx.save_system and _ctx.save_system.load_slot(QUICK_SAVE_SLOT):
+		load_game()
+
+
+func _toggle_dbox() -> void:
+	if _dbox:
+		_dbox.visible = not _dbox.visible
+
+
+func _toggle_fullscreen() -> void:
+	var is_full := DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
+	if is_full:
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+	else:
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+
+
+func _on_hot_reload() -> void:
+	if _ctx.hot_reload:
+		_ctx.hot_reload.reload()
+
+
+func _is_save_panel_visible() -> bool:
+	return _save_panel != null and _save_panel.visible
+
+
+func _is_backlog_panel_visible() -> bool:
+	return _backlog_panel != null and _backlog_panel.visible
