@@ -74,6 +74,10 @@ addons/godot_mcp/            # Godot MCP 调试/自动化插件
 - 镜头/转场/对话框：`cam`、`trans`、`set_box`
 - VFX：`vfx`、`clear_vfx`、`post_fx`、`clear_post_fx`、`shake`
 - 预制体：`load_prefab`、`show_prefab`、`hide_prefab`、`destroy_prefab`
+- 时间轴：`timeline().at(time, callable).play()`
+- 视频：`play_video`
+- 对话框：`show_toast`、`show_confirm`
+- 预加载：`preload_asset`
 - 变量：`set_var`、`get_var`、`has_var`、`add_var`
 - 其它：`wait`、`print`
 

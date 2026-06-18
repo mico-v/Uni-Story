@@ -114,3 +114,7 @@ UI / 系统（演出做完后）：
 - 镜头/转场：`cam` `trans`；对话框：`set_box`
 - 变量：`set_var` `get_var` `has_var` `add_var`；其它：`wait` `print`
 - 预制体：`load_prefab` `show_prefab` `hide_prefab` `destroy_prefab`
+- 时间轴：`timeline().at(time, callable).play()`
+- 视频：`play_video(path, skippable)`
+- 对话框：`show_toast(message)` `show_confirm(title, message)`
+- 预加载：`preload_asset(path)`
