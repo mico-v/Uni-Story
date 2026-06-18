@@ -85,6 +85,10 @@ func _await_possible_async_result(value: Variant):
 		await value.await_finished()
 		return null
 
+	if value is Timeline:
+		await value.await_finished()
+		return null
+
 	return value
 
 

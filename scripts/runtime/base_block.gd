@@ -159,6 +159,10 @@ func wait(seconds: float):
 	return _ctx.animation.wait(seconds)
 
 
+func timeline() -> Timeline:
+	return Timeline.new(_ctx)
+
+
 # --- audio API ---------------------------------------------------------------
 
 func play_bgm(path: String, fade: float = 0.0):
