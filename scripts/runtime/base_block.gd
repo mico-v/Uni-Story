@@ -163,6 +163,10 @@ func timeline() -> Timeline:
 	return Timeline.new(_ctx)
 
 
+func play_video(path: String, skippable: bool = true):
+	return _ctx.video_system.play_video(path, skippable)
+
+
 # --- audio API ---------------------------------------------------------------
 
 func play_bgm(path: String, fade: float = 0.0):

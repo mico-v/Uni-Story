@@ -313,6 +313,9 @@ func reset_world() -> void:
 	# Clean up runtime-loaded prefabs.
 	if _ctx and _ctx.prefab_loader:
 		_ctx.prefab_loader.destroy_all()
+	# Stop any playing video.
+	if _ctx and _ctx.video_system:
+		_ctx.video_system.stop()
 	if _bg:
 		_bg.visible = false
 	if _fg:
