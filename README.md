@@ -81,7 +81,6 @@ addons/godot_mcp/            # Godot MCP 调试/自动化插件
 
 近期计划优先补齐以下能力：
 
-- 脚本热加载
 - 快捷键系统
 - TimelineController / 视频
 

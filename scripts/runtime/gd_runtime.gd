@@ -19,6 +19,12 @@ func _init(ctx: Node) -> void:
 	_ctx = ctx
 
 
+## Clear the compile cache. Used by hot reload to force recompilation
+## of scenario blocks whose source has changed.
+func clear_cache() -> void:
+	_cache.clear()
+
+
 ## Compile a block of statements into an instantiable GDScript. Returns null on
 ## a compile error (already pushed to the error log).
 func compile_block(source: String) -> GDScript:

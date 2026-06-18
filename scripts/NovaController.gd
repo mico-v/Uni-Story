@@ -46,6 +46,7 @@ var dialogue_box: DialogueBoxSystem
 var vfx: VFXSystem
 var read_tracker: ReadTracker
 var prefab_loader: PrefabLoader
+var hot_reload: HotReload
 
 # ── View management ─────────────────────────────────────────────────
 var view_manager: ViewManager
@@ -89,6 +90,9 @@ func _ready() -> void:
 	_refresh_chapters()
 	view_manager.switch_to("title")
 
+	# Start file watching for hot reload (debug builds only).
+	hot_reload.start(scenario_files)
+
 
 # ── Subsystem creation ──────────────────────────────────────────────
 
@@ -112,6 +116,7 @@ func _init_subsystems() -> void:
 	vfx = VFXSystem.new(self)
 	read_tracker = ReadTracker.new(self)
 	prefab_loader = PrefabLoader.new(self)
+	hot_reload = HotReload.new(self)
 
 
 # ── Locale ───────────────────────────────────────────────────────────
