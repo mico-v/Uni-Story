@@ -138,6 +138,21 @@ func shake(intensity: float = 10.0, duration: float = 0.5):
 	return _ctx.vfx.shake(intensity, duration)
 
 
+# --- prefab API ----------------------------------------------------------------
+
+func load_prefab(name: String, path: String, coord = null, color = null, ui: bool = false):
+	return _ctx.prefab_loader.load_prefab(name, path, coord, color, ui)
+
+func show_prefab(name: String) -> void:
+	_ctx.prefab_loader.show_prefab(name)
+
+func hide_prefab(name: String) -> void:
+	_ctx.prefab_loader.hide_prefab(name)
+
+func destroy_prefab(name: String) -> void:
+	_ctx.prefab_loader.destroy_prefab(name)
+
+
 # --- misc --------------------------------------------------------------------
 
 func wait(seconds: float):

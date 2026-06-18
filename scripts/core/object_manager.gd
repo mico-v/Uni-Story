@@ -27,6 +27,11 @@ func bind_object_runtime(name: String, value: Variant) -> void:
 	objects[name] = value
 
 
+## Remove a runtime-bound object (used when prefabs are destroyed).
+func unbind_object_runtime(name: String) -> void:
+	objects.erase(name)
+
+
 func set_constant(name: String, value: Variant) -> void:
 	if _frozen_constants:
 		push_warning("ObjectManager: write to constants is frozen, reject set_constant('%s')" % name)

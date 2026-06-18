@@ -29,7 +29,7 @@
 - 图构建与校验：`scripts/core/script_loader.gd`, `scripts/core/flow_chart_graph.gd`, `scripts/core/flow_chart_node.gd`
 - 剧情推进与分支决策：`scripts/core/game_state.gd`
 - 已读追踪与存档：`scripts/core/read_tracker.gd`, `scripts/core/save_system.gd`
-- 运行时系统：`scripts/runtime/*`（含 `transition_system.gd` fade 修复）
+- 运行时系统：`scripts/runtime/*`（含 `transition_system.gd` fade 修复、`prefab_loader.gd` 新增）
 - 视图控制器：`scripts/ui/title_view_controller.gd`, `scripts/ui/game_view_controller.gd`（含 `on_game_ended()`/`reset_world()` overlay 重置）, `scripts/ui/settings_view_controller.gd`, `scripts/ui/cg_gallery_controller.gd`, `scripts/ui/music_gallery_controller.gd`, `scripts/ui/chapter_select_view_controller.gd`, `scripts/ui/choice_list_controller.gd`, `scripts/ui/save_load_controller.gd`
 - 本地化：`scripts/core/i18n.gd`, `resources/localized_resources/localized_strings/*.json`
 - VFX/Shader：`scripts/runtime/vfx_system.gd`, `resources/shaders/*.gdshader`
@@ -47,10 +47,11 @@
 - 2026-06-18：独立存读档界面完成。新增 `SaveLoadController`（89 行）+ `SaveLoadView.tscn`，GALGAME 侧栏风格，主菜单"读取存档"直接进入。NovaController 新增 `_on_title_load()` / `_on_save_load_completed()` 桥接。`run_scene(res://scene/game.tscn)` + `get_errors(include_warnings=true)` 结果 `error_count=0`。
 - 2026-06-18：测试剧本整合 + 演示增强。5 个独立测试脚本合并为 `test_all.txt`（6 项分支菜单），`plan_demo.txt` 增强为 5 章结构含说话人标签和 fade 转场。`run_scene` + `get_errors` 结果 `error_count=0`。
 - 2026-06-18：`is_end()` 黑屏修复。`TransitionSystem.play("fade")` 改为完整淡出+淡入（Tween 链式 0→1→0），`flash` 改为顺序 Tween 避免并发冲突。`GameViewController.on_game_ended()` 和 `reset_world()` 新增 overlay 重置（visible=false, color.a=0）。`run_scene(res://scene/game.tscn)` + `get_errors` 结果 `error_count=0`。
+- 2026-06-18：PrefabLoader 子系统完成。新增 `prefab_loader.gd`（幂等加载 .tscn 预制体，注册到 ObjectManager，世界/UI 双挂载，snapshot/restore 支持）。修改 `object_manager.gd`（加 `unbind_object_runtime`）、`NovaController.gd`（注册子系统）、`base_block.gd`（4 个 API：`load_prefab/show_prefab/hide_prefab/destroy_prefab`）、`game_state.gd`（snapshot/restore 集成）、`game_view_controller.gd`（reset_world 清理 + get_hud getter）。新建 `resources/prefabs/test_particles.tscn` 测试预制体。`test_all.txt` 新增 Section 6 Prefab 测试章节。`run_scene(res://scene/game.tscn)` + `get_errors` 结果 `error_count=0`。
 
 ## 5. 暂时收尾状态
-- 当前可停点：ViewManager + GALGAME 菜单 + 设置/鉴赏/独立存读档界面 + NovaController 重构 + is_end() 黑屏修复全部完成，运行无 Godot 错误。
-- 下一步优先级：PrefabLoader、脚本热加载、快捷键系统。
+- 当前可停点：ViewManager + GALGAME 菜单 + 设置/鉴赏/独立存读档界面 + NovaController 重构 + is_end() 黑屏修复 + PrefabLoader 子系统全部完成，运行无 Godot 错误。
+- 下一步优先级：脚本热加载、快捷键系统、TimelineController / 视频。
 - 提交策略：待 git 索引可写后，按范围拆分提交。
 
 ## 6. 复用规则

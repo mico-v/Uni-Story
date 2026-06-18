@@ -40,6 +40,8 @@ func snapshot() -> Dictionary:
 		system_state["animation"] = _ctx.animation.snapshot()
 	if _ctx.audio and _ctx.audio.has_method("snapshot"):
 		system_state["audio"] = _ctx.audio.snapshot()
+	if _ctx.prefab_loader and _ctx.prefab_loader.has_method("snapshot"):
+		system_state["prefab_loader"] = _ctx.prefab_loader.snapshot()
 	return {
 		"node": String(current_node.name) if current_node else "",
 		"index": current_index,
@@ -69,6 +71,10 @@ func restore(data: Dictionary) -> bool:
 	var target: int = int(data.get("index", 0))
 	target = clampi(target, 0, current_node.entries.size() - 1)
 
+	# Clean up runtime objects before replay (prefabs will be re-created by lazy blocks).
+	if _ctx.prefab_loader:
+		_ctx.prefab_loader.destroy_all()
+
 	# Replay lazy blocks up to and including target entry to rebuild state.
 	for i in range(0, target + 1):
 		current_index = i
@@ -84,6 +90,8 @@ func restore(data: Dictionary) -> bool:
 			_ctx.animation.restore(systems.get("animation", {}))
 		if _ctx.audio and _ctx.audio.has_method("restore"):
 			_ctx.audio.restore(systems.get("audio", {}))
+		if _ctx.prefab_loader and _ctx.prefab_loader.has_method("restore"):
+			_ctx.prefab_loader.restore(systems.get("prefab_loader", {}))
 
 	var e = current_node.entries[target]
 	dialogue_changed.emit(e.speaker, e.text)

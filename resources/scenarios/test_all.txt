@@ -12,7 +12,8 @@ set_box()
     { dest="sec_char", text="3. 立绘合成" },
     { dest="sec_var", text="4. 变量系统" },
     { dest="sec_vfx", text="5. VFX 效果" },
-    { dest="sec_full", text="6. 全部顺序执行" },
+    { dest="sec_prefab", text="6. Prefab 加载" },
+    { dest="sec_full", text="7. 全部顺序执行" },
 ]) |>
 
 @<| label("sec_runtime") |>
@@ -29,6 +30,9 @@ set_box()
 
 @<| label("sec_vfx") |>
 @<| jump_to("vfx_start") |>
+
+@<| label("sec_prefab") |>
+@<| jump_to("prefab_start") |>
 
 @<| label("sec_full") |>
 
@@ -302,6 +306,72 @@ trans("wipe", 0.6)
 show("bg", "demo_media/rainy_bg")
 |>
 重新显示背景
+
+<|
+hide("bg")
+|>
+清场
+
+# ══════════════════════════════════════════════════════════════
+# Section 6: Prefab 加载
+# ══════════════════════════════════════════════════════════════
+
+@<| label("prefab_start") |>
+<|
+set_box()
+|>
+━━━ 6/6  Prefab 加载 ━━━
+
+<|
+show("bg", "cg/rain_back")
+|>
+显示背景图
+
+<|
+load_prefab("rain", "prefabs/test_particles", [640, 200])
+|>
+加载粒子预制体到世界坐标 (640, 200)
+
+<|
+move("rain", [400, 300, 1.5])
+|>
+通过名字移动预制体（验证 ObjectManager 注册）
+
+<|
+tint("rain", [1.0, 0.5, 0.5, 1.0])
+|>
+给预制体染红色
+
+<|
+o.anim.PropertyVector3(o.rain, "position", Vector3(800, 400, 0), 1.0, false)
+|>
+通过 o.anim 动画链驱动预制体位置
+
+<|
+o.anim.PropertyVector3(o.rain, "rotation_degrees", Vector3(0, 0, 180), 0.8, false)
+|>
+动画链旋转预制体
+
+<|
+move("rain", [640, 200, 1.0, 0, 0])
+tint("rain", [1, 1, 1, 1])
+|>
+重置位置和颜色
+
+<|
+hide_prefab("rain")
+|>
+隐藏预制体（节点仍在场景中）
+
+<|
+show_prefab("rain")
+|>
+重新显示预制体
+
+<|
+destroy_prefab("rain")
+|>
+彻底销毁预制体
 
 <|
 hide("bg")

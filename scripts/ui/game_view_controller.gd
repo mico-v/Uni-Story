@@ -238,6 +238,9 @@ func load_game() -> void:
 
 
 func reset_world() -> void:
+	# Clean up runtime-loaded prefabs.
+	if _ctx and _ctx.prefab_loader:
+		_ctx.prefab_loader.destroy_all()
 	if _bg:
 		_bg.visible = false
 	if _fg:
@@ -280,6 +283,10 @@ func reset_world() -> void:
 
 func get_world() -> Node2D:
 	return _world
+
+
+func get_hud() -> Control:
+	return _hud
 
 
 func get_bg() -> Sprite2D:

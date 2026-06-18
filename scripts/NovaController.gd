@@ -45,6 +45,7 @@ var transition: TransitionSystem
 var dialogue_box: DialogueBoxSystem
 var vfx: VFXSystem
 var read_tracker: ReadTracker
+var prefab_loader: PrefabLoader
 
 # ── View management ─────────────────────────────────────────────────
 var view_manager: ViewManager
@@ -110,6 +111,7 @@ func _init_subsystems() -> void:
 	dialogue_box = DialogueBoxSystem.new(self)
 	vfx = VFXSystem.new(self)
 	read_tracker = ReadTracker.new(self)
+	prefab_loader = PrefabLoader.new(self)
 
 
 # ── Locale ───────────────────────────────────────────────────────────
