@@ -41,6 +41,11 @@ custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 text = "开始游戏"
 
+[node name="BtnContinue" type="Button" parent="HBox/MenuSidebar/VBox" unique_id=743002106]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "继续游戏"
+
 [node name="BtnLoad" type="Button" parent="HBox/MenuSidebar/VBox" unique_id=1852129721]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2

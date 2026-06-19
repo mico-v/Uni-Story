@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://bc4sqnqyin56v"]
 
 [ext_resource type="PackedScene" path="res://scene/view/cg_gallery_view.tscn" id="CgGalleryRes"]
-[ext_resource type="PackedScene" uid="uid://c0mp0yhxinipg" path="res://scene/view/chapter_select_view.tscn" id="ChapterViewRes"]
 [ext_resource type="Script" uid="uid://b4fukuskbf86u" path="res://scripts/ui/game_view_controller.gd" id="GameVCScript"]
 [ext_resource type="PackedScene" uid="uid://dyuv51hoh1kf6" path="res://scene/view/game_view.tscn" id="GameViewRes"]
 [ext_resource type="PackedScene" path="res://scene/view/music_gallery_view.tscn" id="MusicGalleryRes"]
@@ -14,9 +13,6 @@
 script = ExtResource("NovaScript")
 
 [node name="TitleView" parent="." unique_id=793599501 instance=ExtResource("TitleViewRes")]
-
-[node name="ChapterSelectView" parent="." unique_id=1328674703 instance=ExtResource("ChapterViewRes")]
-visible = false
 
 [node name="GameView" parent="." unique_id=304719952 instance=ExtResource("GameViewRes")]
 visible = false

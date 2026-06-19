@@ -5,11 +5,7 @@ extends Node
 ## view controllers.  All game UI logic lives in GameViewController.
 
 const SCENARIO_FILES := [
-	"res://resources/scenarios/plan_demo.txt",
-	"res://resources/scenarios/ch1.txt",
-	"res://resources/scenarios/ch2.txt",
-	"res://resources/scenarios/demo_full.txt",
-	"res://resources/scenarios/test_all.txt",
+	"res://resources/scenarios/main.txt",
 ]
 
 const REVIEW_REGRESSION_FILES := [
@@ -57,7 +53,6 @@ var view_manager: ViewManager
 
 # ── View controllers (private) ───────────────────────────────────────
 var _title_vc: TitleViewController
-var _chapter_vc: ChapterSelectViewController
 var _game_vc: GameViewController
 var _settings_vc: SettingsViewController
 var _cg_vc: CgGalleryController
@@ -92,8 +87,9 @@ func _ready() -> void:
 		return
 
 	game_state.setup(script_loader.graph)
-	_refresh_chapters()
 	view_manager.switch_to("title")
+	if _title_vc and save_system:
+		_title_vc.set_continue_enabled(save_system.has_auto_save())
 
 	# Start file watching for hot reload (debug builds only).
 	hot_reload.start(scenario_files)
@@ -153,9 +149,6 @@ func _bind_view_controllers() -> void:
 	var title_node := get_node_or_null("TitleView")
 	if title_node is TitleViewController:
 		_title_vc = title_node as TitleViewController
-	var chapter_node := get_node_or_null("ChapterSelectView")
-	if chapter_node is ChapterSelectViewController:
-		_chapter_vc = chapter_node as ChapterSelectViewController
 	var game_node := get_node_or_null("GameView")
 	if game_node is GameViewController:
 		_game_vc = game_node as GameViewController
@@ -186,8 +179,6 @@ func _init_view_manager() -> void:
 	var T := ViewManager.Transition
 	if _title_vc:
 		view_manager.register("title", _title_vc, T.FADE)
-	if _chapter_vc:
-		view_manager.register("chapter_select", _chapter_vc, T.SLIDE_LEFT)
 	if _game_vc:
 		view_manager.register("game", _game_vc, T.FADE)
 	if _settings_vc:
@@ -239,6 +230,7 @@ func _connect_model_signals() -> void:
 	game_state.dialogue_changed.connect(_game_vc.on_dialogue_changed)
 	game_state.branch_requested.connect(_game_vc.on_branch_requested)
 	game_state.game_ended.connect(_game_vc.on_game_ended)
+	game_state.dialogue_advanced.connect(_auto_save)
 	avatar.avatar_changed.connect(_game_vc.on_avatar_changed)
 	# GameVC → NovaController routing.
 	_game_vc.title_requested.connect(_on_game_title_requested)
@@ -246,17 +238,12 @@ func _connect_model_signals() -> void:
 	# TitleVC → navigation.
 	if _title_vc:
 		_title_vc.new_game_requested.connect(_on_title_new_game)
+		_title_vc.continue_requested.connect(_on_title_continue)
 		_title_vc.load_requested.connect(_on_title_load)
 		_title_vc.settings_requested.connect(func() -> void: view_manager.switch_to("settings"))
 		_title_vc.gallery_requested.connect(func() -> void: view_manager.switch_to("cg_gallery"))
 		_title_vc.music_requested.connect(func() -> void: view_manager.switch_to("music_gallery"))
 		_title_vc.quit_requested.connect(_on_quit)
-	# ChapterVC → navigation.
-	if _chapter_vc:
-		if not _chapter_vc.chapter_selected.is_connected(_on_chapter_selected):
-			_chapter_vc.chapter_selected.connect(_on_chapter_selected)
-		if not _chapter_vc.back_requested.is_connected(_on_chapter_back):
-			_chapter_vc.back_requested.connect(_on_chapter_back)
 	# SettingsVC → back.
 	if _settings_vc:
 		_settings_vc.back_requested.connect(func() -> void: view_manager.switch_to("title"))
@@ -274,9 +261,6 @@ func _connect_model_signals() -> void:
 func _apply_i18n() -> void:
 	if _title_vc:
 		_title_vc.apply_i18n(i18n)
-	if _chapter_vc:
-		_chapter_vc.set_title(_t("title.first.selectchapter", "章节选择"))
-		_chapter_vc.set_back_text(_t("title.selectchapter.return", "返回"))
 	if _game_vc:
 		_game_vc.apply_i18n()
 	if _settings_vc:
@@ -292,8 +276,30 @@ func _apply_i18n() -> void:
 # ── Navigation handlers ─────────────────────────────────────────────
 
 func _on_title_new_game() -> void:
-	_refresh_chapters()
-	view_manager.switch_to("chapter_select")
+	var first_node: StringName = &""
+	if script_loader.graph.start_nodes.size() > 0:
+		first_node = script_loader.graph.start_nodes[0]
+	elif script_loader.graph.unlocked_start_nodes.size() > 0:
+		first_node = script_loader.graph.unlocked_start_nodes[0]
+	if first_node == &"":
+		push_error("NovaController: no start node found")
+		return
+	view_manager.switch_to("game")
+	if _game_vc:
+		_game_vc.enter_game(first_node)
+
+
+func _on_title_continue() -> void:
+	if save_system and save_system.has_auto_save():
+		if save_system.load_auto_save():
+			view_manager.switch_to("game")
+			if _game_vc:
+				_game_vc.load_game()
+
+
+func _auto_save() -> void:
+	if save_system:
+		save_system.auto_save()
 
 
 func _on_title_load() -> void:
@@ -302,21 +308,12 @@ func _on_title_load() -> void:
 	view_manager.switch_to("save_load")
 
 
-func _on_chapter_selected(node_name: StringName) -> void:
-	view_manager.switch_to("game")
-	if _game_vc:
-		_game_vc.enter_game(node_name)
-
-
-func _on_chapter_back() -> void:
-	view_manager.switch_to("title")
-
-
 func _on_game_title_requested() -> void:
 	if _game_vc:
 		_game_vc.reset_world()
 	view_manager.switch_to("title")
-	_refresh_chapters()
+	if _title_vc and save_system:
+		_title_vc.set_continue_enabled(save_system.has_auto_save())
 
 
 func _on_save_load_completed() -> void:
@@ -343,7 +340,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		if shortcut_manager.is_action_pressed("ui_leave"):
 			var view := view_manager.current()
 			match view:
-				"settings", "cg_gallery", "music_gallery", "save_load", "chapter_select":
+				"settings", "cg_gallery", "music_gallery", "save_load":
 					view_manager.switch_to("title")
 				"title":
 					_on_quit()
@@ -361,27 +358,6 @@ func _unhandled_input(event: InputEvent) -> void:
 				hot_reload.reload()
 			get_viewport().set_input_as_handled()
 			return
-		if shortcut_manager.is_action_pressed("debug_unlock"):
-			if script_loader and script_loader.graph:
-				script_loader.graph.unlocked_start_nodes = script_loader.graph.start_nodes.duplicate()
-				_refresh_chapters()
-			get_viewport().set_input_as_handled()
-			return
-
-
-# ── Chapter refresh ─────────────────────────────────────────────────
-
-func _refresh_chapters() -> void:
-	if _chapter_vc == null:
-		return
-	_chapter_vc.clear()
-	var entries: Array = []
-	for node_name in script_loader.graph.unlocked_start_nodes:
-		var node = script_loader.graph.get_node_named(node_name)
-		if node == null:
-			continue
-		entries.append({"name": node_name, "text": str(node.display_name)})
-	_chapter_vc.set_chapters(entries, _t("ui.chapter.empty", "（无可用章节）"))
 
 
 # ── Settings handler ────────────────────────────────────────────────

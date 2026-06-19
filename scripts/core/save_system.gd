@@ -7,6 +7,7 @@ class_name SaveSystem extends RefCounted
 
 const SAVE_DIR := "user://saves/"
 const SLOT_COUNT := 6
+const AUTO_SAVE_SLOT := 99
 
 var _ctx: Node
 
@@ -80,3 +81,16 @@ func slot_label(slot: int) -> String:
 	var chapter := str(parsed.get("chapter", "?"))
 	var idx := int(parsed.get("state", {}).get("index", 0))
 	return "%s @%d" % [chapter, idx]
+
+
+## Auto-save helpers — use a dedicated slot (99) separate from manual (0-5) and quick (98).
+func auto_save() -> bool:
+	return save(AUTO_SAVE_SLOT)
+
+
+func has_auto_save() -> bool:
+	return has_save(AUTO_SAVE_SLOT)
+
+
+func load_auto_save() -> bool:
+	return load_slot(AUTO_SAVE_SLOT)

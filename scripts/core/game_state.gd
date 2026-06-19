@@ -4,6 +4,7 @@ class_name GameState extends RefCounted
 ## calls always produces the same state (replayable for save/load/skip/jump).
 
 signal dialogue_changed(speaker: String, text: String)
+signal dialogue_advanced()                 # fired after each dialogue display (for auto-save)
 signal branch_requested(options: Array)        # Array[{dest, text, mode, cond, image, enabled}]
 signal node_changed(node_name: StringName)
 signal game_ended()
@@ -103,6 +104,7 @@ func restore(data: Dictionary) -> bool:
 
 	var e = current_node.entries[target]
 	dialogue_changed.emit(e.speaker, e.text)
+	dialogue_advanced.emit()
 	return true
 
 
@@ -162,6 +164,7 @@ func _continue_after_wait() -> void:
 		if _ctx.read_tracker:
 			_ctx.read_tracker.mark_read(current_node.name, current_index)
 		dialogue_changed.emit(entry.speaker, entry.text)
+		dialogue_advanced.emit()
 		return
 
 
