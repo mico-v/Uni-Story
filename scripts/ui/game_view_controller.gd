@@ -334,6 +334,7 @@ func reset_world() -> void:
 	if _fg:
 		_fg.visible = false
 	if _world:
+		_world.visible = true
 		_world.position = Vector2.ZERO
 		_world.scale = Vector2.ONE
 		_world.rotation_degrees = 0.0

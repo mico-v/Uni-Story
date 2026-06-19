@@ -12,7 +12,6 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="World" type="Node2D" parent="." unique_id=2018656476]
-visible = false
 
 [node name="Background" type="Sprite2D" parent="World" unique_id=342289632]
 visible = false
