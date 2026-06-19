@@ -95,7 +95,7 @@ func _resolve_path(path: String) -> String:
 	return root + path
 
 
-func _get_video_parent() -> Control:
+func _get_video_parent() -> Node:
 	# Attach to the GameView if available, otherwise to the root viewport.
 	var game_view = _ctx.get_node_or_null("GameView")
 	if game_view is Control:
