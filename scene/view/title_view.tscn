@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3 uid="uid://cqdghibhuyigy"]
 
 [ext_resource type="Script" uid="uid://dv4ieuejwoh2m" path="res://scripts/ui/title_view_controller.gd" id="1_vc"]
-[ext_resource type="Texture2D" path="res://resources/cg/home_bg.jpeg" id="2_bg"]
+[ext_resource type="Texture2D" path="res://resources/cg/home_bg.png" id="2_bg"]
 
 [node name="TitleView" type="Control" unique_id=1798715118]
 layout_mode = 3

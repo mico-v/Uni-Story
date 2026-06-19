@@ -5,6 +5,9 @@ is_start()
 <|
 set_box()
 |>
+<|
+play_bgm("music/bgm1.mp3")
+|>
 游戏开始...
 
 这里是主线剧情的起点。

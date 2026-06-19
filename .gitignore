@@ -5,6 +5,8 @@
 .import/
 export.cfg
 export_presets.cfg
+*.import
+*.bak
 
 # Imported translations (automatically generated from CSV files)
 *.translation
@@ -30,3 +32,5 @@ addons/godot_mcp/cache/
 release/
 
 output/
+
+android/
