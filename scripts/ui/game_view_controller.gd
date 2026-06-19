@@ -130,6 +130,12 @@ func _bind_nodes() -> void:
 		_overlay.visible = false
 	if _dbox:
 		_dbox.gui_input.connect(_on_dbox_click)
+	# Let clicks on dbox children pass through to the Panel (which has gui_input signal).
+	# Without this, children's default MOUSE_FILTER_STOP swallows events and
+	# _on_dbox_click never fires — the root cause of "click sometimes doesn't work".
+	for child in [_speaker_label, _story_label, _continue_icon, _avatar_rect]:
+		if child is Control:
+			child.mouse_filter = MOUSE_FILTER_IGNORE
 	if _restart_btn:
 		_restart_btn.visible = false
 	if _save_btn:
