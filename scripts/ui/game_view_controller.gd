@@ -28,7 +28,6 @@ var _story_label: RichTextLabel
 var _choice_list: VBoxContainer
 var _choice_list_controller: ChoiceListController
 var _controls: HBoxContainer
-var _next_btn: Button
 var _restart_btn: Button
 var _quit_btn: Button
 var _save_btn: Button
@@ -98,7 +97,6 @@ func _bind_nodes() -> void:
 		if _choice_list is ChoiceListController:
 			_choice_list_controller = _choice_list as ChoiceListController
 		_controls = _hud.get_node_or_null("Controls") as HBoxContainer
-		_next_btn = _hud.get_node_or_null("Controls/Next") as Button
 		_restart_btn = _hud.get_node_or_null("Controls/Restart") as Button
 		_save_btn = _hud.get_node_or_null("Controls/Save") as Button
 		_load_btn = _hud.get_node_or_null("Controls/Load") as Button
@@ -129,8 +127,8 @@ func _bind_nodes() -> void:
 		_dbox.visible = false
 	if _overlay:
 		_overlay.visible = false
-	if _next_btn:
-		_next_btn.visible = false
+	if _dbox:
+		_dbox.gui_input.connect(_on_dbox_click)
 	if _restart_btn:
 		_restart_btn.visible = false
 	if _save_btn:
@@ -171,8 +169,6 @@ func _apply_ui_defaults() -> void:
 
 
 func _connect_signals() -> void:
-	if _next_btn:
-		_next_btn.pressed.connect(_on_next)
 	if _restart_btn:
 		_restart_btn.pressed.connect(func() -> void: title_requested.emit())
 	if _save_btn:
@@ -287,8 +283,6 @@ func enter_game(node_name: StringName) -> void:
 		_ctx.dialogue_box.set_box("bottom")
 	if _dbox:
 		_dbox.visible = true
-	if _next_btn:
-		_next_btn.visible = true
 	if _restart_btn:
 		_restart_btn.visible = false
 	if _save_btn:
@@ -308,8 +302,6 @@ func enter_game(node_name: StringName) -> void:
 func load_game() -> void:
 	if _dbox:
 		_dbox.visible = true
-	if _next_btn:
-		_next_btn.visible = true
 	if _restart_btn:
 		_restart_btn.visible = false
 	if _save_btn:
@@ -345,8 +337,6 @@ func reset_world() -> void:
 		_save_panel.visible = false
 	if _backlog_panel:
 		_backlog_panel.visible = false
-	if _next_btn:
-		_next_btn.visible = false
 	if _restart_btn:
 		_restart_btn.visible = false
 	if _save_btn:
@@ -404,8 +394,6 @@ func apply_i18n() -> void:
 	if _ctx == null or _ctx.i18n == null:
 		return
 	var i: I18n = _ctx.i18n
-	if _next_btn:
-		_next_btn.text = i.t("ui.button.next", "下一句")
 	if _restart_btn:
 		_restart_btn.text = i.t("ui.button.restart", "重开")
 	if _save_btn:
@@ -433,8 +421,6 @@ func on_dialogue_changed(speaker: String, text: String) -> void:
 		_speaker_label.text = speaker
 	if _dbox:
 		_dbox.visible = true
-	if _next_btn:
-		_next_btn.visible = true
 	if _choice_list:
 		_choice_list.visible = false
 	if _ctx.backlog:
@@ -454,8 +440,6 @@ func on_branch_requested(options: Array) -> void:
 	_deactivate_modes()
 	_finish_typewriter()
 	_continue_icon_visible(false)
-	if _next_btn:
-		_next_btn.visible = false
 	if _choice_list_controller:
 		if _choice_list:
 			_choice_list.visible = true
@@ -485,8 +469,6 @@ func on_game_ended() -> void:
 		_overlay.color = col
 	if _status_label:
 		_status_label.text = _t("ui.status.ended", "状态：章节结束")
-	if _next_btn:
-		_next_btn.visible = false
 	if _restart_btn:
 		_restart_btn.visible = true
 
@@ -550,6 +532,14 @@ func _finish_typewriter() -> void:
 
 # ── Next / Choice ────────────────────────────────────────────────────
 
+func _on_dbox_click(event: InputEvent) -> void:
+	if event is InputEventMouseButton:
+		var mb := event as InputEventMouseButton
+		if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT and not mb.is_echo():
+			_on_next()
+			accept_event()
+
+
 func _on_next() -> void:
 	if _is_typing:
 		_finish_typewriter()
@@ -571,8 +561,6 @@ func _on_choice(dest: StringName) -> void:
 	else:
 		if _choice_list:
 			_clear_children(_choice_list)
-	if _next_btn:
-		_next_btn.visible = true
 	if _ctx.game_state:
 		_ctx.game_state.choose_branch(dest)
 
@@ -729,9 +717,12 @@ func _gui_input(event: InputEvent) -> void:
 			else:
 				_show_mouse_menu(mb.position)
 			accept_event()
-		elif mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT:
+		elif mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT and not mb.is_echo():
 			if _mouse_menu and _mouse_menu.visible:
 				_hide_mouse_menu()
+			elif _dbox == null or not _dbox.visible:
+				_on_next()
+				accept_event()
 
 
 func _show_mouse_menu(at_pos: Vector2) -> void:

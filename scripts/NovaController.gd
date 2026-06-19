@@ -161,6 +161,8 @@ func _bind_view_controllers() -> void:
 	var settings_node := get_node_or_null("SettingsView")
 	if settings_node is SettingsViewController:
 		_settings_vc = settings_node as SettingsViewController
+		if _settings_vc:
+			_settings_vc.setup(self)
 	var cg_node := get_node_or_null("CgGalleryView")
 	if cg_node is CgGalleryController:
 		_cg_vc = cg_node as CgGalleryController

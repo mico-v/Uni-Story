@@ -217,3 +217,10 @@ layout_mode = 2
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 text = "重置默认设置"
+
+[node name="Sep5" type="HSeparator" parent="HBox/Content/Scroll/SettingsList"]
+layout_mode = 2
+
+[node name="SectionShortcut" type="Label" parent="HBox/Content/Scroll/SettingsList"]
+layout_mode = 2
+text = "快捷键"

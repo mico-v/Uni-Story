@@ -37,6 +37,28 @@ signal setting_changed(key: String, value: Variant)
 @onready var section_volume: Label = $HBox/Content/Scroll/SettingsList/SectionVolume
 @onready var section_display: Label = $HBox/Content/Scroll/SettingsList/SectionDisplay
 @onready var section_lang: Label = $HBox/Content/Scroll/SettingsList/SectionLang
+@onready var section_shortcut: Label = $HBox/Content/Scroll/SettingsList/SectionShortcut
+@onready var settings_list: VBoxContainer = $HBox/Content/Scroll/SettingsList
+
+var _ctx: Node  # NovaController reference
+var _key_buttons: Dictionary = {}  # action_name -> Button
+var _recorder_overlay: ColorRect = null
+
+# Action-to-i18n key mapping (excludes debug actions).
+const ACTION_I18N := {
+	"ui_step_forward": "config.key.StepForward",
+	"ui_auto": "config.key.Auto",
+	"ui_skip": "config.key.FastForward",
+	"ui_save": "config.key.Save",
+	"ui_load": "config.key.Load",
+	"ui_quick_save": "config.key.QuickSave",
+	"ui_quick_load": "config.key.QuickLoad",
+	"ui_backlog": "config.key.ShowLog",
+	"ui_toggle_dbox": "config.key.ToggleDialogue",
+	"ui_fullscreen": "config.key.ToggleFullScreen",
+	"ui_settings": "config.key.ShowConfig",
+	"ui_leave": "config.key.LeaveView",
+}
 
 
 func _ready() -> void:
@@ -62,7 +84,7 @@ func _ready() -> void:
 	if title_label:
 		title_label.add_theme_font_size_override("font_size", 32)
 		title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	for section in [section_text, section_volume, section_display, section_lang]:
+	for section in [section_text, section_volume, section_display, section_lang, section_shortcut]:
 		if section:
 			section.add_theme_font_size_override("font_size", 24)
 
@@ -134,6 +156,14 @@ func apply_i18n(i18n: I18n) -> void:
 		lbl_language.text = "语言"
 	if btn_reset:
 		btn_reset.text = i18n.t("config.resetdefault", "重置默认设置")
+	if section_shortcut:
+		section_shortcut.text = i18n.t("config.title.shortcuts", "快捷键")
+	# Refresh shortcut action labels and key buttons.
+	if _ctx and _ctx.shortcut_manager:
+		for action in ACTION_I18N:
+			if _key_buttons.has(action):
+				var btn: Button = _key_buttons[action]
+				btn.text = _ctx.shortcut_manager.get_key_label(action)
 
 
 func _emit_all() -> void:
@@ -159,3 +189,99 @@ func snapshot() -> Dictionary:
 		"font_size": slider_font_size.value,
 		"language": "zh" if option_language.selected == 0 else "en",
 	}
+
+
+# ── Shortcut settings ─────────────────────────────────────────────────
+
+func setup(ctx: Node) -> void:
+	_ctx = ctx
+	_build_shortcut_section()
+
+
+func _build_shortcut_section() -> void:
+	if _ctx == null or _ctx.shortcut_manager == null:
+		return
+	var sm: ShortcutManager = _ctx.shortcut_manager
+	_key_buttons.clear()
+	for action in ACTION_I18N:
+		var row := HBoxContainer.new()
+		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var lbl := Label.new()
+		lbl.custom_minimum_size = Vector2(180, 0)
+		lbl.text = _t(ACTION_I18N[action], action)
+		row.add_child(lbl)
+		var btn := Button.new()
+		btn.custom_minimum_size = Vector2(140, 32)
+		btn.text = sm.get_key_label(action)
+		btn.pressed.connect(_open_key_recorder.bind(action, btn))
+		row.add_child(btn)
+		_key_buttons[action] = btn
+		if settings_list:
+			settings_list.add_child(row)
+	# Reset all shortcuts button.
+	var reset_row := HBoxContainer.new()
+	reset_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var spacer := Control.new()
+	spacer.custom_minimum_size = Vector2(180, 0)
+	reset_row.add_child(spacer)
+	var reset_btn := Button.new()
+	reset_btn.custom_minimum_size = Vector2(140, 32)
+	reset_btn.text = _t("config.shortcut.reset", "重置")
+	reset_btn.pressed.connect(func() -> void:
+		sm.reset_all()
+		_refresh_shortcut_labels()
+	)
+	reset_row.add_child(reset_btn)
+	if settings_list:
+		settings_list.add_child(reset_row)
+
+
+func _refresh_shortcut_labels() -> void:
+	if _ctx == null or _ctx.shortcut_manager == null:
+		return
+	var sm: ShortcutManager = _ctx.shortcut_manager
+	for action in _key_buttons:
+		var btn: Button = _key_buttons[action]
+		btn.text = sm.get_key_label(action)
+
+
+func _open_key_recorder(action: String, btn: Button) -> void:
+	if _recorder_overlay:
+		_close_key_recorder()
+	_recorder_overlay = ColorRect.new()
+	_recorder_overlay.color = Color(0, 0, 0, 0.5)
+	_recorder_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	_recorder_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	var hint := Label.new()
+	hint.text = _t("config.recorderpopup", "按下新的快捷键")
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	hint.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	hint.add_theme_font_size_override("font_size", 28)
+	hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_recorder_overlay.add_child(hint)
+	_recorder_overlay.gui_input.connect(func(event: InputEvent) -> void:
+		if event is InputEventKey and event.pressed and not event.is_echo():
+			var key_event := event as InputEventKey
+			if key_event.keycode == KEY_ESCAPE:
+				_close_key_recorder()
+				return
+			if _ctx and _ctx.shortcut_manager:
+				_ctx.shortcut_manager.remap(action, key_event.keycode)
+				btn.text = _ctx.shortcut_manager.get_key_label(action)
+			_close_key_recorder()
+	)
+	if _ctx:
+		_ctx.get_tree().root.add_child(_recorder_overlay)
+
+
+func _close_key_recorder() -> void:
+	if _recorder_overlay and _recorder_overlay.is_inside_tree():
+		_recorder_overlay.queue_free()
+	_recorder_overlay = null
+
+
+func _t(key: String, fallback: String = "") -> String:
+	if _ctx == null or _ctx.i18n == null:
+		return fallback
+	return _ctx.i18n.t(key, fallback)

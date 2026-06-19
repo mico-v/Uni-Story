@@ -133,13 +133,6 @@ size_flags_vertical = 8
 toggle_mode = true
 text = "快进"
 
-[node name="Next" type="Button" parent="Hud/Controls" unique_id=1740931806]
-custom_minimum_size = Vector2(100, 44)
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 8
-text = "下一句"
-
 [node name="TransitionOverlay" type="ColorRect" parent="Hud" unique_id=2058775679]
 visible = false
 layout_mode = 0

@@ -153,7 +153,7 @@ func _ensure_confirm() -> void:
 	hbox.add_child(_confirm_cancel)
 
 
-func _get_ui_parent() -> Control:
+func _get_ui_parent() -> Node:
 	var game_view = _ctx.get_node_or_null("GameView")
 	if game_view is Control:
 		var hud = game_view.get_node_or_null("Hud")
