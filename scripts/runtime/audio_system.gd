@@ -108,6 +108,13 @@ func restore(state: Dictionary) -> void:
 					_voice_player.play()
 
 
+func stop_all() -> void:
+	_bgm_player.stop()
+	_voice_player.stop()
+	for p in _se_players:
+		p.stop()
+
+
 func stop_bgm(fade: float = 0.0):
 	if not _bgm_player.playing:
 		return

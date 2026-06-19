@@ -189,7 +189,7 @@ func _connect_signals() -> void:
 	if _skip_btn:
 		_skip_btn.pressed.connect(_on_skip_toggled)
 	if _quit_btn:
-		_quit_btn.pressed.connect(_request_quit)
+		_quit_btn.pressed.connect(_request_title)
 	if _save_close_btn:
 		_save_close_btn.pressed.connect(_close_save_panel)
 	if _backlog_close_btn:
@@ -328,6 +328,9 @@ func reset_world() -> void:
 	# Stop any playing video.
 	if _ctx and _ctx.video_system:
 		_ctx.video_system.stop()
+	# Stop all audio (BGM, SE, voice).
+	if _ctx and _ctx.audio:
+		_ctx.audio.stop_all()
 	_hide_mouse_menu()
 	if _bg:
 		_bg.visible = false
@@ -417,7 +420,7 @@ func apply_i18n() -> void:
 	if _skip_btn:
 		_skip_btn.text = i.t("ingame.fastforward.button", "快进")
 	if _quit_btn:
-		_quit_btn.text = i.t("config.quitgame", "退出")
+		_quit_btn.text = i.t("ingame.title.button", "标题")
 	if _save_close_btn:
 		_save_close_btn.text = i.t("help.close", "关闭")
 	if _backlog_close_btn:
@@ -748,7 +751,6 @@ func _show_mouse_menu(at_pos: Vector2) -> void:
 		[_t("ingame.auto.button", "自动"), _on_mouse_auto],
 		[_t("ingame.fastforward.button", "快进"), _on_mouse_skip],
 		[_t("ingame.title.button", "标题"), _on_mouse_title],
-		[_t("config.quitgame", "退出"), _on_mouse_quit],
 	]
 	for item in items:
 		var b := _make_button(str(item[0]))
@@ -819,21 +821,6 @@ func _on_mouse_title() -> void:
 		, CONNECT_ONE_SHOT)
 	else:
 		title_requested.emit()
-
-
-func _on_mouse_quit() -> void:
-	_hide_mouse_menu()
-	if _ctx and _ctx.dialog_system:
-		_deactivate_modes()
-		_ctx.dialog_system.show_confirm(
-			_t("config.quitgame", "退出"),
-			_t("ingame.quit.confirm", "要退出游戏吗？")
-		).connect(func(_confirmed: bool) -> void:
-			if _confirmed:
-				_do_quit()
-		, CONNECT_ONE_SHOT)
-	else:
-		_do_quit()
 
 
 # ── Helpers ──────────────────────────────────────────────────────────
@@ -918,25 +905,18 @@ func _on_hot_reload() -> void:
 		_ctx.hot_reload.reload()
 
 
-func _request_quit() -> void:
+func _request_title() -> void:
 	if _ctx and _ctx.dialog_system:
 		_deactivate_modes()
 		_ctx.dialog_system.show_confirm(
-			_t("config.quitgame", "退出"),
-			_t("ingame.quit.confirm", "要退出游戏吗？")
+			_t("ingame.title.button", "标题"),
+			_t("ingame.title.confirm", "要返回标题界面吗？")
 		).connect(func(_confirmed: bool) -> void:
 			if _confirmed:
-				_do_quit()
+				title_requested.emit()
 		, CONNECT_ONE_SHOT)
 	else:
-		_do_quit()
-
-
-func _do_quit() -> void:
-	if _ctx and _ctx.read_tracker:
-		_ctx.read_tracker.save_to_disk()
-	if _ctx:
-		_ctx.get_tree().quit()
+		title_requested.emit()
 
 
 func _is_save_panel_visible() -> bool:

@@ -87,7 +87,7 @@ custom_minimum_size = Vector2(100, 44)
 layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 8
-text = "退出"
+text = "标题"
 
 [node name="Restart" type="Button" parent="Hud/Controls" unique_id=2113566389]
 custom_minimum_size = Vector2(100, 44)
