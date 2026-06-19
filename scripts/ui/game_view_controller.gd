@@ -286,6 +286,7 @@ func _unhandled_input(event: InputEvent) -> void:
 # ── Public API ───────────────────────────────────────────────────────
 
 func enter_game(node_name: StringName) -> void:
+	reset_world()
 	if _ctx.dialogue_box:
 		_ctx.dialogue_box.set_box("bottom")
 	if _dbox:
@@ -307,6 +308,7 @@ func enter_game(node_name: StringName) -> void:
 
 
 func load_game() -> void:
+	reset_world()
 	if _dbox:
 		_dbox.visible = true
 	if _restart_btn:
