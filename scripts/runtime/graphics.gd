@@ -120,3 +120,63 @@ func _load_texture(path: String) -> Texture2D:
 			return ImageTexture.create_from_image(img)
 	push_warning("Graphics: texture not found '%s'" % path)
 	return null
+
+
+## Capture all display object states for saving.
+func snapshot() -> Dictionary:
+	var state: Dictionary = {}
+	var objects: Dictionary = _ctx.object_manager.objects
+	for key in objects:
+		var node = objects[key]
+		if node is CanvasItem:
+			state[key] = {
+				"visible": node.visible,
+				"position": [node.position.x, node.position.y],
+				"scale": [node.scale.x, node.scale.y],
+				"rotation": node.rotation_degrees,
+				"modulate": [node.modulate.r, node.modulate.g, node.modulate.b, node.modulate.a],
+				"texture_path": _get_texture_path(node),
+			}
+	return state
+
+
+## Restore display object states from a snapshot.
+func restore(data: Dictionary) -> void:
+	if not data is Dictionary:
+		return
+	var objects: Dictionary = _ctx.object_manager.objects
+	for key in data:
+		if not objects.has(key):
+			continue
+		var node = objects[key]
+		if not node is CanvasItem:
+			continue
+		var obj_state: Dictionary = data[key]
+		if obj_state.has("visible"):
+			node.visible = bool(obj_state["visible"])
+		if obj_state.has("position"):
+			var p = obj_state["position"]
+			if p is Array and p.size() >= 2:
+				node.position = Vector2(float(p[0]), float(p[1]))
+		if obj_state.has("scale"):
+			var s = obj_state["scale"]
+			if s is Array and s.size() >= 2:
+				node.scale = Vector2(float(s[0]), float(s[1]))
+		if obj_state.has("rotation"):
+			node.rotation_degrees = float(obj_state["rotation"])
+		if obj_state.has("modulate"):
+			var m = obj_state["modulate"]
+			if m is Array and m.size() >= 4:
+				node.modulate = Color(float(m[0]), float(m[1]), float(m[2]), float(m[3]))
+
+
+func _get_texture_path(node: CanvasItem) -> String:
+	if node is TextureRect:
+		var tex_rect := node as TextureRect
+		if tex_rect.texture:
+			return tex_rect.texture.resource_path
+	elif node is Sprite2D:
+		var spr := node as Sprite2D
+		if spr.texture:
+			return spr.texture.resource_path
+	return ""

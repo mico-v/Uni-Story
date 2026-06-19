@@ -8,6 +8,7 @@ class_name GameViewController extends Control
 ## Receives a reference to NovaController (_ctx) for subsystem access.
 
 signal title_requested()
+signal settings_requested()
 
 const ButtonRingScene: PackedScene = preload("res://scene/ui/button_ring.tscn")
 
@@ -58,12 +59,12 @@ var _mouse_menu: PanelContainer
 var _mouse_menu_items: VBoxContainer
 
 # ── Typewriter state ─────────────────────────────────────────────────
-const TYPE_CPS := 30.0
+var type_cps := 30.0
 var _type_tween: Tween = null
 var _is_typing := false
 
 # ── Auto/Skip mode state ─────────────────────────────────────────────
-const AUTO_DELAY := 2.0
+var auto_delay := 2.0
 const SKIP_DELAY := 0.05
 var _is_auto := false
 var _is_skip := false
@@ -495,7 +496,7 @@ func _start_typewriter(text: String) -> void:
 		return
 	_story_label.visible_ratio = 0.0
 	_is_typing = true
-	var duration := float(n) / TYPE_CPS
+	var duration := float(n) / type_cps
 	_type_tween = create_tween()
 	_type_tween.tween_method(_set_reveal, 0.0, 1.0, duration)
 	_type_tween.finished.connect(_on_typewriter_done)
@@ -513,7 +514,7 @@ func _on_typewriter_done() -> void:
 	_continue_icon_visible(true)
 	if _is_auto and _ctx.game_state and _ctx.game_state.is_waiting_input:
 		var gen := _auto_gen
-		get_tree().create_timer(AUTO_DELAY).timeout.connect(_on_auto_advance.bind(gen))
+		get_tree().create_timer(auto_delay).timeout.connect(_on_auto_advance.bind(gen))
 
 
 func _kill_typewriter() -> void:
@@ -779,6 +780,7 @@ func _on_mouse_backlog() -> void:
 
 func _on_mouse_settings() -> void:
 	_hide_mouse_menu()
+	settings_requested.emit()
 
 
 func _on_mouse_auto() -> void:

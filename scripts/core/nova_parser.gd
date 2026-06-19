@@ -43,6 +43,10 @@ static func tokenize(source: String) -> Array:
 			continue
 
 		if not stripped.is_empty():
+			# Skip comment lines.
+			if stripped.begins_with("#") or stripped.begins_with("//"):
+				i += 1
+				continue
 			out.append({"type": "text", "content": stripped, "attrs": {}, "line": i + 1})
 		i += 1
 	return out

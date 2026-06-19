@@ -40,7 +40,7 @@ func apply_i18n(i18n: I18n) -> void:
 	if i18n == null:
 		return
 	if logo_label:
-		logo_label.text = i18n.t("title.subtitle", "Nova 2")
+		logo_label.text = i18n.t("title.subtitle", "Story With Y")
 	if btn_new_game:
 		btn_new_game.text = i18n.t("title.menu.start", "开始游戏")
 	if btn_load:

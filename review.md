@@ -40,7 +40,7 @@
 ## 4. 验收记录
 - 2026-06-16：任务5/6/7 回归通过，`run_scene(res://scene/game.tscn, wait_for_runtime=false)` + `get_errors(include_warnings=true)` 结果 `error_count=0`。
 - 2026-06-16：任务8 Step1/2 与部分 Step3 回归通过，`run_scene(res://scene/game.tscn, wait_for_runtime=false)` + `get_errors(include_warnings=true)` 结果 `error_count=0`。
-- 2026-06-16：任务8 Step3/4 完成，i18n 文案全部补齐并通过回归；截图确认标题界面 "Nova 2" + "开始游戏" 正确显示，`get_errors` 结果 `error_count=0`。
+- 2026-06-16：任务8 Step3/4 完成，i18n 文案全部补齐并通过回归；截图确认标题界面 "Story With Y" + "开始游戏" 正确显示，`get_errors` 结果 `error_count=0`。
 - 2026-06-16：VFX/Shader 系统完成，`run_scene(res://scene/game.tscn)` + `get_errors(include_warnings=true)` 结果 `error_count=0`；截图确认标题界面正常。
 - 2026-06-16：自动播放与快进模式完成，`run_scene(res://scene/game.tscn)` + `get_errors(include_warnings=true)` 结果 `error_count=0`；ReadTracker 持久化、Auto/Skip 互斥、存读档集成均已就绪。
 - 2026-06-16：ViewManager + GALGAME 菜单重构完成。新增 `ViewManager` 子系统（fade/slide/instant 过渡动画），`TitleViewController`（GALGAME 左侧列表菜单），`GameViewController`（从 NovaController 提取全部游戏逻辑），`SettingsViewController`（文字速度/音量/全屏/语言/字体大小），`CgGalleryController`（缩略图网格+全屏预览），`MusicGalleryController`（曲目列表+播放控制）。NovaController 从 760 行瘦身为 240 行协调器。`run_scene(res://scene/game.tscn)` + `get_errors(include_warnings=true)` 结果 `error_count=0`。

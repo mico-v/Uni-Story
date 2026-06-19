@@ -118,7 +118,7 @@
     "title.menu.start": "开始游戏",
     "title.selectchapter.locked": "？？？",
     "title.selectchapter.return": "返回",
-    "title.subtitle": "Nova 2",
+    "title.subtitle": "Story With Y",
     "ui.status.ready": "状态：选择章节开始",
     "ui.status.playing": "状态：对话中",
     "ui.status.ended": "状态：章节结束",
@@ -133,5 +133,7 @@
     "music.play": "播放",
     "music.stop": "停止",
     "music.no_tracks": "（暂无曲目）",
-    "gallery.no_items": "（暂无鉴赏内容）"
+    "gallery.no_items": "（暂无鉴赏内容）",
+    "ui.status.quicksaved": "快速存档完成",
+    "config.item.language": "语言"
 }

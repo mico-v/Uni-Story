@@ -118,7 +118,7 @@
     "title.menu.start": "Start",
     "title.selectchapter.locked": "? ? ?",
     "title.selectchapter.return": "Back",
-    "title.subtitle": "Nova 2",
+    "title.subtitle": "Story With Y",
     "ui.status.ready": "Status: Ready",
     "ui.status.playing": "Status: In dialogue",
     "ui.status.ended": "Status: Chapter ended",
@@ -133,5 +133,7 @@
     "music.play": "Play",
     "music.stop": "Stop",
     "music.no_tracks": "(No tracks)",
-    "gallery.no_items": "(No gallery items)"
+    "gallery.no_items": "(No gallery items)",
+    "ui.status.quicksaved": "Status: Quick saved",
+    "config.item.language": "Language"
 }

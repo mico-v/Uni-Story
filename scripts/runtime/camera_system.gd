@@ -55,3 +55,32 @@ func move_camera(coord: Variant, scale = null, angle = null, duration: float = 0
 		world.position = target_pos
 		world.scale = target_scale
 		world.rotation_degrees = target_rot
+
+
+## Capture camera state for saving.
+func snapshot() -> Dictionary:
+	var world := _world()
+	if world == null:
+		return {}
+	return {
+		"position": [world.position.x, world.position.y],
+		"scale": [world.scale.x, world.scale.y],
+		"rotation": world.rotation_degrees,
+	}
+
+
+## Restore camera state from a snapshot.
+func restore(data: Dictionary) -> void:
+	if not data is Dictionary or data.is_empty():
+		return
+	var world := _world()
+	if world == null:
+		return
+	var pos = data.get("position", [])
+	if pos is Array and pos.size() >= 2:
+		world.position = Vector2(float(pos[0]), float(pos[1]))
+	var scl = data.get("scale", [])
+	if scl is Array and scl.size() >= 2:
+		world.scale = Vector2(float(scl[0]), float(scl[1]))
+	if data.has("rotation"):
+		world.rotation_degrees = float(data["rotation"])

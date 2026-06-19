@@ -43,7 +43,7 @@ func show_at(time: float, obj_name: String, image: String, coord = null) -> Time
 	var c = _ctx
 	return at(time, func() -> void:
 		if c.graphics:
-			c.graphics.show_image(obj_name, image, coord)
+			c.graphics.show(obj_name, image, coord)
 	)
 
 
@@ -61,7 +61,7 @@ func cam_at(time: float, coord, duration: float = 0.5) -> Timeline:
 	var c = _ctx
 	return at(time, func() -> void:
 		if c.camera:
-			c.camera.move(coord, duration)
+			c.camera.move_camera(coord, null, null, duration)
 	)
 
 

@@ -83,6 +83,7 @@ func _ready() -> void:
 	_register_objects()
 	_connect_model_signals()
 	_apply_i18n()
+	_load_settings()
 
 	scenario_files = _localized_scenario_files(scenario_files)
 	script_loader.load_all(scenario_files)
@@ -169,6 +170,8 @@ func _bind_view_controllers() -> void:
 	var music_node := get_node_or_null("MusicGalleryView")
 	if music_node is MusicGalleryController:
 		_music_vc = music_node as MusicGalleryController
+		if _music_vc:
+			_music_vc.setup(self)
 	var save_load_node := get_node_or_null("SaveLoadView")
 	if save_load_node is SaveLoadController:
 		_save_load_vc = save_load_node as SaveLoadController
@@ -239,6 +242,7 @@ func _connect_model_signals() -> void:
 	avatar.avatar_changed.connect(_game_vc.on_avatar_changed)
 	# GameVC → NovaController routing.
 	_game_vc.title_requested.connect(_on_game_title_requested)
+	_game_vc.settings_requested.connect(func() -> void: view_manager.switch_to("settings"))
 	# TitleVC → navigation.
 	if _title_vc:
 		_title_vc.new_game_requested.connect(_on_title_new_game)
@@ -382,14 +386,35 @@ func _refresh_chapters() -> void:
 
 # ── Settings handler ────────────────────────────────────────────────
 
+const SETTINGS_PATH := "user://config/settings.cfg"
+
 func _on_setting_changed(key: String, value: Variant) -> void:
 	match key:
 		"text_speed":
-			pass  # Future: adjust GameViewController.TYPE_CPS
+			if _game_vc:
+				_game_vc.type_cps = clampf(float(value) * 2.0, 1.0, 200.0)
 		"auto_speed":
-			pass  # Future: adjust GameViewController.AUTO_DELAY
-		"vol_global", "vol_bgm", "vol_se", "vol_voice":
-			pass  # Future: adjust AudioSystem volumes
+			if _game_vc:
+				_game_vc.auto_delay = clampf(float(101 - value) * 0.05, 0.5, 5.0)
+		"vol_global":
+			if audio:
+				audio.set_master_volume(float(value) / 100.0)
+		"vol_bgm":
+			if audio:
+				audio.set_bgm_volume(float(value) / 100.0)
+		"vol_se":
+			if audio:
+				audio.set_se_volume(float(value) / 100.0)
+		"vol_voice":
+			if audio:
+				audio.set_voice_volume(float(value) / 100.0)
+		"font_size":
+			if _game_vc:
+				var dbox := _game_vc.get_dbox()
+				if dbox:
+					var story = dbox.get_node_or_null("Story")
+					if story is RichTextLabel:
+						story.add_theme_font_size_override("normal_font_size", int(value))
 		"language":
 			if str(value) != i18n.locale:
 				i18n.locale = str(value)
@@ -399,6 +424,32 @@ func _on_setting_changed(key: String, value: Variant) -> void:
 				DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 			else:
 				DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+	_save_settings()
+
+
+func _save_settings() -> void:
+	if _settings_vc == null:
+		return
+	DirAccess.make_dir_recursive_absolute("user://config")
+	var cfg := ConfigFile.new()
+	var data := _settings_vc.snapshot()
+	for k in data:
+		cfg.set_value("settings", k, data[k])
+	cfg.save(SETTINGS_PATH)
+
+
+func _load_settings() -> void:
+	var cfg := ConfigFile.new()
+	if cfg.load(SETTINGS_PATH) != OK:
+		return
+	var data: Dictionary = {}
+	for k in cfg.get_section_keys("settings"):
+		data[k] = cfg.get_value("settings", k)
+	if _settings_vc:
+		_settings_vc.apply_settings(data)
+	# Apply each setting to subsystems.
+	for k in data:
+		_on_setting_changed(str(k), data[k])
 
 
 # ── I18n helper ─────────────────────────────────────────────────────

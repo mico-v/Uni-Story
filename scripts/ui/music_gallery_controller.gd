@@ -23,6 +23,22 @@ var _tracks: Array = []  # [{name, display_name, path, unlocked}]
 var _current_index := -1
 var _play_mode: int = PlayMode.SEQUENTIAL
 var _audio: AudioSystem = null  # optional reference for playback
+var _ctx: Node = null
+
+
+func setup(ctx: Node) -> void:
+	_ctx = ctx
+	if ctx and ctx.audio:
+		_audio = ctx.audio as AudioSystem
+	# Connect BGM finished signal for auto-advance.
+	if _audio:
+		var bgm_player = null
+		for child in ctx.get_children():
+			if child.name == "BGMPlayer" and child is AudioStreamPlayer:
+				bgm_player = child
+				break
+		if bgm_player:
+			bgm_player.finished.connect(_on_bgm_finished)
 
 
 func _ready() -> void:
@@ -94,16 +110,43 @@ func _cycle_mode() -> void:
 	_update_mode_label()
 
 
-func _update_mode_label() -> void:
-	if btn_mode == null:
+func _on_bgm_finished() -> void:
+	if _current_index < 0 or _tracks.is_empty():
 		return
 	match _play_mode:
 		PlayMode.SEQUENTIAL:
-			btn_mode.text = "列表循环"
+			# Advance to next track.
+			var next := _current_index + 1
+			if next >= _tracks.size():
+				next = 0
+			_play_track(next)
 		PlayMode.LOOP_SINGLE:
-			btn_mode.text = "单曲循环"
+			# Replay current track.
+			_play_track(_current_index)
 		PlayMode.RANDOM:
-			btn_mode.text = "随机播放"
+			# Pick a random track (different from current if possible).
+			if _tracks.size() <= 1:
+				_play_track(0)
+			else:
+				var r := randi() % _tracks.size()
+				while r == _current_index:
+					r = randi() % _tracks.size()
+				_play_track(r)
+
+
+func _update_mode_label() -> void:
+	if btn_mode == null:
+		return
+	var i: I18n = null
+	if _ctx and _ctx.i18n:
+		i = _ctx.i18n
+	match _play_mode:
+		PlayMode.SEQUENTIAL:
+			btn_mode.text = i.t("musicgallery.mode.seq", "列表循环") if i else "列表循环"
+		PlayMode.LOOP_SINGLE:
+			btn_mode.text = i.t("musicgallery.mode.loop", "单曲循环") if i else "单曲循环"
+		PlayMode.RANDOM:
+			btn_mode.text = i.t("musicgallery.mode.rand", "随机播放") if i else "随机播放"
 
 
 func _clear_list() -> void:

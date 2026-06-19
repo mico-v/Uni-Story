@@ -153,7 +153,7 @@ func apply_i18n(i18n: I18n) -> void:
 	if lbl_font_size:
 		lbl_font_size.text = i18n.t("config.item.fontsize", "字体大小")
 	if lbl_language:
-		lbl_language.text = "语言"
+		lbl_language.text = i18n.t("config.item.language", "语言")
 	if btn_reset:
 		btn_reset.text = i18n.t("config.resetdefault", "重置默认设置")
 	if section_shortcut:

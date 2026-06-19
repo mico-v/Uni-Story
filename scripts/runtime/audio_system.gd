@@ -119,6 +119,36 @@ func stop_bgm(fade: float = 0.0):
 	return
 
 
+## Set volume for all audio players (0.0 to 1.0, converted to dB).
+func set_master_volume(linear: float) -> void:
+	var db := _linear_to_db(linear)
+	_bgm_player.volume_db = db
+	_voice_player.volume_db = db
+
+
+## Set BGM volume only (0.0 to 1.0).
+func set_bgm_volume(linear: float) -> void:
+	_bgm_player.volume_db = _linear_to_db(linear)
+
+
+## Set SE volume (0.0 to 1.0).
+func set_se_volume(linear: float) -> void:
+	var db := _linear_to_db(linear)
+	for p in _se_players:
+		p.volume_db = db
+
+
+## Set voice volume (0.0 to 1.0).
+func set_voice_volume(linear: float) -> void:
+	_voice_player.volume_db = _linear_to_db(linear)
+
+
+static func _linear_to_db(linear: float) -> float:
+	if linear <= 0.0:
+		return -80.0
+	return 20.0 * log(linear) / log(10.0)
+
+
 func play_se(path: String, volume_db: float = 0.0) -> void:
 	var stream := _load_stream(path)
 	if stream == null:

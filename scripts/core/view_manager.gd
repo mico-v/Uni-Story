@@ -11,6 +11,7 @@ var _views: Dictionary = {}          # String name -> Control
 var _transitions: Dictionary = {}    # String name -> Transition enum int
 var _current_view: String = ""
 var _is_transitioning := false
+var _pending_view := ""
 var transition_duration := 0.3
 
 
@@ -32,7 +33,7 @@ func switch_to(view_name: String, transition_override: int = -1) -> void:
 	if view_name == _current_view:
 		return
 	if _is_transitioning:
-		# Queue the last request and run after current finishes.
+		_pending_view = view_name
 		return
 	var new_ctrl: Control = _views.get(view_name) as Control
 	if new_ctrl == null:
@@ -111,3 +112,19 @@ func _do_slide(old_ctrl: Control, new_ctrl: Control, direction: Vector2) -> void
 
 func _finish_transition() -> void:
 	_is_transitioning = false
+	if _pending_view != "":
+		var next := _pending_view
+		_pending_view = ""
+		switch_to(next)
+
+
+## Force-reset transition state if stuck (e.g. after hot reload kills tweens).
+func force_reset() -> void:
+	_is_transitioning = false
+	_pending_view = ""
+	for view_name in _views:
+		var ctrl: Control = _views[view_name]
+		if ctrl:
+			ctrl.visible = (view_name == _current_view)
+			ctrl.modulate.a = 1.0
+			ctrl.position = Vector2.ZERO

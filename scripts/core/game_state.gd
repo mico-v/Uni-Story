@@ -42,6 +42,10 @@ func snapshot() -> Dictionary:
 		system_state["audio"] = _ctx.audio.snapshot()
 	if _ctx.prefab_loader and _ctx.prefab_loader.has_method("snapshot"):
 		system_state["prefab_loader"] = _ctx.prefab_loader.snapshot()
+	if _ctx.camera and _ctx.camera.has_method("snapshot"):
+		system_state["camera"] = _ctx.camera.snapshot()
+	if _ctx.graphics and _ctx.graphics.has_method("snapshot"):
+		system_state["graphics"] = _ctx.graphics.snapshot()
 	return {
 		"node": String(current_node.name) if current_node else "",
 		"index": current_index,
@@ -92,6 +96,10 @@ func restore(data: Dictionary) -> bool:
 			_ctx.audio.restore(systems.get("audio", {}))
 		if _ctx.prefab_loader and _ctx.prefab_loader.has_method("restore"):
 			_ctx.prefab_loader.restore(systems.get("prefab_loader", {}))
+		if _ctx.camera and _ctx.camera.has_method("restore"):
+			_ctx.camera.restore(systems.get("camera", {}))
+		if _ctx.graphics and _ctx.graphics.has_method("restore"):
+			_ctx.graphics.restore(systems.get("graphics", {}))
 
 	var e = current_node.entries[target]
 	dialogue_changed.emit(e.speaker, e.text)
