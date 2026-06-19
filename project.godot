@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="Nova2 (4.6 Rewrite)"
+config/name="Uni-Story"
 run/main_scene="res://scene/game.tscn"
 config/features=PackedStringArray("4.6", "Mobile")
 config/icon="res://resources/icon.svg"
@@ -34,6 +34,10 @@ project/assembly_name="Nova2Rewrite"
 [editor_plugins]
 
 enabled=PackedStringArray("res://addons/godot_mcp/plugin.cfg")
+
+[gui]
+
+theme/custom="res://resources/themes/main_theme.tres"
 
 [input]
 
