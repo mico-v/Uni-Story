@@ -1,0 +1,386 @@
+@<|
+label("test_all", "综合自检")
+is_unlocked_start()
+set_box()
+|>
+综合自检开始 —— 依次测试：运行时基础、动画链、立绘合成、变量系统、VFX 效果。
+
+选择测试项：
+@<| branch([
+    { dest="sec_runtime", text="1. 运行时基础" },
+    { dest="sec_animation", text="2. 动画链" },
+    { dest="sec_char", text="3. 立绘合成" },
+    { dest="sec_var", text="4. 变量系统" },
+    { dest="sec_vfx", text="5. VFX 效果" },
+    { dest="sec_prefab", text="6. Prefab 加载" },
+    { dest="sec_full", text="7. 全部顺序执行" },
+]) |>
+
+@<| label("sec_runtime") |>
+@<| jump_to("runtime_start") |>
+
+@<| label("sec_animation") |>
+@<| jump_to("anim_start") |>
+
+@<| label("sec_char") |>
+@<| jump_to("char_start") |>
+
+@<| label("sec_var") |>
+@<| jump_to("var_start") |>
+
+@<| label("sec_vfx") |>
+@<| jump_to("vfx_start") |>
+
+@<| label("sec_prefab") |>
+@<| jump_to("prefab_start") |>
+
+@<| label("sec_full") |>
+
+# ══════════════════════════════════════════════════════════════
+# Section 1: 运行时基础（原 test_runtime）
+# ══════════════════════════════════════════════════════════════
+
+@<| label("runtime_start") |>
+<|
+set_box()
+|>
+━━━ 1/5  运行时基础 ━━━
+
+开始自检：这是一段比较长的测试文字，用来观察打字机逐字显示效果是否正常工作。
+
+<|
+show("bg", "cg/rain_back")
+show("fg", "foregrounds/moon_halo", [0, 0, 0.3])
+|>
+显示背景与立绘
+
+<|
+cam([200, 0, 1.2], null, 0)
+|>
+镜头右移并放大
+
+<|
+cam([0, 0, 1.0], null, 0)
+trans("flash", 0.4)
+|>
+镜头复位并闪白转场
+
+选择一个分支：
+@<| branch([
+    { dest="t_branch_a", text="分支 A" },
+    { dest="t_branch_b", text="分支 B" },
+]) |>
+
+@<| label("t_branch_a") |>
+你选择了分支 A
+@<| jump_to("t_branch_end") |>
+
+@<| label("t_branch_b") |>
+你选择了分支 B
+@<| jump_to("t_branch_end") |>
+
+@<| label("t_branch_end") |>
+运行时基础测试结束
+
+<|
+hide("bg")
+hide("fg")
+trans("fade", 0.3)
+|>
+清场，进入下一节
+
+# ══════════════════════════════════════════════════════════════
+# Section 2: 动画链（原 test_animation）
+# ══════════════════════════════════════════════════════════════
+
+@<| label("anim_start") |>
+<|
+set_box()
+|>
+━━━ 2/5  动画链 ━━━
+
+<|
+show("bg", "cg/rain_back")
+show("fg", "foregrounds/moon_halo", [0, 0, 0.2])
+|>
+显示图片
+
+<|
+o.anim.PropertyVector3(o.fg, "position", Vector3(1, 1, 0), 0.5, false)  \
+    .PropertyVector3(o.fg, "scale", Vector3(0.3, 0.3, 0.3), 0.5, false) \
+    .PropertyVector3(o.fg, "rotation_degrees", Vector3(0, 0, 45), 1, false)
+|>
+顺序播放动画：位移 → 缩放 → 旋转
+
+<|
+o.anim.PropertyVector3(o.fg, "position", Vector3(0, 0, 0), 1, false)
+o.anim.PropertyVector3(o.fg, "scale", Vector3(0.2, 0.2, 0.2), 1, false)
+o.anim.PropertyColor(o.fg, "modulate", Color(1, 1, 1, 0.5), 1, false)
+|>
+同时播放动画：位移 + 缩放 + 透明度
+
+<|
+move("fg", [0, 0, 0.2, 0, 0])
+tint("fg", [1, 1, 1, 1])
+o.anim.PropertyVector3(o.fg, "position", Vector3(1, 1, 0), 0.5, false)  \
+    .PropertyVector3(o.fg, "scale", Vector3(0.3, 0.3, 0.3), 0.5, false) \
+    .PropertyVector3(o.fg, "rotation_degrees", Vector3(0, 0, 45), 1, false)
+|>
+move/tint 重置后再播放动画链
+
+<|
+move("fg", [0, 0, 0.2, 0, 0])
+tint("fg", [1, 1, 1, 1])
+hide("bg")
+hide("fg")
+|>
+动画链测试结束，清场
+
+# ══════════════════════════════════════════════════════════════
+# Section 3: 立绘合成（原 test_char）
+# ══════════════════════════════════════════════════════════════
+
+@<| label("char_start") |>
+<|
+set_box()
+|>
+━━━ 3/5  立绘合成 ━━━
+
+<|
+show_char("renna", { body="", face="smile" }, [640, 400, 0.6])
+set_avatar("renna", "smile")
+|>
+显示立绘（身体 + 微笑）与头像
+
+<|
+set_layer("renna", "face", "surprised")
+|>
+切换表情为惊讶
+
+<|
+set_layer("renna", "face", "smile")
+o.anim.PropertyVector3(o.renna, "position", Vector3(900, 400, 0), 0.6, false)
+|>
+表情切回微笑并移动到右侧
+
+<|
+tint("renna", [0.6, 0.6, 1.0, 1.0])
+|>
+给立绘染上蓝色
+
+<|
+tint("renna", [1, 1, 1, 1])
+hide_char("renna")
+clear_avatar()
+|>
+恢复并隐藏立绘，清除头像
+
+立绘合成测试结束
+
+# ══════════════════════════════════════════════════════════════
+# Section 4: 变量系统（原 test_var）
+# ══════════════════════════════════════════════════════════════
+
+@<| label("var_start") |>
+<|
+set_box()
+|>
+━━━ 4/5  变量系统 ━━━
+
+<|
+set_var("score", 0)
+add_var("score", 5)
+add_var("score", 3)
+|>
+设置 score = 0，然后 +5 +3
+
+<|
+print("score = " + str(get_var("score")))
+|>
+当前 score 应为 8（见控制台输出）
+
+<|
+jump_if(get_var("score") >= 8, "var_high")
+|>
+score >= 8 时跳转到高分节点
+
+这行不应该出现（因上面已跳转）
+@<| jump_to("var_end") |>
+
+@<| label("var_high") |>
+跳转成功：score 达到 8，进入高分分支
+
+<|
+set_var("flag", true)
+|>
+设置 flag = true
+
+@<| label("var_end") |>
+变量系统测试结束
+
+# ══════════════════════════════════════════════════════════════
+# Section 5: VFX 效果（原 test_vfx）
+# ══════════════════════════════════════════════════════════════
+
+@<| label("vfx_start") |>
+<|
+set_box()
+|>
+━━━ 5/5  VFX 效果 ━━━
+
+<|
+show("bg", "demo_media/rainy_bg")
+|>
+显示背景图
+
+<|
+vfx("blur", "bg", 0.8)
+|>
+高斯模糊（amount → 5.0，0.8 秒渐入）
+
+<|
+wait(1.5)
+clear_vfx("bg", 0.5)
+|>
+等待 1.5 秒后清除模糊
+
+<|
+vfx("grayscale", "bg", 1.0)
+|>
+灰度效果（amount → 1.0，1.0 秒渐入）
+
+<|
+wait(1.5)
+clear_vfx("bg", 0.5)
+|>
+等待 1.5 秒后清除灰度
+
+<|
+shake(12.0, 0.6)
+|>
+震屏（强度 12，0.6 秒）
+
+<|
+wait(1.0)
+|>
+等待震屏结束
+
+<|
+post_fx("vignette", 0.5)
+|>
+全屏暗角效果
+
+<|
+wait(1.5)
+clear_post_fx(0.5)
+|>
+等待 1.5 秒后清除暗角
+
+<|
+post_fx("chromatic", 0.3)
+|>
+全屏色差效果
+
+<|
+wait(1.5)
+clear_post_fx(0.3)
+|>
+等待 1.5 秒后清除色差
+
+<|
+trans("dissolve", 0.8)
+|>
+溶解转场
+
+<|
+show("bg", "demo_media/rainy_bg")
+|>
+重新显示背景
+
+<|
+trans("wipe", 0.6)
+|>
+擦除转场
+
+<|
+show("bg", "demo_media/rainy_bg")
+|>
+重新显示背景
+
+<|
+hide("bg")
+|>
+清场
+
+# ══════════════════════════════════════════════════════════════
+# Section 6: Prefab 加载
+# ══════════════════════════════════════════════════════════════
+
+@<| label("prefab_start") |>
+<|
+set_box()
+|>
+━━━ 6/6  Prefab 加载 ━━━
+
+<|
+show("bg", "cg/rain_back")
+|>
+显示背景图
+
+<|
+load_prefab("rain", "prefabs/test_particles", [640, 200])
+|>
+加载粒子预制体到世界坐标 (640, 200)
+
+<|
+move("rain", [400, 300, 1.5])
+|>
+通过名字移动预制体（验证 ObjectManager 注册）
+
+<|
+tint("rain", [1.0, 0.5, 0.5, 1.0])
+|>
+给预制体染红色
+
+<|
+o.anim.PropertyVector3(o.rain, "position", Vector3(800, 400, 0), 1.0, false)
+|>
+通过 o.anim 动画链驱动预制体位置
+
+<|
+o.anim.PropertyVector3(o.rain, "rotation_degrees", Vector3(0, 0, 180), 0.8, false)
+|>
+动画链旋转预制体
+
+<|
+move("rain", [640, 200, 1.0, 0, 0])
+tint("rain", [1, 1, 1, 1])
+|>
+重置位置和颜色
+
+<|
+hide_prefab("rain")
+|>
+隐藏预制体（节点仍在场景中）
+
+<|
+show_prefab("rain")
+|>
+重新显示预制体
+
+<|
+destroy_prefab("rain")
+|>
+彻底销毁预制体
+
+<|
+hide("bg")
+|>
+清场
+
+# ══════════════════════════════════════════════════════════════
+# 结束
+# ══════════════════════════════════════════════════════════════
+
+综合自检全部完成
+@<| is_end() |>

@@ -6,6 +6,8 @@ extends Node
 
 const SCENARIO_FILES := [
 	"res://resources/scenarios/main.txt",
+	"res://resources/scenarios/plan_demo.txt",
+	"res://resources/scenarios/test_all.txt",
 ]
 
 const REVIEW_REGRESSION_FILES := [
