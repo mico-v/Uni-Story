@@ -41,6 +41,14 @@ func show(obj: Variant, image_path: String, coord = null, color = null) -> void:
 
 	if coord != null:
 		move(node, coord)
+	elif tex != null and node is Sprite2D and (node as Sprite2D).centered:
+		# Auto-center large images (backgrounds) in the viewport when no
+		# explicit position is given.  Without this the sprite stays at (0, 0)
+		# and — because centered=true — most of the image falls outside the
+		# visible area.
+		var vp: Vector2 = _ctx.get_viewport().get_visible_rect().size
+		if tex.get_width() > vp.x and tex.get_height() > vp.y:
+			node.position = vp * 0.5
 	if color != null:
 		tint(node, color)
 	node.visible = true
