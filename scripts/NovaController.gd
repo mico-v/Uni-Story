@@ -79,6 +79,7 @@ func _ready() -> void:
 	_setup_game_view()
 	_register_objects()
 	_connect_model_signals()
+	_load_gallery_configs()
 	_apply_i18n()
 	_load_settings()
 
@@ -328,6 +329,20 @@ func _on_quit() -> void:
 	if read_tracker:
 		read_tracker.save_to_disk()
 	get_tree().quit()
+
+
+# ── Gallery configuration ─────────────────────────────────────────────
+
+const CG_GALLERY_CONFIG := "res://resources/gallery/cg_gallery.txt"
+const MUSIC_GALLERY_CONFIG := "res://resources/gallery/music_gallery.txt"
+
+func _load_gallery_configs() -> void:
+	if _cg_vc and FileAccess.file_exists(CG_GALLERY_CONFIG):
+		var cg_entries := GalleryConfigLoader.load_cg(CG_GALLERY_CONFIG)
+		_cg_vc.set_gallery(cg_entries)
+	if _music_vc and FileAccess.file_exists(MUSIC_GALLERY_CONFIG):
+		var music_entries := GalleryConfigLoader.load_music(MUSIC_GALLERY_CONFIG)
+		_music_vc.set_tracks(music_entries)
 
 
 # ── Keyboard shortcuts (non-game views + debug) ──────────────────────

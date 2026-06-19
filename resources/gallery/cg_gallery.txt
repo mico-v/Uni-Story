@@ -1,0 +1,38 @@
+# CG Gallery Configuration
+# Format: [section_id] with name, file, unlocked keys
+# file: path relative to res://resources/
+
+[cg1]
+name = CG 1
+file = cg/cg1.png
+unlocked = true
+
+[cg2]
+name = CG 2
+file = cg/cg2.png
+unlocked = true
+
+[cg3]
+name = CG 3
+file = cg/cg3.png
+unlocked = true
+
+[cg4]
+name = CG 4
+file = cg/cg4.png
+unlocked = true
+
+[cg5]
+name = CG 5
+file = cg/cg5.png
+unlocked = true
+
+[home_bg]
+name = Home Background
+file = cg/home_bg.png
+unlocked = true
+
+[rain_back]
+name = Rain Background
+file = cg/rain_back.png
+unlocked = true
