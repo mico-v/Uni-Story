@@ -112,7 +112,7 @@ jobs:
 
           # Android Build Template
           ANDROID_SOURCE=~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable/android_source.zip
-          TPL_DIR=~/.local/share/godot/build_templates/android
+          TPL_DIR=android/build
           mkdir -p "$TPL_DIR"
           unzip -q "$ANDROID_SOURCE" -d "$TPL_DIR"
 
@@ -122,7 +122,7 @@ jobs:
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > /tmp/release.jks
 
           # Inject signing config into Android Build Template
-          TPL_DIR=~/.local/share/godot/build_templates/android
+          TPL_DIR=android/build
           cat > "$TPL_DIR/gradle.properties" << PROPS
           android.useAndroidX=true
           KEY_STORE_PATH=/tmp/release.jks
@@ -172,7 +172,7 @@ jobs:
         if: always()
         run: |
           rm -f /tmp/release.jks
-          rm -f ~/.local/share/godot/build_templates/android/gradle.properties
+          rm -f android/build/gradle.properties
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
