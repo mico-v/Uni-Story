@@ -61,6 +61,9 @@ var _cg_vc: CgGalleryController
 var _music_vc: MusicGalleryController
 var _save_load_vc: SaveLoadController
 
+# ── Settings return tracking ──────────────────────────────────────────
+var _settings_return_to := "title"
+
 
 # ── Ready ────────────────────────────────────────────────────────────
 
@@ -237,19 +240,25 @@ func _connect_model_signals() -> void:
 	avatar.avatar_changed.connect(_game_vc.on_avatar_changed)
 	# GameVC → NovaController routing.
 	_game_vc.title_requested.connect(_on_game_title_requested)
-	_game_vc.settings_requested.connect(func() -> void: view_manager.switch_to("settings"))
+	_game_vc.settings_requested.connect(func() -> void:
+		_settings_return_to = view_manager.current()
+		view_manager.switch_to("settings")
+	)
 	# TitleVC → navigation.
 	if _title_vc:
 		_title_vc.new_game_requested.connect(_on_title_new_game)
 		_title_vc.continue_requested.connect(_on_title_continue)
 		_title_vc.load_requested.connect(_on_title_load)
-		_title_vc.settings_requested.connect(func() -> void: view_manager.switch_to("settings"))
+		_title_vc.settings_requested.connect(func() -> void:
+			_settings_return_to = view_manager.current()
+			view_manager.switch_to("settings")
+		)
 		_title_vc.gallery_requested.connect(func() -> void: view_manager.switch_to("cg_gallery"))
 		_title_vc.music_requested.connect(func() -> void: view_manager.switch_to("music_gallery"))
 		_title_vc.quit_requested.connect(_on_quit)
 	# SettingsVC → back.
 	if _settings_vc:
-		_settings_vc.back_requested.connect(func() -> void: view_manager.switch_to("title"))
+		_settings_vc.back_requested.connect(func() -> void: view_manager.switch_to(_settings_return_to))
 		_settings_vc.setting_changed.connect(_on_setting_changed)
 	# GalleryVCs → back.
 	if _cg_vc:
@@ -357,7 +366,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		if shortcut_manager.is_action_pressed("ui_leave"):
 			var view := view_manager.current()
 			match view:
-				"settings", "cg_gallery", "music_gallery", "save_load":
+				"settings":
+					view_manager.switch_to(_settings_return_to)
+				"cg_gallery", "music_gallery", "save_load":
 					view_manager.switch_to("title")
 				"title":
 					_on_quit()

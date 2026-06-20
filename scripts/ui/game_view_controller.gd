@@ -308,7 +308,8 @@ func enter_game(node_name: StringName) -> void:
 
 
 func load_game() -> void:
-	reset_world()
+	# NOTE: reset_world() must be called by the caller BEFORE game_state.restore()
+	# so that lazy block replay can rebuild presentation state cleanly.
 	if _dbox:
 		_dbox.visible = true
 	if _restart_btn:
