@@ -210,7 +210,7 @@ horizontal_scroll_mode = 3
 
 [node name="BacklogList" type="VBoxContainer" parent="Hud/BacklogPanel/BacklogPanelContainer/BacklogScroll" unique_id=1169778468]
 layout_mode = 2
-size_flags_horizontal = 2
+size_flags_horizontal = 3
 size_flags_vertical = 3
 
 [node name="CloseButton" type="Button" parent="Hud/BacklogPanel/BacklogPanelContainer" unique_id=1418495885]
