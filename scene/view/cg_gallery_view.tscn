@@ -1,0 +1,62 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ui/cg_gallery_controller.gd" id="1_vc"]
+
+[node name="CgGalleryView" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_vc")
+
+[node name="HBox" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Sidebar" type="PanelContainer" parent="HBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(280, 0)
+
+[node name="VBox" type="VBoxContainer" parent="HBox/Sidebar"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 8
+
+[node name="Title" type="Label" parent="HBox/Sidebar/VBox"]
+layout_mode = 2
+text = "图片鉴赏"
+horizontal_alignment = 1
+
+[node name="Sep" type="HSeparator" parent="HBox/Sidebar/VBox"]
+layout_mode = 2
+
+[node name="BtnBack" type="Button" parent="HBox/Sidebar/VBox"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "返回"
+
+[node name="Content" type="PanelContainer" parent="HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Scroll" type="ScrollContainer" parent="HBox/Content"]
+layout_mode = 2
+
+[node name="Grid" type="GridContainer" parent="HBox/Content/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+columns = 4
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 12
+
+[node name="EmptyLabel" type="Label" parent="HBox/Content/Scroll/Grid"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "（暂无鉴赏内容）"
+horizontal_alignment = 1

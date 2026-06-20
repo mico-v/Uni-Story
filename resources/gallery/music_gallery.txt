@@ -1,0 +1,8 @@
+# Music Gallery Configuration
+# Format: [section_id] with name, file, unlocked keys
+# file: path relative to res://resources/
+
+[bgm1]
+name = BGM 1
+file = music/bgm1.mp3
+unlocked = true

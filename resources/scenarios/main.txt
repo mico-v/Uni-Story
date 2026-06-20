@@ -1,0 +1,19 @@
+@<|
+label("main", "主线")
+is_start()
+|>
+<|
+set_box()
+|>
+<|
+play_bgm("music/bgm1.mp3")
+|>
+游戏开始...
+
+这里是主线剧情的起点。
+
+请选择进入的剧本：
+@<| branch([
+    { dest="plan_demo", text="演示剧本" },
+    { dest="test_all", text="综合测试" },
+]) |>

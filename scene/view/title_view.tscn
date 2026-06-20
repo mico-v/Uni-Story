@@ -1,0 +1,92 @@
+[gd_scene load_steps=3 format=3 uid="uid://cqdghibhuyigy"]
+
+[ext_resource type="Script" uid="uid://dv4ieuejwoh2m" path="res://scripts/ui/title_view_controller.gd" id="1_vc"]
+[ext_resource type="Texture2D" path="res://resources/cg/home_bg.png" id="2_bg"]
+
+[node name="TitleView" type="Control" unique_id=1798715118]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_vc")
+
+[node name="BgImage" type="TextureRect" parent="." unique_id=1998461685]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2_bg")
+expand_mode = 3
+stretch_mode = 6
+
+[node name="HBox" type="HBoxContainer" parent="." unique_id=1485785699]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MenuSidebar" type="PanelContainer" parent="HBox" unique_id=1466935091]
+custom_minimum_size = Vector2(280, 0)
+layout_mode = 2
+
+[node name="VBox" type="VBoxContainer" parent="HBox/MenuSidebar" unique_id=646322884]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="Logo" type="Label" parent="HBox/MenuSidebar/VBox" unique_id=1876908685]
+layout_mode = 2
+text = "Story With Y"
+horizontal_alignment = 1
+
+[node name="Sep1" type="HSeparator" parent="HBox/MenuSidebar/VBox" unique_id=1047572170]
+layout_mode = 2
+
+[node name="BtnNewGame" type="Button" parent="HBox/MenuSidebar/VBox" unique_id=1749343082]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "开始游戏"
+
+[node name="BtnContinue" type="Button" parent="HBox/MenuSidebar/VBox" unique_id=743002106]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "继续游戏"
+
+[node name="BtnLoad" type="Button" parent="HBox/MenuSidebar/VBox" unique_id=1852129721]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "读取存档"
+
+[node name="BtnSettings" type="Button" parent="HBox/MenuSidebar/VBox" unique_id=672333354]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "系统设置"
+
+[node name="BtnGallery" type="Button" parent="HBox/MenuSidebar/VBox" unique_id=1687666905]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "图片鉴赏"
+
+[node name="BtnMusic" type="Button" parent="HBox/MenuSidebar/VBox" unique_id=1700199028]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "音乐鉴赏"
+
+[node name="Sep2" type="HSeparator" parent="HBox/MenuSidebar/VBox" unique_id=2043140886]
+layout_mode = 2
+
+[node name="BtnQuit" type="Button" parent="HBox/MenuSidebar/VBox" unique_id=1678328767]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "退出游戏"
+
+[node name="ContentArea" type="Control" parent="HBox" unique_id=1570050287]
+layout_mode = 2
+size_flags_horizontal = 3
