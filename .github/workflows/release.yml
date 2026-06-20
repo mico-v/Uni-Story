@@ -111,10 +111,10 @@ jobs:
           mv /tmp/tpl/templates/* ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable/
 
           # Android Build Template
-          wget -nv "https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_android_source.zip" -O android_source.zip
+          ANDROID_SOURCE=~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable/android_source.zip
           TPL_DIR=~/.local/share/godot/build_templates/android
           mkdir -p "$TPL_DIR"
-          unzip -q android_source.zip -d "$TPL_DIR"
+          unzip -q "$ANDROID_SOURCE" -d "$TPL_DIR"
 
       - name: Configure Android signing
         run: |
