@@ -123,6 +123,51 @@ jobs:
           # Decode keystore
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > /tmp/release.jks
 
+          # Godot release export reads Android keystore settings from export_presets.cfg.
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("export_presets.cfg")
+          lines = path.read_text(encoding="utf-8").splitlines()
+          out = []
+          in_android_options = False
+          inserted = False
+
+          for line in lines:
+              stripped = line.strip()
+              if stripped == "[preset.1.options]":
+                  in_android_options = True
+                  out.append(line)
+                  continue
+
+              if in_android_options and stripped.startswith("[preset."):
+                  out.extend([
+                      'keystore/release="/tmp/release.jks"',
+                      'keystore/release_user="${{ secrets.ANDROID_KEY_ALIAS }}"',
+                      'keystore/release_password="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}"',
+                  ])
+                  inserted = True
+                  in_android_options = False
+
+              if in_android_options and (
+                  stripped.startswith("keystore/release=")
+                  or stripped.startswith("keystore/release_user=")
+                  or stripped.startswith("keystore/release_password=")
+              ):
+                  continue
+
+              out.append(line)
+
+          if in_android_options and not inserted:
+              out.extend([
+                  'keystore/release="/tmp/release.jks"',
+                  'keystore/release_user="${{ secrets.ANDROID_KEY_ALIAS }}"',
+                  'keystore/release_password="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}"',
+              ])
+
+          path.write_text("\n".join(out) + "\n", encoding="utf-8")
+          PY
+
           # Inject signing config into Android Build Template
           TPL_DIR=android/build
           cat > "$TPL_DIR/gradle.properties" << PROPS
