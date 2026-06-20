@@ -1,11 +1,11 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" width="200" height="60">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
   <defs>
     <path id="heart" d="M0,-12 C-6,-22 -22,-22 -22,-10 C-22,0 -12,10 0,20 C12,10 22,0 22,-10 C22,-22 6,-22 0,-12Z"/>
   </defs>
   <g transform="translate(0,5)">
-    <use href="#heart" transform="translate(40,25) scale(1.0)" fill="#f48fb1" opacity="0.85"/>
-    <use href="#heart" transform="translate(50,25) scale(1.0)" fill="#f06292" opacity="0.85"/>
-    <use href="#heart" transform="translate(60,25) scale(1.0)" fill="#ec407a" opacity="0.85"/>
-    <use href="#heart" transform="translate(70,25) scale(1.0)" fill="#e91e63" opacity="0.85"/>
+    <use href="#heart" transform="translate(25,25) scale(1.0)" fill="#f48fb1" opacity="0.85"/>
+    <use href="#heart" transform="translate(35,25) scale(1.0)" fill="#f06292" opacity="0.85"/>
+    <use href="#heart" transform="translate(45,25) scale(1.0)" fill="#ec407a" opacity="0.85"/>
+    <use href="#heart" transform="translate(55,25) scale(1.0)" fill="#e91e63" opacity="0.85"/>
   </g>
 </svg>
