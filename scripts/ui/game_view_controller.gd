@@ -645,22 +645,24 @@ func _open_backlog() -> void:
 	if backlog_title:
 		backlog_title.text = _t("ui.label.backlog", "文本回顾")
 	_clear_children(_backlog_list)
+	# Show panel first so layout system processes the container tree.
+	if _backlog_panel:
+		_backlog_panel.visible = true
+	await get_tree().process_frame
 	if _ctx.backlog:
 		for entry in _ctx.backlog.entries():
-			var lbl := RichTextLabel.new()
-			lbl.bbcode_enabled = true
+			var lbl := Label.new()
+			lbl.autowrap_mode = TextServer.AUTOWRAP_WORD
 			lbl.fit_content = true
 			lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			lbl.custom_minimum_size = Vector2(0, 0)
+			lbl.size_flags_vertical = Control.SIZE_FILL
 			var speaker := str(entry["speaker"])
 			var text := str(entry["text"])
 			if speaker.is_empty():
 				lbl.text = text
 			else:
-				lbl.text = "[b]%s[/b]：%s" % [speaker, text]
+				lbl.text = "%s：%s" % [speaker, text]
 			_backlog_list.add_child(lbl)
-	if _backlog_panel:
-		_backlog_panel.visible = true
 	await get_tree().process_frame
 	if _backlog_scroll:
 		_backlog_scroll.scroll_vertical = int(_backlog_scroll.get_v_scroll_bar().max_value)
