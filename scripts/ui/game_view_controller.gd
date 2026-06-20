@@ -602,6 +602,9 @@ func _on_auto_toggled() -> void:
 		_is_skip = false
 		if _skip_btn:
 			_skip_btn.button_pressed = false
+		# If dialogue is already displayed and waiting for input, start auto-advance now.
+		if not _is_typing and _ctx.game_state and _ctx.game_state.is_waiting_input:
+			_check_auto_advance()
 	if not _is_auto:
 		_auto_gen += 1
 
