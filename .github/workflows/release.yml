@@ -114,6 +114,8 @@ jobs:
           ANDROID_SOURCE=~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable/android_source.zip
           TPL_DIR=android/build
           mkdir -p "$TPL_DIR"
+          mkdir -p android
+          echo "${{ env.GODOT_VERSION }}.stable" > android/.build_version
           unzip -q "$ANDROID_SOURCE" -d "$TPL_DIR"
 
       - name: Configure Android signing
