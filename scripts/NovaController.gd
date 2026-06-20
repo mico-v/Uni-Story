@@ -388,7 +388,7 @@ func _on_setting_changed(key: String, value: Variant) -> void:
 				_game_vc.type_cps = clampf(float(value) * 2.0, 1.0, 200.0)
 		"auto_speed":
 			if _game_vc:
-				_game_vc.auto_delay = clampf(float(101 - value) * 0.05, 0.5, 5.0)
+				_game_vc.auto_delay = clampf(float(101 - value) * 0.002, 0.02, 0.2)
 		"vol_global":
 			if audio:
 				audio.set_master_volume(float(value) / 100.0)

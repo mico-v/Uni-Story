@@ -64,7 +64,7 @@ var _type_tween: Tween = null
 var _is_typing := false
 
 # ── Auto/Skip mode state ─────────────────────────────────────────────
-var auto_delay := 2.0
+var auto_delay := 0.10  # seconds per character for auto-play delay
 const SKIP_DELAY := 0.05
 var _is_auto := false
 var _is_skip := false
@@ -525,8 +525,24 @@ func _on_typewriter_done() -> void:
 		_story_label.visible_ratio = 1.0
 	_continue_icon_visible(true)
 	if _is_auto and _ctx.game_state and _ctx.game_state.is_waiting_input:
-		var gen := _auto_gen
-		get_tree().create_timer(auto_delay).timeout.connect(_on_auto_advance.bind(gen))
+		_check_auto_advance()
+
+
+func _check_auto_advance() -> void:
+	var gen := _auto_gen
+	# Wait for voice to finish if currently playing.
+	if _ctx.audio and _ctx.audio.is_voice_playing():
+		await _ctx.audio.voice_finished
+	if gen != _auto_gen or not _is_auto:
+		return
+	if not _ctx.game_state or not _ctx.game_state.is_waiting_input:
+		return
+	# Calculate reading delay from text length × speed multiplier.
+	var char_count := 0
+	if _story_label:
+		char_count = _story_label.text.length()
+	var delay := maxf(float(char_count) * auto_delay, 0.5)
+	get_tree().create_timer(delay).timeout.connect(_on_auto_advance.bind(gen))
 
 
 func _kill_typewriter() -> void:

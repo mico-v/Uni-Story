@@ -4,6 +4,8 @@ class_name AudioSystem extends RefCounted
 ## imported stream (loop begin point is configured on the .ogg/.wav import, so
 ## we don't reimplement looping). SE and Voice are one-shot.
 
+signal voice_finished()
+
 var _ctx: Node
 var _bgm_player: AudioStreamPlayer
 var _voice_player: AudioStreamPlayer
@@ -21,6 +23,7 @@ func _init(ctx: Node) -> void:
 
 	_voice_player = AudioStreamPlayer.new()
 	_voice_player.name = "VoicePlayer"
+	_voice_player.finished.connect(_on_voice_finished)
 	ctx.add_child(_voice_player)
 
 	for i in SE_POOL_SIZE:
@@ -28,6 +31,14 @@ func _init(ctx: Node) -> void:
 		p.name = "SEPlayer%d" % i
 		ctx.add_child(p)
 		_se_players.append(p)
+
+
+func _on_voice_finished() -> void:
+	voice_finished.emit()
+
+
+func is_voice_playing() -> bool:
+	return _voice_player.playing
 
 
 func _load_stream(path: String) -> AudioStream:
