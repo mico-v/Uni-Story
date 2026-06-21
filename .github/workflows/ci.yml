@@ -1,0 +1,158 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+  pull_request:
+    branches:
+      - main
+      - dev
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  GODOT_VERSION: "4.6"
+  PROJECT_NAME: "UniStory"
+
+jobs:
+  build-windows:
+    name: Windows
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          lfs: true
+
+      - name: Download Godot
+        run: |
+          wget -nv "https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64.zip" -O godot.zip
+          unzip -o godot.zip
+          chmod +x Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64
+          mv Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64 /usr/local/bin/godot
+
+      - name: Install export templates
+        run: |
+          wget -nv "https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz" -O templates.tpz
+          mkdir -p ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable
+          unzip -q templates.tpz -d /tmp/tpl
+          mv /tmp/tpl/templates/* ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable/
+
+      - name: Import project
+        run: godot --headless --import
+
+      - name: Export Windows build
+        run: |
+          mkdir -p release/win
+          godot --headless --export-release "Windows Desktop" release/win/${{ env.PROJECT_NAME }}.exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ci-windows
+          path: release/win/
+          retention-days: 7
+
+  build-linux:
+    name: Linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          lfs: true
+
+      - name: Download Godot
+        run: |
+          wget -nv "https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64.zip" -O godot.zip
+          unzip -o godot.zip
+          chmod +x Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64
+          mv Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64 /usr/local/bin/godot
+
+      - name: Install export templates
+        run: |
+          wget -nv "https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz" -O templates.tpz
+          mkdir -p ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable
+          unzip -q templates.tpz -d /tmp/tpl
+          mv /tmp/tpl/templates/* ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable/
+
+      - name: Import project
+        run: godot --headless --import
+
+      - name: Export Linux build
+        run: |
+          mkdir -p release/linux
+          godot --headless --export-release "Linux" release/linux/${{ env.PROJECT_NAME }}.x86_64
+          chmod +x release/linux/${{ env.PROJECT_NAME }}.x86_64
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ci-linux
+          path: release/linux/
+          retention-days: 7
+
+  build-android:
+    name: Android
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          lfs: true
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v4
+
+      - name: Download Godot
+        run: |
+          wget -nv "https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64.zip" -O godot.zip
+          unzip -o godot.zip
+          chmod +x Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64
+          mv Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64 /usr/local/bin/godot
+
+      - name: Install export templates + Android Build Template
+        run: |
+          wget -nv "https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_export_templates.tpz" -O templates.tpz
+          mkdir -p ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable
+          unzip -q templates.tpz -d /tmp/tpl
+          mv /tmp/tpl/templates/* ~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable/
+
+          ANDROID_SOURCE=~/.local/share/godot/export_templates/${{ env.GODOT_VERSION }}.stable/android_source.zip
+          TPL_DIR=android/build
+          mkdir -p "$TPL_DIR"
+          mkdir -p android
+          echo "${{ env.GODOT_VERSION }}.stable" > android/.build_version
+          unzip -q "$ANDROID_SOURCE" -d "$TPL_DIR"
+
+      - name: Import project
+        run: godot --headless --import
+
+      - name: Export Android debug APK
+        run: |
+          mkdir -p release/android
+          if ! godot --headless --export-debug "Android" release/android/${{ env.PROJECT_NAME }}-debug.apk; then
+            if [ -x android/build/gradlew ]; then
+              cd android/build
+              ./gradlew packageStandardDebug --stacktrace --info
+            fi
+            exit 1
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ci-android-debug
+          path: release/android/
+          retention-days: 7
