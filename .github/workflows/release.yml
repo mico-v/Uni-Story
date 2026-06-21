@@ -21,6 +21,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          lfs: true
 
       - name: Download Godot
         run: |
@@ -55,6 +57,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          lfs: true
 
       - name: Download Godot
         run: |
@@ -130,89 +134,29 @@ jobs:
           # Decode keystore
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > /tmp/release.jks
 
-          # Godot release export reads Android keystore settings from export_presets.cfg.
+          # Godot's Gradle template uses the keystore password as the key password.
+          # Patch the generated template so keystores with a separate key password work in CI.
+          TPL_DIR=android/build
           python - <<'PY'
           from pathlib import Path
 
-          path = Path("export_presets.cfg")
-          lines = path.read_text(encoding="utf-8").splitlines()
-          out = []
-          in_android_options = False
-          inserted = False
+          path = Path("android/build/build.gradle")
+          text = path.read_text(encoding="utf-8")
+          old = "keyPassword getReleaseKeystorePassword()"
+          new = 'keyPassword System.getenv("ANDROID_KEY_PASSWORD") ?: getReleaseKeystorePassword()'
 
-          for line in lines:
-              stripped = line.strip()
-              if stripped == "[preset.1.options]":
-                  in_android_options = True
-                  out.append(line)
-                  continue
+          if old not in text:
+              raise SystemExit(f"Unable to find signing keyPassword line in {path}")
 
-              if in_android_options and stripped.startswith("[preset."):
-                  out.extend([
-                      'keystore/release="/tmp/release.jks"',
-                      'keystore/release_user="${{ secrets.ANDROID_KEY_ALIAS }}"',
-                      'keystore/release_password="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}"',
-                  ])
-                  inserted = True
-                  in_android_options = False
-
-              if in_android_options and (
-                  stripped.startswith("keystore/release=")
-                  or stripped.startswith("keystore/release_user=")
-                  or stripped.startswith("keystore/release_password=")
-              ):
-                  continue
-
-              out.append(line)
-
-          if in_android_options and not inserted:
-              out.extend([
-                  'keystore/release="/tmp/release.jks"',
-                  'keystore/release_user="${{ secrets.ANDROID_KEY_ALIAS }}"',
-                  'keystore/release_password="${{ secrets.ANDROID_KEYSTORE_PASSWORD }}"',
-              ])
-
-          path.write_text("\n".join(out) + "\n", encoding="utf-8")
+          path.write_text(text.replace(old, new), encoding="utf-8")
           PY
 
-          # Inject signing config into Android Build Template
-          TPL_DIR=android/build
-          cat > "$TPL_DIR/gradle.properties" << PROPS
-          android.useAndroidX=true
-          KEY_STORE_PATH=/tmp/release.jks
-          KEY_STORE_PASSWORD=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
-          KEY_ALIAS=${{ secrets.ANDROID_KEY_ALIAS }}
-          KEY_PASSWORD=${{ secrets.ANDROID_KEY_PASSWORD }}
-          PROPS
-
-          # Also write a signing.gradle for Godot's gradle project template
-          cat > "$TPL_DIR/signing.gradle" << 'GRADLE'
-          android {
-              signingConfigs {
-                  release {
-                      storeFile file(System.getenv("KEY_STORE_PATH") ?: "/tmp/release.jks")
-                      storePassword System.getenv("KEY_STORE_PASSWORD") ?: ""
-                      keyAlias System.getenv("KEY_ALIAS") ?: ""
-                      keyPassword System.getenv("KEY_PASSWORD") ?: ""
-                  }
-              }
-              buildTypes {
-                  release {
-                      signingConfig signingConfigs.release
-                  }
-                  debug {
-                      signingConfig signingConfigs.release
-                  }
-              }
-          }
-          GRADLE
-
-          # Export env vars for gradle
+          # Godot reads these environment variables when the preset leaves release keystore fields empty.
           echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT" >> $GITHUB_ENV
-          echo "KEY_STORE_PATH=/tmp/release.jks" >> $GITHUB_ENV
-          echo "KEY_STORE_PASSWORD=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
-          echo "KEY_ALIAS=${{ secrets.ANDROID_KEY_ALIAS }}" >> $GITHUB_ENV
-          echo "KEY_PASSWORD=${{ secrets.ANDROID_KEY_PASSWORD }}" >> $GITHUB_ENV
+          echo "GODOT_ANDROID_KEYSTORE_RELEASE_PATH=/tmp/release.jks" >> $GITHUB_ENV
+          echo "GODOT_ANDROID_KEYSTORE_RELEASE_USER=${{ secrets.ANDROID_KEY_ALIAS }}" >> $GITHUB_ENV
+          echo "GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
+          echo "ANDROID_KEY_PASSWORD=${{ secrets.ANDROID_KEY_PASSWORD }}" >> $GITHUB_ENV
 
       - name: Import project
         run: godot --headless --import
@@ -220,13 +164,18 @@ jobs:
       - name: Export Android APK
         run: |
           mkdir -p release/android
-          godot --headless --export-release "Android" release/android/${{ env.PROJECT_NAME }}.apk
+          if ! godot --headless --export-release "Android" release/android/${{ env.PROJECT_NAME }}.apk; then
+            if [ -x android/build/gradlew ]; then
+              cd android/build
+              ./gradlew packageStandardRelease --stacktrace --info
+            fi
+            exit 1
+          fi
 
       - name: Clean up sensitive files
         if: always()
         run: |
           rm -f /tmp/release.jks
-          rm -f android/build/gradle.properties
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
