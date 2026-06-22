@@ -10,18 +10,6 @@ const SCENARIO_FILES := [
 	"res://resources/scenarios/test_all.txt",
 ]
 
-const REVIEW_REGRESSION_FILES := [
-	"res://resources/scenarios/review_regression_branch.txt",
-	"res://resources/scenarios/review_regression_branch_attr.txt",
-	"res://resources/scenarios/review_regression_resume.txt",
-]
-
-const REVIEW_SANITY_FILES := [
-	"res://resources/scenarios/review_regression_sanity.txt",
-]
-
-@export var include_review_scenarios := false
-@export var include_review_sanity := false
 const RESOURCE_ROOT := "res://resources/"
 
 # ── Subsystems (public, BaseBlock reaches them as nova.<name>) ───────
@@ -72,10 +60,6 @@ func _ready() -> void:
 	_setup_locale()
 
 	var scenario_files := SCENARIO_FILES.duplicate()
-	if include_review_scenarios:
-		scenario_files.append_array(REVIEW_REGRESSION_FILES)
-	if include_review_sanity:
-		scenario_files.append_array(REVIEW_SANITY_FILES)
 
 	_bind_view_controllers()
 	_init_view_manager()
@@ -345,13 +329,74 @@ func _on_quit() -> void:
 const CG_GALLERY_CONFIG := "res://resources/gallery/cg_gallery.txt"
 const MUSIC_GALLERY_CONFIG := "res://resources/gallery/music_gallery.txt"
 
+var _cg_entries: Array = []
+var _music_entries: Array = []
+
 func _load_gallery_configs() -> void:
-	if _cg_vc and FileAccess.file_exists(CG_GALLERY_CONFIG):
-		var cg_entries := GalleryConfigLoader.load_cg(CG_GALLERY_CONFIG)
-		_cg_vc.set_gallery(cg_entries)
-	if _music_vc and FileAccess.file_exists(MUSIC_GALLERY_CONFIG):
-		var music_entries := GalleryConfigLoader.load_music(MUSIC_GALLERY_CONFIG)
-		_music_vc.set_tracks(music_entries)
+	if FileAccess.file_exists(CG_GALLERY_CONFIG):
+		_cg_entries = GalleryConfigLoader.load_cg(CG_GALLERY_CONFIG)
+		_apply_gallery_unlocks("cg")
+		if _cg_vc:
+			_cg_vc.set_gallery(_cg_entries)
+	if FileAccess.file_exists(MUSIC_GALLERY_CONFIG):
+		_music_entries = GalleryConfigLoader.load_music(MUSIC_GALLERY_CONFIG)
+		_apply_gallery_unlocks("music")
+		if _music_vc:
+			_music_vc.set_tracks(_music_entries)
+	# Hook auto-unlock signals.
+	if audio and not audio.bgm_started.is_connected(_on_bgm_started):
+		audio.bgm_started.connect(_on_bgm_started)
+	if read_tracker and not read_tracker.gallery_unlocked.is_connected(_on_gallery_unlocked):
+		read_tracker.gallery_unlocked.connect(_on_gallery_unlocked)
+
+
+func _apply_gallery_unlocks(entry_type: String) -> void:
+	if read_tracker == null:
+		return
+	var entries: Array = _cg_entries if entry_type == "cg" else _music_entries
+	for entry in entries:
+		if entry is Dictionary:
+			var entry_name := str(entry.get("name", ""))
+			if entry_type == "cg" and read_tracker.is_cg_unlocked(entry_name):
+				entry["unlocked"] = true
+			elif entry_type == "music" and read_tracker.is_music_unlocked(entry_name):
+				entry["unlocked"] = true
+
+
+func _on_bgm_started(path: String) -> void:
+	if read_tracker == null:
+		return
+	for entry in _music_entries:
+		if entry is Dictionary:
+			var entry_path := str(entry.get("path", ""))
+			if entry_path == path or entry_path.get_file() == path.get_file():
+				read_tracker.mark_music(str(entry.get("name", "")))
+				return
+
+
+func _on_gallery_unlocked(entry_type: String, entry_name: String) -> void:
+	if entry_type == "cg" and _cg_vc:
+		for entry in _cg_entries:
+			if entry is Dictionary and str(entry.get("name", "")) == entry_name:
+				entry["unlocked"] = true
+		_cg_vc.set_gallery(_cg_entries)
+	elif entry_type == "music" and _music_vc:
+		for entry in _music_entries:
+			if entry is Dictionary and str(entry.get("name", "")) == entry_name:
+				entry["unlocked"] = true
+		_music_vc.set_tracks(_music_entries)
+
+
+## Called by the scenario engine when a CG is displayed in-game.
+func unlock_cg_by_path(tex_path: String) -> void:
+	if read_tracker == null:
+		return
+	for entry in _cg_entries:
+		if entry is Dictionary:
+			var entry_path := str(entry.get("texture_path", ""))
+			if entry_path == tex_path or entry_path.get_file() == tex_path.get_file():
+				read_tracker.mark_cg(str(entry.get("name", "")))
+				return
 
 
 # ── Keyboard shortcuts (non-game views + debug) ──────────────────────
@@ -428,6 +473,18 @@ func _on_setting_changed(key: String, value: Variant) -> void:
 				DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 			else:
 				DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+		"dialogue_opacity":
+			if dialogue_box:
+				dialogue_box.set_opacity(float(value) / 100.0)
+		"click_stop_anim":
+			if _game_vc:
+				_game_vc.click_stop_anim = bool(value)
+		"click_stop_voice":
+			if _game_vc:
+				_game_vc.click_stop_voice = bool(value)
+		"skip_unread":
+			if _game_vc:
+				_game_vc.skip_unread = bool(value)
 	_save_settings()
 
 

@@ -1,67 +1,192 @@
-# Nova2 对齐复盘
+# Uni-Story 代码审查报告
 
-## 1. 审核目标
-- 对齐 `Nova2` 行为语义的高风险路径：分支语义、加载边界、恢复挂起、系统快照、对象冻结、解析属性块、输入/本地化边界。
-- 每个关键点保留可复验记录；验收统一使用 Godot MCP 的 `run_scene` + `get_errors`。
+> 审查范围：全部 33 个 GDScript 源文件 + 10 个场景文件 + 配置文件 + 剧本文件
+> 审查日期：2026-06-22
+> 最后更新：2026-06-22（Phase 6-10 实施后同步）
+> 分支：dev（基于 rewrite/godot4.6 squash 后）
 
-## 2. 当前进度
+---
 
-### 已完成并验证
-- P0-1 分支语义：`branch()` 已承载 `dest/text/mode/cond/image`，`jump/show/enable` 与条件判断链路已打通。
-- P0-2 加载边界：`FlowChartGraph.sanity_check()` 返回错误列表，`ScriptLoader.load_all()` 失败时进入 `load_ok=false` 安全态。
-- P0-3 恢复挂起：`GameState`、`GDRuntime` 与异步播放链路已改为 awaitable 流程，避免同帧重入。
-- P1-4 系统快照：`animation/audio` 的 `snapshot()/restore()` 已串接到存档快照。
-- P1-5 对象/常量边界：`ObjectManager` 增加冻结态和告警，`SpriteComposer` 改为运行时绑定。
-- P1-6 条件分支解析与属性块：`NovaParser` 支持 `@[... ]@<|` / `@[... ]<|`，`ScriptLoader` 支持块属性缺省回填。
-- 任务8 Step1 输入事件下沉：章节选择与分支按钮分发已下沉到 `ChapterSelectViewController`、`ChoiceListController`。
-- 任务8 Step2 locale 回退链路：新增 `scripts/core/i18n.gd`，`NovaController` 已接入 `_setup_locale()` 与 `_localized_scenario_files()`。
-- 任务8 Step3 I18n 文案补齐：所有可见 UI 文本已通过 `_t()` 接入本地化；修复 `title.subtitle`、`title.first.selectchapter`、`ingame.log.button` 三个 JSON 翻译值与实际 UI 的不匹配；场景文件硬编码文案已对齐 i18n 值。
-- 任务8 Step4 最终验收：`run_scene` + `get_errors` + 截图确认标题界面与游戏界面文案正确。
-- VFX/Shader 系统：新增 `VFXSystem` 子系统、6 个 `.gdshader` 文件（blur/grayscale/dissolve/chromatic_aberration/vignette/wipe）；`BaseBlock` 新增 `vfx()`/`clear_vfx()`/`post_fx()`/`clear_post_fx()`/`shake()` API；`TransitionSystem` 扩展支持 dissolve/wipe shader 转场；`game_view.tscn` 新增 PostFXRect 全屏后处理节点；自检剧本 `test_vfx.txt` 已创建并纳入 SCENARIO_FILES。
-- 自动播放与快进模式：新增 `ReadTracker` 子系统（持久化已读记录至 `user://read_tracker.json`）；`GameState` 在 `dialogue_changed` 前调用 `mark_read()`；`NovaController` 新增 Auto（打字机结束后定时推进）和 Skip（跳过已读文本、遇到未读自动停止）两种模式，互斥切换；`game_view.tscn` 新增 Auto/Skip 按钮；`SaveSystem` 集成 read_tracker snapshot/restore；所有暂停条件（分支、章节结束、打开面板）均调用 `_deactivate_modes()`。
+## 一、架构总览
 
-### 待提交
-- 任务7 与任务8 当前代码层面已通过运行校验，但提交受环境影响尚未完成：`.git/index.lock` 无法创建（环境权限问题）。
+框架采用"模型-重放"架构：剧本在加载时通过 eager 块构建确定性的 FlowChartGraph（模型），lazy 块存储源码在执行时编译运行（表现层）。25 个子系统全部遵循 `class_name X extends RefCounted` + `_ctx: Node` 模式，通过 NovaController 服务定位器互相访问。
 
-## 3. 当前变更范围
-- 控制层：`scripts/NovaController.gd`（瘦身为协调器）
-- 视图管理：`scripts/core/view_manager.gd`
-- 图构建与校验：`scripts/core/script_loader.gd`, `scripts/core/flow_chart_graph.gd`, `scripts/core/flow_chart_node.gd`
-- 剧情推进与分支决策：`scripts/core/game_state.gd`
-- 已读追踪与存档：`scripts/core/read_tracker.gd`, `scripts/core/save_system.gd`
-- 运行时系统：`scripts/runtime/*`（含 `transition_system.gd` fade 修复、`prefab_loader.gd` 新增）
-- 视图控制器：`scripts/ui/title_view_controller.gd`, `scripts/ui/game_view_controller.gd`（含 `on_game_ended()`/`reset_world()` overlay 重置）, `scripts/ui/settings_view_controller.gd`, `scripts/ui/cg_gallery_controller.gd`, `scripts/ui/music_gallery_controller.gd`, `scripts/ui/chapter_select_view_controller.gd`, `scripts/ui/choice_list_controller.gd`, `scripts/ui/save_load_controller.gd`
-- 本地化：`scripts/core/i18n.gd`, `resources/localized_resources/localized_strings/*.json`
-- VFX/Shader：`scripts/runtime/vfx_system.gd`, `resources/shaders/*.gdshader`
-- 场景：`scene/game.tscn`, `scene/view/title_view.tscn`, `scene/view/chapter_select_view.tscn`, `scene/view/game_view.tscn`, `scene/view/settings_view.tscn`, `scene/view/cg_gallery_view.tscn`, `scene/view/music_gallery_view.tscn`, `scene/view/save_load_view.tscn`
-- 剧本：`resources/scenarios/test_all.txt`（合并 5 个测试脚本）, `resources/scenarios/plan_demo.txt`（增强演示）
-- 回归场景：`resources/scenarios/review_regression_*.txt`
+**优势**：
+- 模型与表现完全分离，GameState 不持有任何视图引用
+- 存档通过 snapshot + lazy block replay 恢复，设计优雅
+- GDScript 运行时编译让剧本拥有完整语言能力（循环、条件、Vector3、Color 等）
+- 子系统 API 表面丰富，BaseBlock 暴露 ~40 个方法覆盖所有系统
 
-## 4. 验收记录
-- 2026-06-16：任务5/6/7 回归通过，`run_scene(res://scene/game.tscn, wait_for_runtime=false)` + `get_errors(include_warnings=true)` 结果 `error_count=0`。
-- 2026-06-16：任务8 Step1/2 与部分 Step3 回归通过，`run_scene(res://scene/game.tscn, wait_for_runtime=false)` + `get_errors(include_warnings=true)` 结果 `error_count=0`。
-- 2026-06-16：任务8 Step3/4 完成，i18n 文案全部补齐并通过回归；截图确认标题界面 "Story With Y" + "开始游戏" 正确显示，`get_errors` 结果 `error_count=0`。
-- 2026-06-16：VFX/Shader 系统完成，`run_scene(res://scene/game.tscn)` + `get_errors(include_warnings=true)` 结果 `error_count=0`；截图确认标题界面正常。
-- 2026-06-16：自动播放与快进模式完成，`run_scene(res://scene/game.tscn)` + `get_errors(include_warnings=true)` 结果 `error_count=0`；ReadTracker 持久化、Auto/Skip 互斥、存读档集成均已就绪。
-- 2026-06-16：ViewManager + GALGAME 菜单重构完成。新增 `ViewManager` 子系统（fade/slide/instant 过渡动画），`TitleViewController`（GALGAME 左侧列表菜单），`GameViewController`（从 NovaController 提取全部游戏逻辑），`SettingsViewController`（文字速度/音量/全屏/语言/字体大小），`CgGalleryController`（缩略图网格+全屏预览），`MusicGalleryController`（曲目列表+播放控制）。NovaController 从 760 行瘦身为 240 行协调器。`run_scene(res://scene/game.tscn)` + `get_errors(include_warnings=true)` 结果 `error_count=0`。
-- 2026-06-18：独立存读档界面完成。新增 `SaveLoadController`（89 行）+ `SaveLoadView.tscn`，GALGAME 侧栏风格，主菜单"读取存档"直接进入。NovaController 新增 `_on_title_load()` / `_on_save_load_completed()` 桥接。`run_scene(res://scene/game.tscn)` + `get_errors(include_warnings=true)` 结果 `error_count=0`。
-- 2026-06-18：测试剧本整合 + 演示增强。5 个独立测试脚本合并为 `test_all.txt`（6 项分支菜单），`plan_demo.txt` 增强为 5 章结构含说话人标签和 fade 转场。`run_scene` + `get_errors` 结果 `error_count=0`。
-- 2026-06-18：`is_end()` 黑屏修复。`TransitionSystem.play("fade")` 改为完整淡出+淡入（Tween 链式 0→1→0），`flash` 改为顺序 Tween 避免并发冲突。`GameViewController.on_game_ended()` 和 `reset_world()` 新增 overlay 重置（visible=false, color.a=0）。`run_scene(res://scene/game.tscn)` + `get_errors` 结果 `error_count=0`。
-- 2026-06-18：PrefabLoader 子系统完成。新增 `prefab_loader.gd`（幂等加载 .tscn 预制体，注册到 ObjectManager，世界/UI 双挂载，snapshot/restore 支持）。修改 `object_manager.gd`（加 `unbind_object_runtime`）、`NovaController.gd`（注册子系统）、`base_block.gd`（4 个 API：`load_prefab/show_prefab/hide_prefab/destroy_prefab`）、`game_state.gd`（snapshot/restore 集成）、`game_view_controller.gd`（reset_world 清理 + get_hud getter）。新建 `resources/prefabs/test_particles.tscn` 测试预制体。`test_all.txt` 新增 Section 6 Prefab 测试章节。`run_scene(res://scene/game.tscn)` + `get_errors` 结果 `error_count=0`。
-- 2026-06-18：脚本热加载完成。新增 `scripts/core/hot_reload.gd`（轮询 `FileAccess.get_modified_time()` 检测文件变化，debounce 防误触，自动重新解析剧本并返回标题页）。修改 `gd_runtime.gd`（加 `clear_cache()` 清空编译缓存）。`NovaController.gd` 注册第 21 个子系统并在 `_ready()` 末尾启动监听。仅 `OS.is_debug_build()` 时启用。控制台输出 `[HotReload] watching N scenario files`。`run_scene(res://scene/game.tscn)` + `get_errors` 结果 `error_count=0`。
-- 2026-06-18：快捷键系统完成。新增 `scripts/core/shortcut_manager.gd`（可定制键盘快捷键，ConfigFile 持久化到 `user://config/keybinds.cfg`，remap/reset_all API 供未来设置 UI 使用）。`project.godot` 新增 `[input]` 段定义 14 个默认键位。`GameViewController` 新增 `_unhandled_input()` 处理游戏内快捷键（Space 推进、A 自动、S 快进、F5/F7 存读档、F6/F8 快速存取、L 回顾、H 隐藏对话框、F11 全屏、Esc 返回标题、F5 调试重载、U 解锁章节）。`NovaController` 新增 `_unhandled_input()` 处理非游戏视图导航（Esc 从设置/鉴赏/读档返回标题、Space 在标题开始游戏）。面板打开时屏蔽非关键快捷键。`run_scene(res://scene/game.tscn)` + `get_errors` 结果 `error_count=0`。
-- 2026-06-18：TimelineController 完成。新增 `scripts/runtime/timeline.gd`（轨道式调度器，`at(time, callable)` 精确时间偏移编排，支持 `show_at/hide_at/cam_at/trans_at/se_at` 便捷方法，`play()` 启动所有轨道并行执行，`await_finished()` 可等待完成）。`base_block.gd` 新增 `timeline()` 工厂方法。`gd_runtime.gd` 新增 `Timeline` 异步检测（自动 await 直到所有轨道完成）。NovaScript 用法：`var tl = timeline(); tl.at(0.0, func(): show(...)).at(0.5, func(): cam(...)).play()`。`run_scene(res://scene/game.tscn)` + `get_errors` 结果 `error_count=0`。
-- 2026-06-18：视频播放系统完成。新增 `scripts/runtime/video_system.gd`（VideoStreamPlayer 全屏播放，支持 .ogv/.webm，点击/Space/Enter/Esc 跳过，`play_video()` 返回 Signal 供 GDRuntime await）。`NovaController.gd` 注册第 23 个子系统。`base_block.gd` 新增 `play_video(path, skippable)` API。`game_view_controller.gd` 的 `reset_world()` 新增视频清理。`run_scene(res://scene/game.tscn)` + `get_errors` 结果 `error_count=0`。
-- 2026-06-18：鼠标菜单完成。`game_view_controller.gd` 新增右键上下文菜单（PanelContainer + VBoxContainer，8 个菜单项：存档/读档/回顾/设置/自动/快进/标题/退出），`_gui_input()` 处理右键打开/左键关闭，视口边界钳位，`reset_world()` 自动隐藏。i18n 完整接入。`run_scene(res://scene/game.tscn)` + `get_errors` 结果 `error_count=0`。
-- 2026-06-18：警告框/通知框完成。新增 `scripts/ui/dialog_system.gd`（DialogSystem 子系统，Toast 顶部通知自动淡出 + Confirm 模态确认对话框 OK/Cancel）。`NovaController` 注册第 24 个子系统。`base_block.gd` 新增 `show_toast()` / `show_confirm()` API。`game_view_controller.gd`：快速存档 Toast 反馈、Esc/鼠标菜单返回标题确认对话框、退出游戏确认对话框。`run_scene(res://scene/game.tscn)` + `get_errors` 结果 `error_count=0`。
-- 2026-06-18：预加载系统完成。新增 `scripts/core/preload_system.gd`（ResourceLoader 异步后台加载，`preload_asset()` 请求、`is_ready()` 检查、`get_cached()` 获取、`get_progress()` 进度、`clear_cache()` 清理）。`NovaController` 注册第 25 个子系统。`base_block.gd` 新增 `preload_asset()` API。NovaScript 在 eager 块中预加载下一章资源，Godot 内部缓存命中免卡顿。`run_scene(res://scene/game.tscn)` + `get_errors` 结果 `error_count=0`。
+---
 
-## 5. 暂时收尾状态
-- 当前可停点：所有 PLAN.md 主要功能项完成。25 个子系统。运行无 Godot 错误。
-- 剩余项：随意缩放窗口、对话框完整功能、手柄支持、立绘裁剪工具。
-- 提交策略：按范围拆分提交。
+## 二、Bug（按严重程度排序）
 
-## 6. 复用规则
-- 验收只采用：`mcp__godot__run_scene` + `mcp__godot__get_errors`。
-- 不使用 `send_input`。
-- 计划文件只记录执行状态与下一步，复盘文件只保留进度总览，避免重复记录。
+### HIGH
+
+| # | 位置 | 问题 | 影响 |
+|---|------|------|------|
+| B1 | `game_view_controller.gd` L261-265 | `ui_settings` 快捷键 (F1) 只关闭面板，不打开设置 | 按键无响应 |
+| B2 | `project.godot` + `shortcut_manager.gd` | `ui_save` 和 `debug_reload` 共用 F5 | 调试模式下 F5 同时触发存档和热重载 |
+| B3 | `prefab_loader.gd` L222-236 | `_ui_parent()` 逻辑反转：找到 GameView 时返回 null | UI 预制体永远无法加载 |
+| B4 | `vfx_system.gd` L140 | `get_shader_uniform_list(false)` 是 Godot 3.x API，4.6 无此参数 | 可能运行时崩溃 |
+| B5 | `game_view_controller.gd` `_on_slot_pressed` | 游戏内读档调用 `load_game()` 之前没有调 `reset_world()` | 读档后残留旧场景状态（prefab/视频/音频） |
+| B6 | `gd_runtime.gd` L32 | 缓存键用 `source.hash()`（32位整数），大型项目可能哈希碰撞 | 错误块被执行 |
+
+### MEDIUM
+
+| # | 位置 | 问题 | 影响 |
+|---|------|------|------|
+| B7 | `dialog_system.gd` L144-152 | 确认对话框 OK/Cancel 按钮硬编码英文，未接入 i18n | 切换语言后按钮仍显示英文 |
+| B8 | `music_gallery_controller.gd` L35-41 | BGM 播放器通过遍历子节点按名字查找，耦合脆弱 | AudioSystem 改名则自动连播失效 |
+| B9 | `script_loader.gd` L35 | 最后一个文件末尾的 pending lazy 块未 flush | 尾部 lazy 块静默丢失 |
+| B10 | `animation_chain.gd` L92 | `emit_signal("finished")` 使用 Godot 3 语法 | 风格不一致，4.x 推荐 `finished.emit()` |
+| B11 | `graphics.gd` L126-170 | `snapshot()` 捕获 `texture_path` 但 `restore()` 不恢复 | 快照数据冗余，可能误导开发者 |
+| B12 | `composite_sprite.gd` L52-54 | `clear_layers()` 用 `queue_free` 异步删除但立即清空 `_layers` | 同帧内引用层会悬空 |
+
+### LOW
+
+| # | 位置 | 问题 | 影响 |
+|---|------|------|------|
+| B13 | `save_system.gd` L35-36 | `data.has("version")` 永远为 true（刚赋值） | 死代码 |
+| B14 | `variables.gd` L30 | `add_var` 用 `float()` 强转，整数变浮点 | 类型意外变化 |
+| B15 | `transition_system.gd` L39-47 | "flash" 实现与 "fade" 完全相同 | 冗余代码 |
+| B16 | `audio_system.gd` L110-119 | Voice restore 不 seek 到保存的播放位置（BGM 会 seek） | 语音位置丢失 |
+| B17 | `dialogue_box.tscn` L27 | Speaker offset 144.6px（亚像素），可能渲染模糊 | 轻微视觉瑕疵 |
+
+---
+
+## 三、设计问题
+
+### 3.1 存档恢复覆盖不完整
+
+当前 `snapshot()` 收集 5 个子系统：animation, audio, prefab_loader, camera, graphics。
+
+**缺失的子系统**：
+- **VFXSystem**：无 snapshot/restore，活跃 shader 效果（blur/grayscale/后处理）存读档后丢失
+- **DialogueBoxSystem**：对话框位置不存档，`set_box("center")` 后存档恢复位置取决于 replay 窗口
+- **SpriteComposer**：立绘图层不存档，依赖 lazy block replay 重建，但只覆盖当前节点
+- **TransitionSystem**：转场中存档会丢失 overlay 状态
+
+**影响**：存档正确性完全依赖剧本作者在 lazy 块中正确设置所有表现状态。跨节点的 VFX/立绘状态在读档后会丢失。
+
+### 3.2 图完整性
+
+- **无循环检测**：`FlowChartGraph.sanity_check()` 验证跳转目标存在，但不检测 A→B→A 的无限循环。`advance()` 会永久挂起
+- **CHAPTER 类型无行为**：`is_chapter()` 设置节点类型为 CHAPTER，但 GameState 和所有 ViewController 都不区分 CHAPTER 和 NORMAL
+- **`is_debug` 标志无行为**：标记了但无代码过滤或高亮
+- **`is_end(name)` 忽略 name 参数**：不支持命名结局（用于画廊解锁追踪等）
+
+### 3.3 运行时安全性
+
+- **GDRuntime 无超时机制**：死循环或永不完成的 Tween 会永久挂起故事
+- **`_eval_condition` 编译失败静默返回 false**：隐藏剧本作者的条件表达式错误
+- **`_eval_condition` 命名空间碰撞**：条件表达式中变量名若与 BaseBlock 方法名冲突（如 `show`），会调用方法而非读变量
+- **PreloadSystem 无取消机制**：预加载请求无法取消，玩家切走后仍在加载
+- **ReadTracker 不自动持久化**：`mark_read()` 更新内存但不写磁盘，崩溃则丢失已读记录
+
+### 3.4 信号与死代码
+
+| 信号 | 位置 | 状态 |
+|------|------|------|
+| `game_state.node_changed` | game_state.gd | 定义并 emit 但无消费者 |
+| `game_state.game_started` | game_state.gd | 定义并 emit 但无消费者 |
+| `debug_unlock` (KEY_U) | project.godot | 定义输入动作但无 `_unhandled_input` 处理 |
+
+| 文件 | 状态 |
+|------|------|
+| `scripts/ui/chapter_select_view_controller.gd.uid` | 孤立 .uid 文件，对应 .gd 已删除 |
+| `scene/ui/dialogue_entry.tscn` | 无脚本或场景引用 |
+| `REVIEW_REGRESSION_FILES` / `REVIEW_SANITY_FILES` | NovaController 引用的剧本路径不存在（被 @export 门控，默认不加载） |
+
+---
+
+## 四、功能缺口（场景系统支持但 UI 未暴露）
+
+| 功能 | 剧本 API / i18n 支持 | UI 状态 |
+|------|---------------------|---------|
+| 分支图片 | `branch([{image="..."}])` 解析+存储完整 | ✅ ChoiceListController 渲染缩略图（Phase 8） |
+| 回顾跳转 | `log.moveback.confirm` i18n 键存在 | ✅ 点击回顾条目跳回对应位置（Phase 8） |
+| 对话框透明度 | `config.item.dialogueopacity` i18n 键 | ✅ SettingsViewController 滑块绑定（Phase 6） |
+| 点击停止动画 | `config.item.clickstopanimation` i18n 键 | ✅ SettingsViewController 开关（Phase 6） |
+| 点击停止语音 | `config.item.clickstopvoice` i18n 键 | ✅ SettingsViewController 开关（Phase 6） |
+| 快进未读文本 | `config.item.fastforwardunread` i18n 键 | ✅ SettingsViewController 开关（Phase 6） |
+| 角色独立音量 | `config.item.charactervolume.*` i18n 键 | 无每角色音量控制 |
+| 操作帮助 | `title.menu.help` i18n 键 | 标题界面无帮助按钮 |
+| 存档覆盖确认 | `bookmark.overwrite.confirm` i18n 键 | ✅ show_confirm 确认对话框（Phase 6） |
+| 存档删除 | `bookmark.delete.confirm` i18n 键 | ✅ 每槽删除按钮（Phase 6） |
+| 条件分支 | `branch()` 的 `cond` 字段完整实现 | ✅ test_all.txt 补充测试用例（Phase 8） |
+| `stop_bgm` | BaseBlock API 已实现 | 无任何剧本使用 |
+| `show_toast` / `show_confirm` | BaseBlock API 已实现 | 仅在 GameViewController 内部使用，剧本中无示例 |
+| CG 动态解锁 | gallery 配置 `unlocked=true` 硬编码 | ✅ ReadTracker + graphics.show() 自动解锁（Phase 9） |
+| 音乐动态解锁 | — | ✅ AudioSystem.bgm_started 信号自动解锁（Phase 9） |
+| 快速存档/读档 | — | ✅ 鼠标右键菜单快存快读条目（Phase 10） |
+
+---
+
+## 五、代码质量观察
+
+### 5.1 正面评价
+
+- **一致性高**：所有子系统遵循相同模式（RefCounted + _ctx + snapshot/restore），学习一个新系统即可理解全部
+- **无 TODO/FIXME/stub**：所有声明的功能都已实现，代码完成度极高
+- **错误处理合理**：null 检查、push_warning 降级、早期返回的模式贯穿全部代码
+- **NovaScript 设计优雅**：把剧本块当真正的 GDScript 编译，避免手写表达式求值器
+- **存档架构健壮**：snapshot/replay/restore 三层机制，理论上可恢复任意状态
+
+### 5.2 改进建议（非 Bug）
+
+1. **条件表达式缓存**：`_eval_condition` 每次编译新 GDScript，频繁分支会重复编译相同条件。加 hash 缓存
+2. **~~BGM 交叉淡入淡出~~**：✅ 已实现双播放器 crossfade（Phase 7）
+3. **~~SE 池耗尽策略~~**：✅ 已改为抢占最早播放的 SE（Phase 7）
+4. **~~AudioSystem 音频总线~~**：✅ 已创建 BGM/SE/Voice 独立总线路由到 Master（Phase 7）
+5. **TextureRect 支持**：`Graphics.show()` 硬编码 `.png` 扩展名，不支持 JPG/WebP/SVG
+6. **Backlog 持久化**：文本回顾历史不存入存档，读档后回顾面板为空
+7. **~~Gallery 动态解锁~~**：✅ CG/BGM 已接入 ReadTracker 和 AudioSystem 信号（Phase 9）
+
+---
+
+## 六、场景文件问题
+
+| 文件 | 问题 |
+|------|------|
+| `title_view.tscn` | ContentArea 空白（右侧占满屏幕但不显示任何内容，可放 logo 或动画背景） |
+| `game_view.tscn` | TransitionOverlay `layout_mode=0` 与其他 Hud 子节点不一致 |
+| `game_view.tscn` | ~~ChoiceList 无最大尺寸约束~~ | ✅ 已添加最大高度约束（6 项 + ScrollContainer）（Phase 10） |
+| `dialogue_box.tscn` | ContinueIcon 用 Unicode "▼"，换字体时可能缺失字形 |
+| `main_theme.tres` | 无 ScrollContainer/GridContainer 样式，CG 画廊网格和滚动条用默认样式 |
+| `main_theme.tres` | 无自定义字体资源，CJK 覆盖依赖平台默认字体 |
+
+---
+
+## 七、统计
+
+| 类别 | 数量 |
+|------|------|
+| GDScript 源文件 | 34 |
+| 场景文件 (.tscn) | 10 |
+| Shader 文件 | 6 |
+| 剧本文件 | 3 |
+| i18n 语言文件 | 2 (zh/en) |
+| 总代码行数 | ~4800 |
+| 子系统数 | 25 |
+| BaseBlock API 方法 | ~40 |
+| Bug (HIGH) | 6 |
+| Bug (MEDIUM) | 6 |
+| Bug (LOW) | 5 |
+| 功能缺口（未实现） | 4 |
+| 功能缺口（已实现） | 12 |
+| 设计问题 | 4 大类 |
+| 死代码/孤立文件 | 5 |
+
+---
+
+## 八、Phase 6-10 实施记录
+
+| Phase | 内容 | 提交 | 日期 |
+|-------|------|------|------|
+| Phase 6 | 设置扩展 + 存档 UX | c37fa10 | 2026-06-22 |
+| Phase 7 | 音频独立总线 + BGM 交叉淡入 + SE 抢占 | 637492e | 2026-06-22 |
+| Phase 8 | 分支图片 + 条件分支测试 + 回顾跳转 | 72b1349 | 2026-06-22 |
+| Phase 9 | 画廊动态解锁 CG/BGM | e0ebbd8 | 2026-06-22 |
+| Phase 10 | ChoiceList 限高 + Toast 自适应 + 鼠标菜单快存快读 | 5b74b61 | 2026-06-22 |
+| 后续修复 | 严格模式错误清理（get_bus_layout/shadowed var/confusable decl/unused param） | ed924a1 | 2026-06-22 |

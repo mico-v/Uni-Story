@@ -92,3 +92,40 @@ func set_layer(char_name: String, layer: String, key: Variant = "") -> void:
 func hide_char(char_name: String) -> void:
 	if _chars.has(char_name):
 		_chars[char_name].visible = false
+
+
+## Free all character nodes and clear internal references.
+## Called during reset_world() to prevent dangling references.
+func clear_all() -> void:
+	for char_name in _chars:
+		var cs: CompositeSprite = _chars[char_name]
+		if is_instance_valid(cs):
+			cs.clear_layers()
+			cs.queue_free()
+		if _ctx.object_manager:
+			_ctx.object_manager.unbind_object_runtime(char_name)
+	_chars.clear()
+
+
+func snapshot() -> Dictionary:
+	var data := {}
+	for char_name in _chars:
+		var cs: CompositeSprite = _chars[char_name]
+		if is_instance_valid(cs) and cs.visible:
+			var state := cs.layer_state()
+			if not state.is_empty():
+				data[char_name] = state
+	return data
+
+
+func restore(data: Dictionary) -> void:
+	for char_name in data:
+		var layer_map: Dictionary = data[char_name]
+		if layer_map.is_empty():
+			continue
+		var cs := _get_or_create(char_name)
+		for layer in layer_map:
+			var tex_path: String = str(layer_map[layer])
+			if ResourceLoader.exists(tex_path):
+				cs.set_layer(layer, load(tex_path))
+		cs.visible = true

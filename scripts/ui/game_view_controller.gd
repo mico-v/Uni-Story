@@ -38,7 +38,7 @@ var _auto_btn: Button
 var _skip_btn: Button
 var _overlay: ColorRect
 var _post_fx_rect: ColorRect
-var _continue_icon: Label
+var _continue_icon: TextureRect
 var _avatar_rect: TextureRect
 
 # ── Save/load panel ──────────────────────────────────────────────────
@@ -71,6 +71,11 @@ var _is_skip := false
 var _auto_gen := 0
 var _skip_gen := 0
 
+# ── Gameplay settings (set by SettingsViewController) ─────────────────
+var click_stop_anim := true
+var click_stop_voice := true
+var skip_unread := false
+
 
 # ── Lifecycle ────────────────────────────────────────────────────────
 
@@ -92,7 +97,7 @@ func _bind_nodes() -> void:
 		_dbox = _hud.get_node_or_null("DialogueBox") as Panel
 		_speaker_label = _hud.get_node_or_null("DialogueBox/Speaker") as Label
 		_story_label = _hud.get_node_or_null("DialogueBox/Story") as RichTextLabel
-		_continue_icon = _hud.get_node_or_null("DialogueBox/ContinueIcon") as Label
+		_continue_icon = _hud.get_node_or_null("DialogueBox/ContinueIcon") as TextureRect
 		_avatar_rect = _hud.get_node_or_null("DialogueBox/Avatar") as TextureRect
 		_choice_list = _hud.get_node_or_null("ChoiceList") as VBoxContainer
 		if _choice_list is ChoiceListController:
@@ -136,6 +141,16 @@ func _bind_nodes() -> void:
 	for child in [_speaker_label, _story_label, _continue_icon, _avatar_rect]:
 		if child is Control:
 			child.mouse_filter = MOUSE_FILTER_IGNORE
+	# Create a small downward-pointing triangle texture for ContinueIcon.
+	if _continue_icon:
+		var img := Image.create(16, 10, false, Image.FORMAT_RGBA8)
+		img.fill(Color(0, 0, 0, 0))
+		var tri_color := Color(0.55, 0.38, 0.65, 0.9)
+		for row in 8:
+			var half := row / 2
+			img.fill_rect(Rect2i(8 - half - 1, row + 1, half * 2 + 2, 1), tri_color)
+		var tex := ImageTexture.create_from_image(img)
+		_continue_icon.texture = tex
 	if _restart_btn:
 		_restart_btn.visible = false
 	if _save_btn:
@@ -199,6 +214,9 @@ func _connect_signals() -> void:
 	if _choice_list_controller:
 		if not _choice_list_controller.choice_chosen.is_connected(_on_choice):
 			_choice_list_controller.choice_chosen.connect(_on_choice)
+	if _ctx.backlog:
+		if not _ctx.backlog.jump_requested.is_connected(_on_backlog_jump):
+			_ctx.backlog.jump_requested.connect(_on_backlog_jump)
 
 
 # ── Keyboard shortcuts ───────────────────────────────────────────────
@@ -262,6 +280,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_close_save_panel()
 		if _backlog_panel:
 			_backlog_panel.visible = false
+		settings_requested.emit()
 		get_viewport().set_input_as_handled()
 	elif sm.is_action_pressed("ui_leave"):
 		if _ctx.dialog_system:
@@ -326,6 +345,9 @@ func reset_world() -> void:
 	# Clean up runtime-loaded prefabs.
 	if _ctx and _ctx.prefab_loader:
 		_ctx.prefab_loader.destroy_all()
+	# Clean up character sprites (CompositeSprite nodes).
+	if _ctx and _ctx.composer:
+		_ctx.composer.clear_all()
 	# Stop any playing video.
 	if _ctx and _ctx.video_system:
 		_ctx.video_system.stop()
@@ -438,7 +460,12 @@ func on_dialogue_changed(speaker: String, text: String) -> void:
 	if _choice_list:
 		_choice_list.visible = false
 	if _ctx.backlog:
-		_ctx.backlog.record(speaker, text)
+		var node_name := ""
+		var entry_idx := -1
+		if _ctx.game_state and _ctx.game_state.current_node:
+			node_name = str(_ctx.game_state.current_node.name)
+			entry_idx = _ctx.game_state.current_index
+		_ctx.backlog.record(speaker, text, node_name, entry_idx)
 	_start_typewriter(text)
 	# Skip mode: fast-forward read entries, stop at unread.
 	if _is_skip and _ctx.game_state and _ctx.game_state.current_node:
@@ -572,9 +599,12 @@ func _on_dbox_click(event: InputEvent) -> void:
 
 func _on_next() -> void:
 	if _is_typing:
-		_finish_typewriter()
-		_deactivate_modes()
+		if click_stop_anim:
+			_finish_typewriter()
+			_deactivate_modes()
 		return
+	if click_stop_voice and _ctx.audio:
+		_ctx.audio.stop_voice()
 	if _ctx.game_state and _ctx.game_state.is_waiting_input:
 		_deactivate_modes()
 		_ctx.game_state.continue_after_input()
@@ -616,9 +646,14 @@ func _on_skip_toggled() -> void:
 		_is_auto = false
 		if _auto_btn:
 			_auto_btn.button_pressed = false
-		if _ctx.game_state and _ctx.game_state.is_waiting_input and _ctx.game_state.current_node and _ctx.read_tracker:
-			if _ctx.read_tracker.is_read(_ctx.game_state.current_node.name, _ctx.game_state.current_index):
+		if _ctx.game_state and _ctx.game_state.is_waiting_input:
+			var can_skip := skip_unread
+			if not can_skip and _ctx.game_state.current_node and _ctx.read_tracker:
+				can_skip = _ctx.read_tracker.is_read(_ctx.game_state.current_node.name, _ctx.game_state.current_index)
+			if can_skip:
 				_finish_typewriter()
+				if click_stop_voice and _ctx.audio:
+					_ctx.audio.stop_voice()
 				var gen := _skip_gen
 				get_tree().create_timer(SKIP_DELAY).timeout.connect(_on_skip_advance.bind(gen))
 			else:
@@ -670,7 +705,9 @@ func _open_backlog() -> void:
 		_backlog_panel.visible = true
 	await get_tree().process_frame
 	if _ctx.backlog:
-		for entry in _ctx.backlog.entries():
+		var entries = _ctx.backlog.entries()
+		for i in entries.size():
+			var entry: Dictionary = entries[i]
 			var lbl := RichTextLabel.new()
 			lbl.bbcode_enabled = true
 			lbl.fit_content = true
@@ -682,6 +719,12 @@ func _open_backlog() -> void:
 				lbl.text = text
 			else:
 				lbl.text = "[b]%s[/b]：%s" % [speaker, text]
+			# Make clickable for jump-back (only if position data exists).
+			var node_name := str(entry.get("node", ""))
+			var entry_idx: int = int(entry.get("index", -1))
+			if node_name != "" and entry_idx >= 0:
+				lbl.mouse_filter = Control.MOUSE_FILTER_STOP
+				lbl.gui_input.connect(_on_backlog_entry_click.bind(i, lbl))
 			_backlog_list.add_child(lbl)
 	await get_tree().process_frame
 	# Lock in measured heights so fit_content never recomputes to zero.
@@ -690,6 +733,27 @@ func _open_backlog() -> void:
 			child.custom_minimum_size.y = child.size.y
 	if _backlog_scroll:
 		_backlog_scroll.scroll_vertical = int(_backlog_scroll.get_v_scroll_bar().max_value)
+
+
+func _on_backlog_entry_click(event: InputEvent, entry_index: int, _lbl: RichTextLabel) -> void:
+	if event is InputEventMouseButton:
+		var mb := event as InputEventMouseButton
+		if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT and not mb.is_echo():
+			if _ctx.backlog:
+				_ctx.backlog.request_jump(entry_index)
+
+
+func _on_backlog_jump(node_name: String, entry_index: int) -> void:
+	if _ctx.dialog_system:
+		var msg := _t("log.moveback.confirm", "要跳回到这个位置吗？")
+		var sig: Signal = _ctx.dialog_system.show_confirm(_t("ui.label.backlog", "文本回顾"), msg)
+		var confirmed: bool = await sig
+		if not confirmed:
+			return
+	if _backlog_panel:
+		_backlog_panel.visible = false
+	if _ctx.game_state:
+		_ctx.game_state.jump_to_position(node_name, entry_index)
 
 
 # ── Save/load panel ──────────────────────────────────────────────────
@@ -703,13 +767,25 @@ func _open_save_panel(save_mode: bool) -> void:
 	if _ctx.save_system == null:
 		return
 	for slot in _ctx.save_system.SLOT_COUNT:
+		var has: bool = _ctx.save_system.has_save(slot)
 		var label := _t("ui.save.slot_format", "存档位 %d：%s") % [slot + 1, _ctx.save_system.slot_label(slot)]
+		var row := HBoxContainer.new()
+		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_theme_constant_override("separation", 8)
 		var b := _make_button(label)
-		b.custom_minimum_size = Vector2(360, 40)
-		if not save_mode and not _ctx.save_system.has_save(slot):
+		b.custom_minimum_size = Vector2(300, 40)
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		if not save_mode and not has:
 			b.disabled = true
 		b.pressed.connect(_on_slot_pressed.bind(slot))
-		_save_slots.add_child(b)
+		row.add_child(b)
+		if has:
+			var del_btn := Button.new()
+			del_btn.text = _t("bookmark.delete.button", "删除")
+			del_btn.custom_minimum_size = Vector2(60, 40)
+			del_btn.pressed.connect(_on_slot_delete.bind(slot))
+			row.add_child(del_btn)
+		_save_slots.add_child(row)
 	if _save_panel:
 		_save_panel.visible = true
 
@@ -723,14 +799,66 @@ func _on_slot_pressed(slot: int) -> void:
 	if _ctx.save_system == null:
 		return
 	if _save_mode:
+		if _ctx.save_system.has_save(slot) and _ctx.dialog_system:
+			var msg := _t("bookmark.overwrite.confirm", "覆盖存档{0}？").format([slot + 1])
+			var sig: Signal = _ctx.dialog_system.show_confirm(_t("ingame.save.button", "存档"), msg)
+			var confirmed: bool = await sig
+			if not confirmed:
+				return
 		if _ctx.save_system.save(slot):
 			if _status_label:
 				_status_label.text = _t("ui.status.saved", "状态：已存档到位 %d") % (slot + 1)
+			_refresh_save_slots()
 		_close_save_panel()
 	else:
+		if _ctx.dialog_system:
+			var msg := _t("bookmark.load.confirm", "读取存档{0}？").format([slot + 1])
+			var sig: Signal = _ctx.dialog_system.show_confirm(_t("ingame.load.button", "读档"), msg)
+			var confirmed: bool = await sig
+			if not confirmed:
+				return
 		_close_save_panel()
 		if _ctx.save_system.load_slot(slot):
+			reset_world()
 			load_game()
+
+
+func _on_slot_delete(slot: int) -> void:
+	if _ctx.save_system == null or _ctx.dialog_system == null:
+		return
+	var msg := _t("bookmark.delete.confirm", "要删除存档{0}吗？").format([slot + 1])
+	var sig: Signal = _ctx.dialog_system.show_confirm(_t("bookmark.delete.button", "删除"), msg)
+	var confirmed: bool = await sig
+	if not confirmed:
+		return
+	_ctx.save_system.delete_slot(slot)
+	_refresh_save_slots()
+
+
+func _refresh_save_slots() -> void:
+	if _save_slots == null or _ctx.save_system == null:
+		return
+	_clear_children(_save_slots)
+	for slot in _ctx.save_system.SLOT_COUNT:
+		var has: bool = _ctx.save_system.has_save(slot)
+		var label := _t("ui.save.slot_format", "存档位 %d：%s") % [slot + 1, _ctx.save_system.slot_label(slot)]
+		var row := HBoxContainer.new()
+		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_theme_constant_override("separation", 8)
+		var b := _make_button(label)
+		b.custom_minimum_size = Vector2(300, 40)
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		if not _save_mode and not has:
+			b.disabled = true
+		b.pressed.connect(_on_slot_pressed.bind(slot))
+		row.add_child(b)
+		if has:
+			var del_btn := Button.new()
+			del_btn.text = _t("bookmark.delete.button", "删除")
+			del_btn.custom_minimum_size = Vector2(60, 40)
+			del_btn.pressed.connect(_on_slot_delete.bind(slot))
+			row.add_child(del_btn)
+		_save_slots.add_child(row)
 
 
 # ── Mouse menu (right-click context menu) ────────────────────────────
@@ -772,6 +900,8 @@ func _show_mouse_menu(at_pos: Vector2) -> void:
 	var items := [
 		[_t("ingame.save.button", "存档"), _on_mouse_save],
 		[_t("ingame.load.button", "读档"), _on_mouse_load],
+		[_t("config.key.QuickSave", "快速存档"), _on_mouse_quick_save],
+		[_t("config.key.QuickLoad", "快速读档"), _on_mouse_quick_load],
 		[_t("ingame.log.button", "回顾"), _on_mouse_backlog],
 		[_t("ingame.config.button", "设置"), _on_mouse_settings],
 		[_t("ingame.auto.button", "自动"), _on_mouse_auto],
@@ -808,6 +938,16 @@ func _on_mouse_save() -> void:
 func _on_mouse_load() -> void:
 	_hide_mouse_menu()
 	_open_save_panel(false)
+
+
+func _on_mouse_quick_save() -> void:
+	_hide_mouse_menu()
+	_quick_save()
+
+
+func _on_mouse_quick_load() -> void:
+	_hide_mouse_menu()
+	_quick_load()
 
 
 func _on_mouse_backlog() -> void:

@@ -14,6 +14,8 @@ const PRESETS := {
 }
 
 var _ctx: Node
+var _current_preset: String = "bottom"
+var _gradient_overlay: ColorRect
 
 
 func _init(ctx: Node) -> void:
@@ -32,8 +34,11 @@ func set_box(pos_name: Variant = "bottom") -> void:
 	var key := str(pos_name) if pos_name != null else "hide"
 	if key == "hide" or key == "":
 		box.visible = false
+		_current_preset = "hide"
 		return
 	box.visible = true
+	_current_preset = key
+	_ensure_gradient_overlay(box)
 	var a: Array = PRESETS.get(key, PRESETS["bottom"])
 	box.anchor_left = a[0]
 	box.anchor_right = a[1]
@@ -43,3 +48,43 @@ func set_box(pos_name: Variant = "bottom") -> void:
 	box.offset_right = 0
 	box.offset_top = 0
 	box.offset_bottom = 0
+
+
+func _ensure_gradient_overlay(box: Control) -> void:
+	if _gradient_overlay and is_instance_valid(_gradient_overlay):
+		return
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.96, 0.93, 0.98, 0.82)
+	sb.border_width_top = 2
+	sb.border_color = Color(0.88, 0.78, 0.92, 0.6)
+	sb.corner_radius_top_left = 10
+	sb.corner_radius_top_right = 10
+	sb.corner_radius_bottom_right = 10
+	sb.corner_radius_bottom_left = 10
+	sb.content_margin_left = 8.0
+	sb.content_margin_top = 8.0
+	sb.content_margin_right = 8.0
+	sb.content_margin_bottom = 8.0
+	sb.shadow_color = Color(0, 0, 0, 0.1)
+	sb.shadow_size = 6
+	if box is Panel:
+		box.add_theme_stylebox_override("panel", sb)
+	_gradient_overlay = ColorRect.new()
+	_gradient_overlay.visible = false
+	box.add_child(_gradient_overlay)
+
+
+func set_opacity(value: float) -> void:
+	var box := _box()
+	if box == null:
+		return
+	box.modulate.a = clampf(value, 0.0, 1.0)
+
+
+func snapshot() -> Dictionary:
+	return {"preset": _current_preset}
+
+
+func restore(data: Dictionary) -> void:
+	var preset: String = str(data.get("preset", "bottom"))
+	set_box(preset)

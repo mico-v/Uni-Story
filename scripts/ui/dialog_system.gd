@@ -87,9 +87,6 @@ func _ensure_toast() -> void:
 	_toast_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_toast_label.add_theme_font_size_override("font_size", 22)
 	_toast_label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
-	_toast_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
-	_toast_label.position.y = 20
-	_toast_label.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_toast_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	# Add a background panel for readability.
 	var bg := ColorRect.new()
@@ -97,10 +94,11 @@ func _ensure_toast() -> void:
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_get_ui_parent().add_child(bg)
 	bg.add_child(_toast_label)
-	# Size the background.
+	# Use anchors for viewport-adaptive positioning (top center, 2% from top).
 	bg.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	bg.anchor_top = 0.02
+	bg.anchor_bottom = 0.02
 	bg.custom_minimum_size = Vector2(300, 40)
-	bg.position.y = 16
 	bg.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 
 
@@ -142,12 +140,12 @@ func _ensure_confirm() -> void:
 	hbox.add_theme_constant_override("separation", 20)
 	vbox.add_child(hbox)
 	_confirm_ok = Button.new()
-	_confirm_ok.text = "OK"
+	_confirm_ok.text = _t("alert.confirm", "OK")
 	_confirm_ok.custom_minimum_size = Vector2(120, 40)
 	_confirm_ok.pressed.connect(func() -> void: answer_confirm(true))
 	hbox.add_child(_confirm_ok)
 	_confirm_cancel = Button.new()
-	_confirm_cancel.text = "Cancel"
+	_confirm_cancel.text = _t("alert.cancel", "Cancel")
 	_confirm_cancel.custom_minimum_size = Vector2(120, 40)
 	_confirm_cancel.pressed.connect(func() -> void: answer_confirm(false))
 	hbox.add_child(_confirm_cancel)
@@ -161,3 +159,9 @@ func _get_ui_parent() -> Node:
 			return hud
 		return game_view
 	return _ctx.get_tree().root
+
+
+func _t(key: String, fallback: String = "") -> String:
+	if _ctx == null or _ctx.i18n == null:
+		return fallback
+	return _ctx.i18n.t(key, fallback)

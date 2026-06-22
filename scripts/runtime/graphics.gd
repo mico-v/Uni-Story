@@ -44,6 +44,9 @@ func show(obj: Variant, image_path: String, coord = null, color = null) -> void:
 	if color != null:
 		tint(node, color)
 	node.visible = true
+	# Auto-unlock CG gallery entry if this image matches a gallery CG.
+	if _ctx.has_method("unlock_cg_by_path"):
+		_ctx.unlock_cg_by_path(path)
 
 
 func hide(obj: Variant) -> void:
@@ -168,6 +171,15 @@ func restore(data: Dictionary) -> void:
 			var m = obj_state["modulate"]
 			if m is Array and m.size() >= 4:
 				node.modulate = Color(float(m[0]), float(m[1]), float(m[2]), float(m[3]))
+		if obj_state.has("texture_path"):
+			var tp := str(obj_state["texture_path"])
+			if not tp.is_empty():
+				var tex := _load_texture(tp)
+				if tex:
+					if node is Sprite2D:
+						(node as Sprite2D).texture = tex
+					elif node is TextureRect:
+						(node as TextureRect).texture = tex
 
 
 func _get_texture_path(node: CanvasItem) -> String:

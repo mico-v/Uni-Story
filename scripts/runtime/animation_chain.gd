@@ -89,4 +89,4 @@ func await_finished() -> void:
 
 func _on_tween_finished() -> void:
 	_is_finished = true
-	emit_signal("finished")
+	finished.emit()

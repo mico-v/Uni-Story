@@ -6,6 +6,7 @@
     "bookmark.corrupted.title": "（存档损坏）",
     "bookmark.date.latest": "最新",
     "bookmark.delete.confirm": "要删除存档{0}吗？",
+    "bookmark.delete.button": "删除",
     "bookmark.load.button": "读    档",
     "bookmark.load.complete": "读档完成",
     "bookmark.load.confirm": "要读取存档{0}吗？",

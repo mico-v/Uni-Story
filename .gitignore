@@ -10,22 +10,17 @@ export.cfg
 # Imported translations (automatically generated from CSV files)
 *.translation
 
-# Mono-specific ignores
-.mono/
-data_*/
-mono_crash.*.json
-
 # VSCode
 .vscode/
-
-# Visual Studio
-.vs/
 
 # IdeaJ
 .idea/*
 
 #cache
 addons/godot_mcp/cache/
+
+# Large font files (download separately)
+resources/fonts/NotoSerifCJK.ttc
 
 #release
 release/

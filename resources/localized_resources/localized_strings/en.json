@@ -6,6 +6,7 @@
     "bookmark.corrupted.title": "(Corrupted data)",
     "bookmark.date.latest": "New",
     "bookmark.delete.confirm": "Delete data {0}?",
+    "bookmark.delete.button": "Delete",
     "bookmark.load.button": "Load",
     "bookmark.load.complete": "Load complete",
     "bookmark.load.confirm": "Load data {0}?",
