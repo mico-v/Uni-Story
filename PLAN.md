@@ -57,41 +57,41 @@
 
 ## 二、Bug 修复（优先级从高到低）
 
-### P0 — 功能阻断
+### P0 — 功能阻断（Phase 1 ✅）
 
-- [ ] **B1 F1 设置快捷键失效**：`ui_settings` 处理只关闭面板不打开设置。改为：关闭面板 + emit `settings_requested`
-- [ ] **B3 `_ui_parent()` 逻辑反转**：PrefabLoader 的 UI 挂载方法找到 GameView 时返回 null，UI 预制体无法加载
-- [ ] **B4 VFXSystem API 过期**：`get_shader_uniform_list(false)` 在 Godot 4.6 可能报错，改为无参数调用
-- [ ] **B5 游戏内读档残留**：`_on_slot_pressed` 的 load 路径调 `load_game()` 前需先 `reset_world()`
-- [ ] **B2 F5 快捷键冲突**：`ui_save` 和 `debug_reload` 共用 F5，重新分配键位
+- [x] **B1 F1 设置快捷键失效**：`ui_settings` 处理只关闭面板不打开设置。改为：关闭面板 + emit `settings_requested`
+- [x] **B3 `_ui_parent()` 逻辑反转**：PrefabLoader 的 UI 挂载方法找到 GameView 时返回 null，UI 预制体无法加载
+- [x] **B4 VFXSystem API 过期**：`get_shader_uniform_list(false)` 在 Godot 4.6 可能报错，改为无参数调用
+- [x] **B5 游戏内读档残留**：`_on_slot_pressed` 的 load 路径调 `load_game()` 前需先 `reset_world()`
+- [x] **B2 F5 快捷键冲突**：`ui_save` 和 `debug_reload` 共用 F5，重新分配键位
 
-### P1 — 数据正确性
+### P1 — 数据正确性（Phase 2 ✅）
 
-- [ ] **B6 GDRuntime 哈希碰撞**：`source.hash()` 改 `source.sha256_text()` 或全字符串缓存
-- [ ] **B9 尾部 lazy 块丢失**：`script_loader.gd` 的 `load_all()` 末尾补调 `_flush_pending_lazy_as_silent()`
-- [ ] **B7 确认对话框未 i18n**：`dialog_system.gd` OK/Cancel 按钮接入 `_t("alert.confirm")` / `_t("alert.cancel")`
-- [ ] **B12 CompositeSprite 层悬空引用**：`clear_layers()` 改为同步 `remove_child` + `free`，或等一帧后再清空 `_layers`
+- [x] **B6 GDRuntime 哈希碰撞**：`source.hash()` 改 `source.sha256_text()` 或全字符串缓存
+- [x] **B9 尾部 lazy 块丢失**：`script_loader.gd` 的 `load_all()` 末尾补调 `_flush_pending_lazy_as_silent()`
+- [x] **B7 确认对话框未 i18n**：`dialog_system.gd` OK/Cancel 按钮接入 `_t("alert.confirm")` / `_t("alert.cancel")`
+- [x] **B12 CompositeSprite 层悬空引用**：`clear_layers()` 改为同步 `remove_child` + `free`，或等一帧后再清空 `_layers`
 
-### P2 — 代码质量
+### P2 — 代码质量（Phase 5 ✅）
 
-- [ ] **B8 MusicGallery BGM 发现脆弱**：改为 AudioSystem 暴露 `get_bgm_player()` 方法
-- [ ] **B10 AnimationChain 信号语法**：`emit_signal("finished")` 改为 `finished.emit()`
-- [ ] **B11 Graphics snapshot 冗余**：移除 `texture_path` 捕获（restore 不使用）或在 restore 中恢复纹理
-- [ ] **B13 SaveSystem 死代码**：删除 `data.has("version")` 永远为 true 的检查
-- [ ] **B14 Variables 类型偏移**：`add_var` 保持原类型（整数加整数仍为整数）
-- [ ] **B15 TransitionSystem "flash" 重复**：删除与 "fade" 相同的实现，或让 flash 有不同的视觉行为
-- [ ] **B16 Voice restore 缺 seek**：AudioSystem voice restore 加上 `play(pos)` 与 BGM 对齐
+- [x] **B8 MusicGallery BGM 发现脆弱**：改为 AudioSystem 暴露 `get_bgm_player()` 方法
+- [x] **B10 AnimationChain 信号语法**：`emit_signal("finished")` 改为 `finished.emit()`
+- [x] **B11 Graphics snapshot 冗余**：移除 `texture_path` 捕获（restore 不使用）或在 restore 中恢复纹理
+- [x] **B13 SaveSystem 死代码**：删除 `data.has("version")` 永远为 true 的检查
+- [x] **B14 Variables 类型偏移**：`add_var` 保持原类型（整数加整数仍为整数）
+- [x] **B15 TransitionSystem "flash" 重复**：删除与 "fade" 相同的实现，或让 flash 有不同的视觉行为
+- [x] **B16 Voice restore 缺 seek**：AudioSystem voice restore 加上 `play(pos)` 与 BGM 对齐
 
 ---
 
 ## 三、架构改进
 
-### 3.1 存档恢复覆盖
+### 3.1 存档恢复覆盖（Phase 4 ✅）
 
-- [ ] **VFXSystem snapshot/restore**：捕获活跃的 shader 参数和 uniform 值，restore 时重新应用
-- [ ] **DialogueBoxSystem snapshot/restore**：保存当前预设名（bottom/center/etc.），restore 时重新定位
-- [ ] **SpriteComposer snapshot/restore**：捕获每个角色名的图层状态，restore 时重建
-- [ ] **Backlog 持久化**：存入存档 JSON，读档后回顾面板保留历史
+- [x] **VFXSystem snapshot/restore**：捕获活跃的 shader 参数和 uniform 值，restore 时重新应用
+- [x] **DialogueBoxSystem snapshot/restore**：保存当前预设名（bottom/center/etc.），restore 时重新定位
+- [x] **SpriteComposer snapshot/restore**：捕获每个角色名的图层状态，restore 时重建
+- [x] **Backlog 持久化**：存入存档 JSON，读档后回顾面板保留历史
 
 ### 3.2 图完整性
 
@@ -156,25 +156,32 @@
 
 ---
 
-## 六、清理
+## 六、清理（Phase 3 ✅）
 
-- [ ] 删除 `scripts/ui/chapter_select_view_controller.gd.uid`（孤立文件）
-- [ ] 删除 `scene/ui/dialogue_entry.tscn`（未引用场景）
-- [ ] 删除 NovaController 中 `REVIEW_REGRESSION_FILES` / `REVIEW_SANITY_FILES` 常量（对应文件不存在）
-- [ ] 清理 `debug_unlock` (KEY_U) 输入动作或实现其功能
-- [ ] 清理 `game_state.node_changed` / `game_state.game_started` 未消费信号（连接消费者或删除）
+- [x] 删除 `scripts/ui/chapter_select_view_controller.gd.uid`（孤立文件）
+- [x] 删除 `scene/ui/dialogue_entry.tscn`（未引用场景）
+- [x] 删除 NovaController 中 `REVIEW_REGRESSION_FILES` / `REVIEW_SANITY_FILES` 常量（对应文件不存在）
+- [x] 清理 `debug_unlock` (KEY_U) 输入动作或实现其功能
+- [x] 清理 `game_state.node_changed` / `game_state.game_started` 未消费信号（连接消费者或删除）
 
 ---
 
-## 七、建议实施顺序
+## 七、实施顺序（全部完成）
 
-1. **P0 Bug 修复**（5 项，功能阻断级，1-2 天）
-2. **P1 数据正确性修复**（4 项，1 天）
-3. **清理孤立文件和死代码**（5 项，半天）
-4. **存档恢复覆盖补全**（4 项，2-3 天）
-5. **P2 代码质量改进**（8 项，1-2 天）
-6. **设置界面扩展 + 存档体验**（7 项，2-3 天）
-7. **音频系统增强**（3 项，1 天）
-8. **分支图片 + 条件分支验证**（3 项，1-2 天）
-9. **画廊动态解锁**（2 项，1 天）
-10. **UI/UX 改进**（7 项，2-3 天）
+1. ~~**P0 Bug 修复**（5 项，功能阻断级）~~ ✅ Phase 1 — `b367a4a`
+2. ~~**P1 数据正确性修复**（4 项）~~ ✅ Phase 2 — `9558c32`
+3. ~~**清理孤立文件和死代码**（5 项）~~ ✅ Phase 3 — `aa318c9`
+4. ~~**存档恢复覆盖补全**（4 项）~~ ✅ Phase 4 — `79186ba`
+5. ~~**P2 代码质量改进**（8 项）~~ ✅ Phase 5 — `cc1b754`
+6. ~~**设置界面扩展 + 存档体验**（7 项）~~ ✅ Phase 6 — `c37fa10`
+7. ~~**音频系统增强**（3 项）~~ ✅ Phase 7 — `637492e`
+8. ~~**分支图片 + 条件分支验证**（3 项）~~ ✅ Phase 8 — `72b1349`
+9. ~~**画廊动态解锁**（2 项）~~ ✅ Phase 9 — `e0ebbd8`
+10. ~~**UI/UX 改进**（7 项）~~ ✅ Phase 10 — `5b74b61`
+
+### 剩余未完成
+
+- **3.2 图完整性**（3 项）：循环检测、CHAPTER 行为、命名结局
+- **3.3 运行时安全性**（4 项）：GDRuntime 超时、条件缓存、ReadTracker 自动持久化、PreloadSystem 取消
+- **五、UI/UX 需美术资源**（4 项）：对话框渐变重设计、标题 ContentArea、主主题补全、ContinueIcon TextureRect
+- **五、右键菜单设置快捷键**（1 项）
