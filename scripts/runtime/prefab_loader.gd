@@ -223,15 +223,17 @@ func _ui_parent() -> Control:
 	if _ctx == null:
 		return null
 	var game_vc = _ctx.get_node_or_null("GameView")
-	if game_vc == null:
-		# Try through the game view controller reference.
-		if _ctx.has_method("get_game_vc"):
-			var vc = _ctx.get_game_vc()
-			if vc and vc.has_method("get_hud"):
-				var hud = vc.get_hud()
-				if hud is Control:
-					return _ensure_prefab_ui(hud)
-		return null
+	if game_vc != null and game_vc.has_method("get_hud"):
+		var hud = game_vc.get_hud()
+		if hud is Control:
+			return _ensure_prefab_ui(hud)
+	# Fallback: try through NovaController.get_game_vc().
+	if _ctx.has_method("get_game_vc"):
+		var vc = _ctx.get_game_vc()
+		if vc and vc.has_method("get_hud"):
+			var hud = vc.get_hud()
+			if hud is Control:
+				return _ensure_prefab_ui(hud)
 	return null
 
 

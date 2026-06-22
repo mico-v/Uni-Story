@@ -137,7 +137,7 @@ func clear(target: Variant, duration: float = 0.3) -> Tween:
 	# Tween all float parameters back to 0.
 	var t := _ctx.get_tree().create_tween()
 	t.set_parallel(true)
-	for param_name in mat.shader.get_shader_uniform_list(false):
+	for param_name in mat.shader.get_shader_uniform_list():
 		var current = mat.get_shader_parameter(param_name.name)
 		if current is float:
 			var prop_path = "material:shader_parameter/" + param_name.name
@@ -253,7 +253,7 @@ func clear_post(duration: float = 0.3) -> Tween:
 	var mat: ShaderMaterial = _post_fx_rect.material
 	var t := _ctx.get_tree().create_tween()
 	t.set_parallel(true)
-	for param_name in mat.shader.get_shader_uniform_list(false):
+	for param_name in mat.shader.get_shader_uniform_list():
 		var current = mat.get_shader_parameter(param_name.name)
 		if current is float:
 			var prop_path = "material:shader_parameter/" + param_name.name

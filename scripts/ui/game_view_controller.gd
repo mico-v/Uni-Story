@@ -262,6 +262,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_close_save_panel()
 		if _backlog_panel:
 			_backlog_panel.visible = false
+		settings_requested.emit()
 		get_viewport().set_input_as_handled()
 	elif sm.is_action_pressed("ui_leave"):
 		if _ctx.dialog_system:
@@ -730,6 +731,7 @@ func _on_slot_pressed(slot: int) -> void:
 	else:
 		_close_save_panel()
 		if _ctx.save_system.load_slot(slot):
+			reset_world()
 			load_game()
 
 
