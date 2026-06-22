@@ -33,13 +33,13 @@ func save(slot: int) -> bool:
 	if _ctx.read_tracker:
 		data["read_tracker"] = _ctx.read_tracker.snapshot()
 	if _ctx.vfx:
-		var vfx_data := _ctx.vfx.snapshot()
+		var vfx_data = _ctx.vfx.snapshot()
 		if not vfx_data.is_empty():
 			data["vfx"] = vfx_data
 	if _ctx.dialogue_box:
 		data["dialogue_box"] = _ctx.dialogue_box.snapshot()
 	if _ctx.composer:
-		var comp_data := _ctx.composer.snapshot()
+		var comp_data = _ctx.composer.snapshot()
 		if not comp_data.is_empty():
 			data["composer"] = comp_data
 	if _ctx.backlog:

@@ -695,7 +695,7 @@ func _open_backlog() -> void:
 		_backlog_panel.visible = true
 	await get_tree().process_frame
 	if _ctx.backlog:
-		var entries := _ctx.backlog.entries()
+		var entries = _ctx.backlog.entries()
 		for i in entries.size():
 			var entry: Dictionary = entries[i]
 			var lbl := RichTextLabel.new()
@@ -725,7 +725,7 @@ func _open_backlog() -> void:
 		_backlog_scroll.scroll_vertical = int(_backlog_scroll.get_v_scroll_bar().max_value)
 
 
-func _on_backlog_entry_click(event: InputEvent, entry_index: int, lbl: RichTextLabel) -> void:
+func _on_backlog_entry_click(event: InputEvent, entry_index: int, _lbl: RichTextLabel) -> void:
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
 		if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT and not mb.is_echo():

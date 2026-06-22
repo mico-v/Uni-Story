@@ -15,12 +15,17 @@ script = ExtResource("NovaScript")
 [node name="TitleView" parent="." unique_id=793599501 instance=ExtResource("TitleViewRes")]
 
 [node name="GameView" parent="." unique_id=304719952 instance=ExtResource("GameViewRes")]
+visible = false
 script = ExtResource("GameVCScript")
 
 [node name="SettingsView" parent="." unique_id=308811666 instance=ExtResource("SettingsViewRes")]
+visible = false
 
 [node name="CgGalleryView" parent="." unique_id=2083502021 instance=ExtResource("CgGalleryRes")]
+visible = false
 
 [node name="MusicGalleryView" parent="." unique_id=91674295 instance=ExtResource("MusicGalleryRes")]
+visible = false
 
 [node name="SaveLoadView" parent="." unique_id=325184227 instance=ExtResource("SaveLoadRes")]
+visible = false

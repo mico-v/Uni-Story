@@ -59,7 +59,6 @@ func _init(ctx: Node) -> void:
 
 func _setup_buses() -> void:
 	# Create BGM, SE, Voice buses routing to Master. Skip if already present.
-	var layout := AudioServer.get_bus_layout()
 	for bus_name in [BUS_BGM, BUS_SE, BUS_VOICE]:
 		if AudioServer.get_bus_index(bus_name) == -1:
 			var idx := AudioServer.bus_count
@@ -272,11 +271,11 @@ func play_se(path: String, volume_db: float = 0.0) -> void:
 		if _se_start_times[i] < oldest_time:
 			oldest_time = _se_start_times[i]
 			oldest_idx = i
-	var p: AudioStreamPlayer = _se_players[oldest_idx]
-	p.stop()
-	p.stream = stream
-	p.volume_db = volume_db
-	p.play()
+	var preempt: AudioStreamPlayer = _se_players[oldest_idx]
+	preempt.stop()
+	preempt.stream = stream
+	preempt.volume_db = volume_db
+	preempt.play()
 	_se_start_times[oldest_idx] = Time.get_ticks_msec()
 
 

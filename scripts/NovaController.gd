@@ -356,10 +356,10 @@ func _apply_gallery_unlocks(entry_type: String) -> void:
 	var entries: Array = _cg_entries if entry_type == "cg" else _music_entries
 	for entry in entries:
 		if entry is Dictionary:
-			var name := str(entry.get("name", ""))
-			if entry_type == "cg" and read_tracker.is_cg_unlocked(name):
+			var entry_name := str(entry.get("name", ""))
+			if entry_type == "cg" and read_tracker.is_cg_unlocked(entry_name):
 				entry["unlocked"] = true
-			elif entry_type == "music" and read_tracker.is_music_unlocked(name):
+			elif entry_type == "music" and read_tracker.is_music_unlocked(entry_name):
 				entry["unlocked"] = true
 
 
