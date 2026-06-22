@@ -34,6 +34,7 @@ enabled=PackedStringArray("res://addons/godot_mcp/plugin.cfg")
 [gui]
 
 theme/custom="res://resources/themes/main_theme.tres"
+theme/custom_font="res://resources/fonts/NotoSerifCJK.ttc"
 
 [input]
 

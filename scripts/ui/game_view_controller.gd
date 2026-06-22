@@ -38,7 +38,7 @@ var _auto_btn: Button
 var _skip_btn: Button
 var _overlay: ColorRect
 var _post_fx_rect: ColorRect
-var _continue_icon: Label
+var _continue_icon: TextureRect
 var _avatar_rect: TextureRect
 
 # ── Save/load panel ──────────────────────────────────────────────────
@@ -97,7 +97,7 @@ func _bind_nodes() -> void:
 		_dbox = _hud.get_node_or_null("DialogueBox") as Panel
 		_speaker_label = _hud.get_node_or_null("DialogueBox/Speaker") as Label
 		_story_label = _hud.get_node_or_null("DialogueBox/Story") as RichTextLabel
-		_continue_icon = _hud.get_node_or_null("DialogueBox/ContinueIcon") as Label
+		_continue_icon = _hud.get_node_or_null("DialogueBox/ContinueIcon") as TextureRect
 		_avatar_rect = _hud.get_node_or_null("DialogueBox/Avatar") as TextureRect
 		_choice_list = _hud.get_node_or_null("ChoiceList") as VBoxContainer
 		if _choice_list is ChoiceListController:
@@ -141,6 +141,16 @@ func _bind_nodes() -> void:
 	for child in [_speaker_label, _story_label, _continue_icon, _avatar_rect]:
 		if child is Control:
 			child.mouse_filter = MOUSE_FILTER_IGNORE
+	# Create a small downward-pointing triangle texture for ContinueIcon.
+	if _continue_icon:
+		var img := Image.create(16, 10, false, Image.FORMAT_RGBA8)
+		img.fill(Color(0, 0, 0, 0))
+		var tri_color := Color(0.55, 0.38, 0.65, 0.9)
+		for row in 8:
+			var half := row / 2
+			img.fill_rect(Rect2i(8 - half - 1, row + 1, half * 2 + 2, 1), tri_color)
+		var tex := ImageTexture.create_from_image(img)
+		_continue_icon.texture = tex
 	if _restart_btn:
 		_restart_btn.visible = false
 	if _save_btn:
