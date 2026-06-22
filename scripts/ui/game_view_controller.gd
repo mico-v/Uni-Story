@@ -71,6 +71,11 @@ var _is_skip := false
 var _auto_gen := 0
 var _skip_gen := 0
 
+# ── Gameplay settings (set by SettingsViewController) ─────────────────
+var click_stop_anim := true
+var click_stop_voice := true
+var skip_unread := false
+
 
 # ── Lifecycle ────────────────────────────────────────────────────────
 
@@ -576,9 +581,12 @@ func _on_dbox_click(event: InputEvent) -> void:
 
 func _on_next() -> void:
 	if _is_typing:
-		_finish_typewriter()
-		_deactivate_modes()
+		if click_stop_anim:
+			_finish_typewriter()
+			_deactivate_modes()
 		return
+	if click_stop_voice and _ctx.audio:
+		_ctx.audio.stop_voice()
 	if _ctx.game_state and _ctx.game_state.is_waiting_input:
 		_deactivate_modes()
 		_ctx.game_state.continue_after_input()
@@ -620,9 +628,14 @@ func _on_skip_toggled() -> void:
 		_is_auto = false
 		if _auto_btn:
 			_auto_btn.button_pressed = false
-		if _ctx.game_state and _ctx.game_state.is_waiting_input and _ctx.game_state.current_node and _ctx.read_tracker:
-			if _ctx.read_tracker.is_read(_ctx.game_state.current_node.name, _ctx.game_state.current_index):
+		if _ctx.game_state and _ctx.game_state.is_waiting_input:
+			var can_skip := skip_unread
+			if not can_skip and _ctx.game_state.current_node and _ctx.read_tracker:
+				can_skip = _ctx.read_tracker.is_read(_ctx.game_state.current_node.name, _ctx.game_state.current_index)
+			if can_skip:
 				_finish_typewriter()
+				if click_stop_voice and _ctx.audio:
+					_ctx.audio.stop_voice()
 				var gen := _skip_gen
 				get_tree().create_timer(SKIP_DELAY).timeout.connect(_on_skip_advance.bind(gen))
 			else:
@@ -707,13 +720,25 @@ func _open_save_panel(save_mode: bool) -> void:
 	if _ctx.save_system == null:
 		return
 	for slot in _ctx.save_system.SLOT_COUNT:
+		var has: bool = _ctx.save_system.has_save(slot)
 		var label := _t("ui.save.slot_format", "存档位 %d：%s") % [slot + 1, _ctx.save_system.slot_label(slot)]
+		var row := HBoxContainer.new()
+		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_theme_constant_override("separation", 8)
 		var b := _make_button(label)
-		b.custom_minimum_size = Vector2(360, 40)
-		if not save_mode and not _ctx.save_system.has_save(slot):
+		b.custom_minimum_size = Vector2(300, 40)
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		if not save_mode and not has:
 			b.disabled = true
 		b.pressed.connect(_on_slot_pressed.bind(slot))
-		_save_slots.add_child(b)
+		row.add_child(b)
+		if has:
+			var del_btn := Button.new()
+			del_btn.text = _t("bookmark.delete.button", "删除")
+			del_btn.custom_minimum_size = Vector2(60, 40)
+			del_btn.pressed.connect(_on_slot_delete.bind(slot))
+			row.add_child(del_btn)
+		_save_slots.add_child(row)
 	if _save_panel:
 		_save_panel.visible = true
 
@@ -727,15 +752,66 @@ func _on_slot_pressed(slot: int) -> void:
 	if _ctx.save_system == null:
 		return
 	if _save_mode:
+		if _ctx.save_system.has_save(slot) and _ctx.dialog_system:
+			var msg := _t("bookmark.overwrite.confirm", "覆盖存档{0}？").format([slot + 1])
+			var sig: Signal = _ctx.dialog_system.show_confirm(_t("ingame.save.button", "存档"), msg)
+			var confirmed: bool = await sig
+			if not confirmed:
+				return
 		if _ctx.save_system.save(slot):
 			if _status_label:
 				_status_label.text = _t("ui.status.saved", "状态：已存档到位 %d") % (slot + 1)
+			_refresh_save_slots()
 		_close_save_panel()
 	else:
+		if _ctx.dialog_system:
+			var msg := _t("bookmark.load.confirm", "读取存档{0}？").format([slot + 1])
+			var sig: Signal = _ctx.dialog_system.show_confirm(_t("ingame.load.button", "读档"), msg)
+			var confirmed: bool = await sig
+			if not confirmed:
+				return
 		_close_save_panel()
 		if _ctx.save_system.load_slot(slot):
 			reset_world()
 			load_game()
+
+
+func _on_slot_delete(slot: int) -> void:
+	if _ctx.save_system == null or _ctx.dialog_system == null:
+		return
+	var msg := _t("bookmark.delete.confirm", "要删除存档{0}吗？").format([slot + 1])
+	var sig: Signal = _ctx.dialog_system.show_confirm(_t("bookmark.delete.button", "删除"), msg)
+	var confirmed: bool = await sig
+	if not confirmed:
+		return
+	_ctx.save_system.delete_slot(slot)
+	_refresh_save_slots()
+
+
+func _refresh_save_slots() -> void:
+	if _save_slots == null or _ctx.save_system == null:
+		return
+	_clear_children(_save_slots)
+	for slot in _ctx.save_system.SLOT_COUNT:
+		var has: bool = _ctx.save_system.has_save(slot)
+		var label := _t("ui.save.slot_format", "存档位 %d：%s") % [slot + 1, _ctx.save_system.slot_label(slot)]
+		var row := HBoxContainer.new()
+		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_theme_constant_override("separation", 8)
+		var b := _make_button(label)
+		b.custom_minimum_size = Vector2(300, 40)
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		if not _save_mode and not has:
+			b.disabled = true
+		b.pressed.connect(_on_slot_pressed.bind(slot))
+		row.add_child(b)
+		if has:
+			var del_btn := Button.new()
+			del_btn.text = _t("bookmark.delete.button", "删除")
+			del_btn.custom_minimum_size = Vector2(60, 40)
+			del_btn.pressed.connect(_on_slot_delete.bind(slot))
+			row.add_child(del_btn)
+		_save_slots.add_child(row)
 
 
 # ── Mouse menu (right-click context menu) ────────────────────────────

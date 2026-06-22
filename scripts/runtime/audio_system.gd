@@ -41,6 +41,10 @@ func is_voice_playing() -> bool:
 	return _voice_player.playing
 
 
+func stop_voice() -> void:
+	_voice_player.stop()
+
+
 func _load_stream(path: String) -> AudioStream:
 	var root: String = _ctx.object_manager.constants.get("resource_root", "res://resources/")
 	var full := path if path.begins_with("res://") else root + path

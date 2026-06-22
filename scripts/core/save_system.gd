@@ -88,6 +88,14 @@ func has_save(slot: int) -> bool:
 	return FileAccess.file_exists(_slot_path(slot))
 
 
+func delete_slot(slot: int) -> bool:
+	var path := _slot_path(slot)
+	if not FileAccess.file_exists(path):
+		return false
+	var err := DirAccess.remove_absolute(path)
+	return err == OK
+
+
 ## Short label for a slot (chapter name + entry index), for the save/load UI.
 func slot_label(slot: int) -> String:
 	if not has_save(slot):

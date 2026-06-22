@@ -44,6 +44,17 @@ var _ctx: Node  # NovaController reference
 var _key_buttons: Dictionary = {}  # action_name -> Button
 var _recorder_overlay: ColorRect = null
 
+# Programmatically created controls for extended settings.
+var _slider_dialogue_opacity: HSlider = null
+var _check_click_stop_anim: CheckButton = null
+var _check_click_stop_voice: CheckButton = null
+var _check_skip_unread: CheckButton = null
+var _lbl_dialogue_opacity: Label = null
+var _lbl_click_stop_anim: Label = null
+var _lbl_click_stop_voice: Label = null
+var _lbl_skip_unread: Label = null
+var _section_gameplay: Label = null
+
 # Action-to-i18n key mapping (excludes debug actions).
 const ACTION_I18N := {
 	"ui_step_forward": "config.key.StepForward",
@@ -98,6 +109,14 @@ func _apply_defaults() -> void:
 	slider_vol_voice.value = 100.0
 	check_fullscreen.button_pressed = false
 	slider_font_size.value = 26.0
+	if _slider_dialogue_opacity:
+		_slider_dialogue_opacity.value = 100.0
+	if _check_click_stop_anim:
+		_check_click_stop_anim.button_pressed = true
+	if _check_click_stop_voice:
+		_check_click_stop_voice.button_pressed = true
+	if _check_skip_unread:
+		_check_skip_unread.button_pressed = false
 
 
 func apply_settings(data: Dictionary) -> void:
@@ -119,6 +138,14 @@ func apply_settings(data: Dictionary) -> void:
 		slider_font_size.value = float(data["font_size"])
 	if data.has("language"):
 		option_language.selected = 0 if str(data["language"]) == "zh" else 1
+	if data.has("dialogue_opacity") and _slider_dialogue_opacity:
+		_slider_dialogue_opacity.value = float(data["dialogue_opacity"])
+	if data.has("click_stop_anim") and _check_click_stop_anim:
+		_check_click_stop_anim.button_pressed = bool(data["click_stop_anim"])
+	if data.has("click_stop_voice") and _check_click_stop_voice:
+		_check_click_stop_voice.button_pressed = bool(data["click_stop_voice"])
+	if data.has("skip_unread") and _check_skip_unread:
+		_check_skip_unread.button_pressed = bool(data["skip_unread"])
 
 
 func apply_i18n(i18n: I18n) -> void:
@@ -158,6 +185,17 @@ func apply_i18n(i18n: I18n) -> void:
 		btn_reset.text = i18n.t("config.resetdefault", "重置默认设置")
 	if section_shortcut:
 		section_shortcut.text = i18n.t("config.title.shortcuts", "快捷键")
+	# Gameplay section labels.
+	if _section_gameplay:
+		_section_gameplay.text = i18n.t("config.title.gameplay", "游戏")
+	if _lbl_dialogue_opacity:
+		_lbl_dialogue_opacity.text = i18n.t("config.item.dialogueopacity", "对话框透明度")
+	if _lbl_click_stop_anim:
+		_lbl_click_stop_anim.text = i18n.t("config.item.clickstopanimation", "点击停止动画")
+	if _lbl_click_stop_voice:
+		_lbl_click_stop_voice.text = i18n.t("config.item.clickstopvoice", "点击停止语音")
+	if _lbl_skip_unread:
+		_lbl_skip_unread.text = i18n.t("config.item.fastforwardunread", "快进未读文本")
 	# Refresh shortcut action labels and key buttons.
 	if _ctx and _ctx.shortcut_manager:
 		for action in ACTION_I18N:
@@ -175,10 +213,18 @@ func _emit_all() -> void:
 	setting_changed.emit("vol_voice", slider_vol_voice.value)
 	setting_changed.emit("fullscreen", check_fullscreen.button_pressed)
 	setting_changed.emit("font_size", slider_font_size.value)
+	if _slider_dialogue_opacity:
+		setting_changed.emit("dialogue_opacity", _slider_dialogue_opacity.value)
+	if _check_click_stop_anim:
+		setting_changed.emit("click_stop_anim", _check_click_stop_anim.button_pressed)
+	if _check_click_stop_voice:
+		setting_changed.emit("click_stop_voice", _check_click_stop_voice.button_pressed)
+	if _check_skip_unread:
+		setting_changed.emit("skip_unread", _check_skip_unread.button_pressed)
 
 
 func snapshot() -> Dictionary:
-	return {
+	var d := {
 		"text_speed": slider_text_speed.value,
 		"auto_speed": slider_auto_speed.value,
 		"vol_global": slider_vol_global.value,
@@ -189,12 +235,85 @@ func snapshot() -> Dictionary:
 		"font_size": slider_font_size.value,
 		"language": "zh" if option_language.selected == 0 else "en",
 	}
+	if _slider_dialogue_opacity:
+		d["dialogue_opacity"] = _slider_dialogue_opacity.value
+	if _check_click_stop_anim:
+		d["click_stop_anim"] = _check_click_stop_anim.button_pressed
+	if _check_click_stop_voice:
+		d["click_stop_voice"] = _check_click_stop_voice.button_pressed
+	if _check_skip_unread:
+		d["skip_unread"] = _check_skip_unread.button_pressed
+	return d
+
+
+# ── Gameplay settings ─────────────────────────────────────────────────
+
+func _build_gameplay_section() -> void:
+	if settings_list == null:
+		return
+	# Section header.
+	_section_gameplay = Label.new()
+	_section_gameplay.add_theme_font_size_override("font_size", 24)
+	_section_gameplay.text = "Gameplay"
+	settings_list.add_child(_section_gameplay)
+	# Dialogue opacity slider.
+	_lbl_dialogue_opacity = Label.new()
+	_lbl_dialogue_opacity.custom_minimum_size = Vector2(200, 0)
+	_slider_dialogue_opacity = HSlider.new()
+	_slider_dialogue_opacity.min_value = 0.0
+	_slider_dialogue_opacity.max_value = 100.0
+	_slider_dialogue_opacity.step = 1.0
+	_slider_dialogue_opacity.value = 100.0
+	_slider_dialogue_opacity.custom_minimum_size = Vector2(200, 0)
+	_slider_dialogue_opacity.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_slider_dialogue_opacity.value_changed.connect(func(v: float) -> void:
+		setting_changed.emit("dialogue_opacity", v)
+	)
+	_add_row(_lbl_dialogue_opacity, _slider_dialogue_opacity)
+	# Click stop animation toggle.
+	_lbl_click_stop_anim = Label.new()
+	_lbl_click_stop_anim.custom_minimum_size = Vector2(200, 0)
+	_check_click_stop_anim = CheckButton.new()
+	_check_click_stop_anim.button_pressed = true
+	_check_click_stop_anim.toggled.connect(func(on: bool) -> void:
+		setting_changed.emit("click_stop_anim", on)
+	)
+	_add_row(_lbl_click_stop_anim, _check_click_stop_anim)
+	# Click stop voice toggle.
+	_lbl_click_stop_voice = Label.new()
+	_lbl_click_stop_voice.custom_minimum_size = Vector2(200, 0)
+	_check_click_stop_voice = CheckButton.new()
+	_check_click_stop_voice.button_pressed = true
+	_check_click_stop_voice.toggled.connect(func(on: bool) -> void:
+		setting_changed.emit("click_stop_voice", on)
+	)
+	_add_row(_lbl_click_stop_voice, _check_click_stop_voice)
+	# Skip unread toggle.
+	_lbl_skip_unread = Label.new()
+	_lbl_skip_unread.custom_minimum_size = Vector2(200, 0)
+	_check_skip_unread = CheckButton.new()
+	_check_skip_unread.button_pressed = false
+	_check_skip_unread.toggled.connect(func(on: bool) -> void:
+		setting_changed.emit("skip_unread", on)
+	)
+	_add_row(_lbl_skip_unread, _check_skip_unread)
+
+
+func _add_row(lbl: Control, ctrl: Control) -> void:
+	var row := HBoxContainer.new()
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(lbl)
+	ctrl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(ctrl)
+	if settings_list:
+		settings_list.add_child(row)
 
 
 # ── Shortcut settings ─────────────────────────────────────────────────
 
 func setup(ctx: Node) -> void:
 	_ctx = ctx
+	_build_gameplay_section()
 	_build_shortcut_section()
 
 

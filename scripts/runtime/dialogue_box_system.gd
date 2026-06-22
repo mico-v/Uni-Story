@@ -48,6 +48,13 @@ func set_box(pos_name: Variant = "bottom") -> void:
 	box.offset_bottom = 0
 
 
+func set_opacity(value: float) -> void:
+	var box := _box()
+	if box == null:
+		return
+	box.modulate.a = clampf(value, 0.0, 1.0)
+
+
 func snapshot() -> Dictionary:
 	return {"preset": _current_preset}
 

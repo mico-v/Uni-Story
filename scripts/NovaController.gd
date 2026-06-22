@@ -412,6 +412,18 @@ func _on_setting_changed(key: String, value: Variant) -> void:
 				DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 			else:
 				DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+		"dialogue_opacity":
+			if dialogue_box:
+				dialogue_box.set_opacity(float(value) / 100.0)
+		"click_stop_anim":
+			if _game_vc:
+				_game_vc.click_stop_anim = bool(value)
+		"click_stop_voice":
+			if _game_vc:
+				_game_vc.click_stop_voice = bool(value)
+		"skip_unread":
+			if _game_vc:
+				_game_vc.skip_unread = bool(value)
 	_save_settings()
 
 
