@@ -44,6 +44,9 @@ func show(obj: Variant, image_path: String, coord = null, color = null) -> void:
 	if color != null:
 		tint(node, color)
 	node.visible = true
+	# Auto-unlock CG gallery entry if this image matches a gallery CG.
+	if _ctx.has_method("unlock_cg_by_path"):
+		_ctx.unlock_cg_by_path(path)
 
 
 func hide(obj: Variant) -> void:

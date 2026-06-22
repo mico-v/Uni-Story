@@ -1,31 +1,32 @@
 # CG Gallery Configuration
 # Format: [section_id] with name, file, unlocked keys
 # file: path relative to res://resources/
+# unlocked: false by default; dynamically unlocked when shown in-game
 
 [cg1]
 name = CG 1
 file = cg/cg1.png
-unlocked = true
+unlocked = false
 
 [cg2]
 name = CG 2
 file = cg/cg2.png
-unlocked = true
+unlocked = false
 
 [cg3]
 name = CG 3
 file = cg/cg3.png
-unlocked = true
+unlocked = false
 
 [cg4]
 name = CG 4
 file = cg/cg4.png
-unlocked = true
+unlocked = false
 
 [cg5]
 name = CG 5
 file = cg/cg5.png
-unlocked = true
+unlocked = false
 
 [home_bg]
 name = Home Background
