@@ -17,7 +17,7 @@
 - Variables（变量存取 + 条件跳转 jump_if）
 - I18n（zh/en 双语 + locale 回退 + 剧本路径本地化）
 - Backlog（200 条滚动历史）
-- ReadTracker（已读记录持久化 + Skip 模式集成）
+- ReadTracker（已读记录持久化 + Skip 模式集成 + CG/音乐画廊解锁追踪）
 - ObjectManager（对象/常量注册 + 冻结语义）
 - ShortcutManager（快捷键自定义 + ConfigFile 持久化）
 - HotReload（文件轮询 + debounce + 自动重新解析）
@@ -26,11 +26,11 @@
 
 ### 运行时子系统
 - Graphics（show/hide/move/tint + 名字解析）
-- AudioSystem（BGM/SE 池/Voice + 音量控制）
+- AudioSystem（独立 BGM/SE/Voice 总线 + 交叉淡入淡出 + SE 抢占策略）
 - CameraSystem（逻辑 2D 相机：移动/缩放/旋转）
 - AnimationSystem + AnimationChain（o.anim 链式 Tween）
 - TransitionSystem（fade/flash/fade_out/fade_in）
-- DialogueBoxSystem（7 种锚点预设）
+- DialogueBoxSystem（7 种锚点预设 + 透明度控制）
 - VFXSystem（对象 shader + 震屏 + 全屏后处理 + shader 转场）
 - SpriteComposer + CompositeSprite（多图层立绘）
 - AvatarSystem（对话框内肖像）
@@ -40,14 +40,14 @@
 - DialogSystem（Toast + Confirm）
 
 ### UI 层
-- NovaController（瘦协调器 ~450 行）
-- GameViewController（对话/打字机/选项/自动/快进/存读档面板/回顾/鼠标菜单 ~950 行）
+- NovaController（瘦协调器 ~480 行 + 画廊解锁管理 + 4 项 gameplay 设置分发）
+- GameViewController（对话/打字机/选项/自动/快进/存读档面板/回顾跳转/鼠标菜单快存快读 ~1060 行）
 - TitleViewController（GALGAME 左侧列表菜单）
-- SettingsViewController（文字速度/音量/全屏/语言/字体/快捷键）
+- SettingsViewController（文字速度/音量/全屏/语言/字体/快捷键 + gameplay 设置 + snapshot/apply_i18n）
 - SaveLoadController（独立存读档视图 + 侧栏）
-- CgGalleryController（缩略图网格 + 全屏预览）
-- MusicGalleryController（曲目列表 + 三种播放模式）
-- ChoiceListController（分支选项渲染）
+- CgGalleryController（缩略图网格 + 全屏预览 + 动态解锁）
+- MusicGalleryController（曲目列表 + 三种播放模式 + BGM 信号集成）
+- ChoiceListController（分支选项渲染 + 图片缩略图 + 最大高度约束）
 
 ### CI/CD
 - GitHub Actions workflow（tag 触发，Win/Linux/Android 并行编译 + Release）
@@ -106,52 +106,52 @@
 - [ ] **ReadTracker 自动持久化**：`mark_read()` 加 debounce（2s），自动写磁盘
 - [ ] **PreloadSystem 取消机制**：加 `cancel_preload(path)` 方法
 
-### 3.4 音频系统增强
+### 3.4 音频系统增强（Phase 7 ✅）
 
-- [ ] **独立音频总线**：创建 BGM/SE/Voice 三个 AudioBus，分别路由
-- [ ] **BGM 交叉淡入淡出**：fade 改为同时淡出旧 + 淡入新，消除静默间隙
-- [ ] **SE 池抢占策略**：改为抢占播放时间最长或优先级最低的 SE 播放器
+- [x] **独立音频总线**：创建 BGM/SE/Voice 三个 AudioBus，分别路由
+- [x] **BGM 交叉淡入淡出**：fade 改为同时淡出旧 + 淡入新，消除静默间隙
+- [x] **SE 池抢占策略**：改为抢占播放时间最长或优先级最低的 SE 播放器
 
 ---
 
 ## 四、功能补完（场景系统已支持但 UI 未暴露）
 
-### 4.1 设置界面扩展
+### 4.1 设置界面扩展（Phase 6 ✅）
 
-- [ ] **对话框透明度滑块**：i18n 键 `config.item.dialogueopacity` 已有，实现 DialogueBoxSystem.modulate 绑定
-- [ ] **点击停止动画开关**：`config.item.clickstopanimation` — 点击时如果动画还在播放则先完成动画再推进
-- [ ] **点击停止语音开关**：`config.item.clickstopvoice` — 点击时停止当前语音
-- [ ] **快进未读开关**：`config.item.fastforwardunread` — 控制 Skip 模式是否跳过未读文本
+- [x] **对话框透明度滑块**：i18n 键 `config.item.dialogueopacity` 已有，实现 DialogueBoxSystem.modulate 绑定
+- [x] **点击停止动画开关**：`config.item.clickstopanimation` — 点击时如果动画还在播放则先完成动画再推进
+- [x] **点击停止语音开关**：`config.item.clickstopvoice` — 点击时停止当前语音
+- [x] **快进未读开关**：`config.item.fastforwardunread` — 控制 Skip 模式是否跳过未读文本
 
-### 4.2 存档体验
+### 4.2 存档体验（Phase 6 ✅）
 
-- [ ] **存档覆盖确认**：使用 i18n 键 `bookmark.overwrite.confirm`
-- [ ] **读档确认**：使用 i18n 键 `bookmark.load.confirm`
-- [ ] **存档删除功能**：使用 i18n 键 `bookmark.delete.confirm`
+- [x] **存档覆盖确认**：使用 i18n 键 `bookmark.overwrite.confirm`
+- [x] **读档确认**：使用 i18n 键 `bookmark.load.confirm`
+- [x] **存档删除功能**：使用 i18n 键 `bookmark.delete.confirm`
 
-### 4.3 分支与选项
+### 4.3 分支与选项（Phase 8 ✅）
 
-- [ ] **分支图片**：ChoiceListController 渲染选项的 `image` 字段为缩略图
-- [ ] **条件分支验证**：在 `test_all.txt` 中补充条件分支测试用例
-- [ ] **回顾跳转**：点击回顾条目跳回对应位置（使用 `log.moveback.confirm`）
+- [x] **分支图片**：ChoiceListController 渲染选项的 `image` 字段为缩略图
+- [x] **条件分支验证**：在 `test_all.txt` 中补充条件分支测试用例
+- [x] **回顾跳转**：点击回顾条目跳回对应位置（使用 `log.moveback.confirm`）
 
-### 4.4 画廊与解锁
+### 4.4 画廊与解锁（Phase 9 ✅）
 
-- [ ] **CG 动态解锁**：基于 ReadTracker 或自定义事件触发解锁
-- [ ] **音乐动态解锁**：播放过一次的 BGM 自动解锁
+- [x] **CG 动态解锁**：基于 ReadTracker 或自定义事件触发解锁
+- [x] **音乐动态解锁**：播放过一次的 BGM 自动解锁
 
 ---
 
 ## 五、UI/UX 改进
 
-- [ ] **重新设计对话框和按钮元素UI**：按钮改为无边框，字体底色带渐变背景。对话框也是需要符合现代galgame的渐变色框。主题颜色采用亮色系，淡粉色白色淡蓝色等色系。
+- [ ] **重新设计对话框和按钮元素UI**：按钮改为无边框，字体底色带渐变背景。对话框也是需要符合现代galgame的渐变色框。主题颜色采用亮色系，淡粉色白色淡蓝色等色系。（需美术资源）
 
-- [ ] **标题界面 ContentArea**：右侧空白区域放置 Logo 图片或动画背景
-- [ ] **ChoiceList 最大尺寸**：约束最大高度，超出时 ScrollContainer
-- [ ] **Toast 视口自适应**：位置从绝对像素改为视口百分比
-- [ ] **主主题补全**：ScrollContainer/GridContainer 样式、自定义 CJK 字体
-- [ ] **ContinueIcon**：从 Unicode "▼" 改为 TextureRect 确保跨字体兼容
-- [ ] **鼠标菜单补充**：添加快速存档 / 快速读档条目
+- [ ] **标题界面 ContentArea**：右侧空白区域放置 Logo 图片或动画背景（需美术资源）
+- [x] **ChoiceList 最大尺寸**：约束最大高度，超出时 ScrollContainer（Phase 10 ✅）
+- [x] **Toast 视口自适应**：位置从绝对像素改为视口百分比（Phase 10 ✅）
+- [ ] **主主题补全**：ScrollContainer/GridContainer 样式、自定义 CJK 字体（需美术资源）
+- [ ] **ContinueIcon**：从 Unicode "▼" 改为 TextureRect 确保跨字体兼容（需美术资源）
+- [x] **鼠标菜单补充**：添加快速存档 / 快速读档条目（Phase 10 ✅）
 - [ ] **右键菜单设置快捷键**：F1 设置快捷键连接到 `settings_requested`
 
 ---

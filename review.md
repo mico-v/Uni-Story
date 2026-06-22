@@ -2,6 +2,7 @@
 
 > 审查范围：全部 33 个 GDScript 源文件 + 10 个场景文件 + 配置文件 + 剧本文件
 > 审查日期：2026-06-22
+> 最后更新：2026-06-22（Phase 6-10 实施后同步）
 > 分支：dev（基于 rewrite/godot4.6 squash 后）
 
 ---
@@ -103,20 +104,22 @@
 
 | 功能 | 剧本 API / i18n 支持 | UI 状态 |
 |------|---------------------|---------|
-| 分支图片 | `branch([{image="..."}])` 解析+存储完整 | ChoiceListController 只渲染文本按钮 |
-| 回顾跳转 | `log.moveback.confirm` i18n 键存在 | 回顾面板只读，无点击跳转 |
-| 对话框透明度 | `config.item.dialogueopacity` i18n 键 | 设置界面无滑块 |
-| 点击停止动画 | `config.item.clickstopanimation` i18n 键 | 设置界面无开关 |
-| 点击停止语音 | `config.item.clickstopvoice` i18n 键 | 设置界面无开关 |
-| 快进未读文本 | `config.item.fastforwardunread` i18n 键 | 设置界面无开关 |
+| 分支图片 | `branch([{image="..."}])` 解析+存储完整 | ✅ ChoiceListController 渲染缩略图（Phase 8） |
+| 回顾跳转 | `log.moveback.confirm` i18n 键存在 | ✅ 点击回顾条目跳回对应位置（Phase 8） |
+| 对话框透明度 | `config.item.dialogueopacity` i18n 键 | ✅ SettingsViewController 滑块绑定（Phase 6） |
+| 点击停止动画 | `config.item.clickstopanimation` i18n 键 | ✅ SettingsViewController 开关（Phase 6） |
+| 点击停止语音 | `config.item.clickstopvoice` i18n 键 | ✅ SettingsViewController 开关（Phase 6） |
+| 快进未读文本 | `config.item.fastforwardunread` i18n 键 | ✅ SettingsViewController 开关（Phase 6） |
 | 角色独立音量 | `config.item.charactervolume.*` i18n 键 | 无每角色音量控制 |
 | 操作帮助 | `title.menu.help` i18n 键 | 标题界面无帮助按钮 |
-| 存档覆盖确认 | `bookmark.overwrite.confirm` i18n 键 | 存档无确认对话框 |
-| 存档删除 | `bookmark.delete.confirm` i18n 键 | 无删除按钮 |
-| 条件分支 | `branch()` 的 `cond` 字段完整实现 | 无任何剧本使用条件分支（功能未验证） |
+| 存档覆盖确认 | `bookmark.overwrite.confirm` i18n 键 | ✅ show_confirm 确认对话框（Phase 6） |
+| 存档删除 | `bookmark.delete.confirm` i18n 键 | ✅ 每槽删除按钮（Phase 6） |
+| 条件分支 | `branch()` 的 `cond` 字段完整实现 | ✅ test_all.txt 补充测试用例（Phase 8） |
 | `stop_bgm` | BaseBlock API 已实现 | 无任何剧本使用 |
 | `show_toast` / `show_confirm` | BaseBlock API 已实现 | 仅在 GameViewController 内部使用，剧本中无示例 |
-| CG 动态解锁 | gallery 配置 `unlocked=true` 硬编码 | 无基于游戏进度的解锁机制 |
+| CG 动态解锁 | gallery 配置 `unlocked=true` 硬编码 | ✅ ReadTracker + graphics.show() 自动解锁（Phase 9） |
+| 音乐动态解锁 | — | ✅ AudioSystem.bgm_started 信号自动解锁（Phase 9） |
+| 快速存档/读档 | — | ✅ 鼠标右键菜单快存快读条目（Phase 10） |
 
 ---
 
@@ -133,12 +136,12 @@
 ### 5.2 改进建议（非 Bug）
 
 1. **条件表达式缓存**：`_eval_condition` 每次编译新 GDScript，频繁分支会重复编译相同条件。加 hash 缓存
-2. **BGM 交叉淡入淡出**：当前 fade 是先淡出再淡入（中间有静默间隙），改为真正的 crossfade
-3. **SE 池耗尽策略**：4 个 SE 播放器全忙时强占第 0 个，应改为抢占最老或最低优先级的
-4. **AudioSystem 音频总线**：所有音频走 Master bus，应分为 BGM/SE/Voice 独立总线，支持分别控制
+2. **~~BGM 交叉淡入淡出~~**：✅ 已实现双播放器 crossfade（Phase 7）
+3. **~~SE 池耗尽策略~~**：✅ 已改为抢占最早播放的 SE（Phase 7）
+4. **~~AudioSystem 音频总线~~**：✅ 已创建 BGM/SE/Voice 独立总线路由到 Master（Phase 7）
 5. **TextureRect 支持**：`Graphics.show()` 硬编码 `.png` 扩展名，不支持 JPG/WebP/SVG
 6. **Backlog 持久化**：文本回顾历史不存入存档，读档后回顾面板为空
-7. **Gallery 动态解锁**：CG/音乐画廊全部 `unlocked=true` 硬编码，应基于 ReadTracker 或独立成就系统
+7. **~~Gallery 动态解锁~~**：✅ CG/BGM 已接入 ReadTracker 和 AudioSystem 信号（Phase 9）
 
 ---
 
@@ -148,7 +151,7 @@
 |------|------|
 | `title_view.tscn` | ContentArea 空白（右侧占满屏幕但不显示任何内容，可放 logo 或动画背景） |
 | `game_view.tscn` | TransitionOverlay `layout_mode=0` 与其他 Hud 子节点不一致 |
-| `game_view.tscn` | ChoiceList 无最大尺寸约束，多选项可能溢出屏幕 |
+| `game_view.tscn` | ~~ChoiceList 无最大尺寸约束~~ | ✅ 已添加最大高度约束（6 项 + ScrollContainer）（Phase 10） |
 | `dialogue_box.tscn` | ContinueIcon 用 Unicode "▼"，换字体时可能缺失字形 |
 | `main_theme.tres` | 无 ScrollContainer/GridContainer 样式，CG 画廊网格和滚动条用默认样式 |
 | `main_theme.tres` | 无自定义字体资源，CJK 覆盖依赖平台默认字体 |
@@ -159,17 +162,31 @@
 
 | 类别 | 数量 |
 |------|------|
-| GDScript 源文件 | 33 |
+| GDScript 源文件 | 34 |
 | 场景文件 (.tscn) | 10 |
 | Shader 文件 | 6 |
 | 剧本文件 | 3 |
 | i18n 语言文件 | 2 (zh/en) |
-| 总代码行数 | ~4500 |
+| 总代码行数 | ~4800 |
 | 子系统数 | 25 |
 | BaseBlock API 方法 | ~40 |
 | Bug (HIGH) | 6 |
 | Bug (MEDIUM) | 6 |
 | Bug (LOW) | 5 |
-| 功能缺口 | 14 |
+| 功能缺口（未实现） | 4 |
+| 功能缺口（已实现） | 12 |
 | 设计问题 | 4 大类 |
 | 死代码/孤立文件 | 5 |
+
+---
+
+## 八、Phase 6-10 实施记录
+
+| Phase | 内容 | 提交 | 日期 |
+|-------|------|------|------|
+| Phase 6 | 设置扩展 + 存档 UX | c37fa10 | 2026-06-22 |
+| Phase 7 | 音频独立总线 + BGM 交叉淡入 + SE 抢占 | 637492e | 2026-06-22 |
+| Phase 8 | 分支图片 + 条件分支测试 + 回顾跳转 | 72b1349 | 2026-06-22 |
+| Phase 9 | 画廊动态解锁 CG/BGM | e0ebbd8 | 2026-06-22 |
+| Phase 10 | ChoiceList 限高 + Toast 自适应 + 鼠标菜单快存快读 | 5b74b61 | 2026-06-22 |
+| 后续修复 | 严格模式错误清理（get_bus_layout/shadowed var/confusable decl/unused param） | ed924a1 | 2026-06-22 |
