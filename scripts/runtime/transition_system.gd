@@ -36,14 +36,13 @@ func play(kind: String = "fade", duration: float = 0.5) -> void:
 		"fade_in":
 			_fade(overlay, 1.0, 0.0, duration)
 		"flash":
-			var half := duration * 0.5
+			# Flash: instant snap to full opacity, then fade out.
 			overlay.visible = true
 			var col := overlay.color
-			col.a = 0.0
+			col.a = 1.0
 			overlay.color = col
 			var t := _ctx.get_tree().create_tween()
-			t.tween_property(overlay, "color:a", 1.0, max(0.01, half))
-			t.tween_property(overlay, "color:a", 0.0, max(0.01, half))
+			t.tween_property(overlay, "color:a", 0.0, max(0.01, duration))
 			t.tween_callback(func(): overlay.visible = false)
 		"dissolve":
 			_ctx.vfx.transition("dissolve", duration)

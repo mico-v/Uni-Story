@@ -115,8 +115,8 @@ func restore(state: Dictionary) -> void:
 			if stream != null:
 				_voice_player.stream = stream
 				_voice_player.volume_db = float(voice_state.get("volume_db", 0.0))
-				if bool(voice_state.get("playing", false)):
-					_voice_player.play()
+				# NOTE: voice is one-shot; do NOT replay on restore — it has
+				# already finished by the time the player loads the save.
 
 
 func stop_all() -> void:
@@ -124,6 +124,11 @@ func stop_all() -> void:
 	_voice_player.stop()
 	for p in _se_players:
 		p.stop()
+
+
+## Public accessor for the BGM player, used by MusicGalleryController.
+func get_bgm_player() -> AudioStreamPlayer:
+	return _bgm_player
 
 
 func stop_bgm(fade: float = 0.0):

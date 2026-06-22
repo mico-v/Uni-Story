@@ -168,6 +168,15 @@ func restore(data: Dictionary) -> void:
 			var m = obj_state["modulate"]
 			if m is Array and m.size() >= 4:
 				node.modulate = Color(float(m[0]), float(m[1]), float(m[2]), float(m[3]))
+		if obj_state.has("texture_path"):
+			var tp := str(obj_state["texture_path"])
+			if not tp.is_empty():
+				var tex := _load_texture(tp)
+				if tex:
+					if node is Sprite2D:
+						(node as Sprite2D).texture = tex
+					elif node is TextureRect:
+						(node as TextureRect).texture = tex
 
 
 func _get_texture_path(node: CanvasItem) -> String:

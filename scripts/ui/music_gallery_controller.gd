@@ -32,11 +32,7 @@ func setup(ctx: Node) -> void:
 		_audio = ctx.audio as AudioSystem
 	# Connect BGM finished signal for auto-advance.
 	if _audio:
-		var bgm_player = null
-		for child in ctx.get_children():
-			if child.name == "BGMPlayer" and child is AudioStreamPlayer:
-				bgm_player = child
-				break
+		var bgm_player := _audio.get_bgm_player()
 		if bgm_player:
 			bgm_player.finished.connect(_on_bgm_finished)
 

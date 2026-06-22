@@ -26,8 +26,12 @@ func has_var(name: String) -> bool:
 	return _store.has(name)
 
 
-func add_var(name: String, delta: float) -> void:
-	set_var(name, float(get_var(name, 0)) + delta)
+func add_var(name: String, delta: Variant) -> void:
+	var current = get_var(name, 0)
+	if current is int and delta is int:
+		set_var(name, int(current) + int(delta))
+	else:
+		set_var(name, float(current) + float(delta))
 
 
 func clear() -> void:
