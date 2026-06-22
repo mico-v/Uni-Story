@@ -14,6 +14,7 @@ const PRESETS := {
 }
 
 var _ctx: Node
+var _current_preset: String = "bottom"
 
 
 func _init(ctx: Node) -> void:
@@ -32,8 +33,10 @@ func set_box(pos_name: Variant = "bottom") -> void:
 	var key := str(pos_name) if pos_name != null else "hide"
 	if key == "hide" or key == "":
 		box.visible = false
+		_current_preset = "hide"
 		return
 	box.visible = true
+	_current_preset = key
 	var a: Array = PRESETS.get(key, PRESETS["bottom"])
 	box.anchor_left = a[0]
 	box.anchor_right = a[1]
@@ -43,3 +46,12 @@ func set_box(pos_name: Variant = "bottom") -> void:
 	box.offset_right = 0
 	box.offset_top = 0
 	box.offset_bottom = 0
+
+
+func snapshot() -> Dictionary:
+	return {"preset": _current_preset}
+
+
+func restore(data: Dictionary) -> void:
+	var preset: String = str(data.get("preset", "bottom"))
+	set_box(preset)

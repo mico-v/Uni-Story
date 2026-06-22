@@ -32,8 +32,18 @@ func save(slot: int) -> bool:
 	}
 	if _ctx.read_tracker:
 		data["read_tracker"] = _ctx.read_tracker.snapshot()
-	if not data.has("version"):
-		data["version"] = 1
+	if _ctx.vfx:
+		var vfx_data := _ctx.vfx.snapshot()
+		if not vfx_data.is_empty():
+			data["vfx"] = vfx_data
+	if _ctx.dialogue_box:
+		data["dialogue_box"] = _ctx.dialogue_box.snapshot()
+	if _ctx.composer:
+		var comp_data := _ctx.composer.snapshot()
+		if not comp_data.is_empty():
+			data["composer"] = comp_data
+	if _ctx.backlog:
+		data["backlog"] = _ctx.backlog.snapshot()
 	var f := FileAccess.open(_slot_path(slot), FileAccess.WRITE)
 	if f == null:
 		push_error("SaveSystem: cannot write slot %d" % slot)
@@ -56,10 +66,21 @@ func load_slot(slot: int) -> bool:
 		push_error("SaveSystem: corrupt save in slot %d" % slot)
 		return false
 	var ok = _ctx.game_state.restore(parsed["state"])
-	if ok and _ctx.read_tracker and parsed.has("read_tracker"):
-		var rt_data = parsed["read_tracker"]
-		if rt_data is Dictionary:
-			_ctx.read_tracker.restore(rt_data)
+	if ok:
+		if _ctx.read_tracker and parsed.has("read_tracker"):
+			var rt_data = parsed["read_tracker"]
+			if rt_data is Dictionary:
+				_ctx.read_tracker.restore(rt_data)
+		if _ctx.vfx and parsed.has("vfx"):
+			_ctx.vfx.restore(parsed["vfx"])
+		if _ctx.dialogue_box and parsed.has("dialogue_box"):
+			_ctx.dialogue_box.restore(parsed["dialogue_box"])
+		if _ctx.composer and parsed.has("composer"):
+			_ctx.composer.restore(parsed["composer"])
+		if _ctx.backlog and parsed.has("backlog"):
+			var bl_data = parsed["backlog"]
+			if bl_data is Array:
+				_ctx.backlog.restore(bl_data)
 	return ok
 
 

@@ -24,6 +24,9 @@ const POST_EFFECTS := {
 
 var _shader_cache: Dictionary = {}          # path → Shader
 var _active_materials: Dictionary = {}      # node instance_id → ShaderMaterial
+var _active_effects: Dictionary = {}        # object_name → { effect, params }
+var _post_fx_name: String = ""              # active post-FX effect name
+var _post_fx_params: Dictionary = {}        # active post-FX param overrides
 var _post_fx_rect: ColorRect = null         # full-screen post-process target
 var _shake_tween: Tween = null
 
@@ -87,6 +90,11 @@ func play(effect_name: String, target: Variant, duration: float = 0.5, params: D
 		push_warning("VFXSystem.play: unknown effect '%s'" % effect_name)
 		return _null_tween()
 
+	# Track effect by object name for snapshot/restore.
+	var obj_name := _resolve_name(target, node)
+	if not obj_name.is_empty():
+		_active_effects[obj_name] = {"effect": effect_name, "params": params.duplicate()}
+
 	var effect_info: Dictionary = OBJECT_EFFECTS[effect_name]
 	var mat := _get_or_create_material(node, effect_info)
 	if mat == null:
@@ -124,6 +132,11 @@ func clear(target: Variant, duration: float = 0.3) -> Tween:
 	var node := _resolve(target)
 	if node == null:
 		return _null_tween()
+
+	# Remove tracking by object name.
+	var obj_name := _resolve_name(target, node)
+	if not obj_name.is_empty():
+		_active_effects.erase(obj_name)
 
 	var id := node.get_instance_id()
 	if not _active_materials.has(id):
@@ -218,6 +231,8 @@ func post(effect_name: String, duration: float = 0.5, params: Dictionary = {}) -
 
 	_post_fx_rect.material = mat
 	_post_fx_rect.visible = true
+	_post_fx_name = effect_name
+	_post_fx_params = params.duplicate()
 
 	# Animate the primary parameter.
 	var anim_key := ""
@@ -248,6 +263,8 @@ func clear_post(duration: float = 0.3) -> Tween:
 	if duration <= 0.0:
 		_post_fx_rect.material = null
 		_post_fx_rect.visible = false
+		_post_fx_name = ""
+		_post_fx_params = {}
 		return _null_tween()
 
 	var mat: ShaderMaterial = _post_fx_rect.material
@@ -262,6 +279,8 @@ func clear_post(duration: float = 0.3) -> Tween:
 	t.tween_callback(func():
 		_post_fx_rect.material = null
 		_post_fx_rect.visible = false
+		_post_fx_name = ""
+		_post_fx_params = {}
 	)
 	return t
 
@@ -307,3 +326,42 @@ func _null_tween() -> Tween:
 	var t := _ctx.get_tree().create_tween()
 	t.tween_interval(0.0)
 	return t
+
+
+# ── Name resolution helper ────────────────────────────────────────────
+
+func _resolve_name(target: Variant, node: CanvasItem) -> String:
+	if target is String or target is StringName:
+		return str(target)
+	# Try to find the object name by matching instance ID.
+	if _ctx and _ctx.object_manager:
+		var id := node.get_instance_id()
+		for obj_name in _ctx.object_manager.objects:
+			var obj = _ctx.object_manager.objects[obj_name]
+			if obj is CanvasItem and obj.get_instance_id() == id:
+				return str(obj_name)
+	return ""
+
+
+# ── Snapshot / Restore ─────────────────────────────────────────────────
+
+func snapshot() -> Dictionary:
+	var data := {}
+	if not _active_effects.is_empty():
+		data["effects"] = _active_effects.duplicate(true)
+	if not _post_fx_name.is_empty():
+		data["post_fx"] = {"name": _post_fx_name, "params": _post_fx_params.duplicate()}
+	return data
+
+
+func restore(data: Dictionary) -> void:
+	# Re-apply per-object effects.
+	if data.has("effects"):
+		var effects: Dictionary = data["effects"]
+		for obj_name in effects:
+			var info: Dictionary = effects[obj_name]
+			play(str(info["effect"]), obj_name, 0.0, info.get("params", {}))
+	# Re-apply post-FX.
+	if data.has("post_fx"):
+		var pf: Dictionary = data["post_fx"]
+		post(str(pf["name"]), 0.0, pf.get("params", {}))

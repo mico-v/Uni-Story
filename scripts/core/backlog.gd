@@ -23,3 +23,13 @@ func entries() -> Array:
 
 func clear() -> void:
 	_entries.clear()
+
+
+func snapshot() -> Array:
+	return _entries.duplicate(true)
+
+
+func restore(data: Array) -> void:
+	_entries = data.duplicate(true)
+	if _entries.size() > MAX_ENTRIES:
+		_entries = _entries.slice(_entries.size() - MAX_ENTRIES)
