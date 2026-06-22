@@ -327,6 +327,9 @@ func reset_world() -> void:
 	# Clean up runtime-loaded prefabs.
 	if _ctx and _ctx.prefab_loader:
 		_ctx.prefab_loader.destroy_all()
+	# Clean up character sprites (CompositeSprite nodes).
+	if _ctx and _ctx.composer:
+		_ctx.composer.clear_all()
 	# Stop any playing video.
 	if _ctx and _ctx.video_system:
 		_ctx.video_system.stop()

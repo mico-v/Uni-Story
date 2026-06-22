@@ -92,3 +92,16 @@ func set_layer(char_name: String, layer: String, key: Variant = "") -> void:
 func hide_char(char_name: String) -> void:
 	if _chars.has(char_name):
 		_chars[char_name].visible = false
+
+
+## Free all character nodes and clear internal references.
+## Called during reset_world() to prevent dangling references.
+func clear_all() -> void:
+	for char_name in _chars:
+		var cs: CompositeSprite = _chars[char_name]
+		if is_instance_valid(cs):
+			cs.clear_layers()
+			cs.queue_free()
+		if _ctx.object_manager:
+			_ctx.object_manager.unbind_object_runtime(char_name)
+	_chars.clear()

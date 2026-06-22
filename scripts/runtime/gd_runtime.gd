@@ -12,7 +12,7 @@ class_name GDRuntime extends RefCounted
 const BASE_BLOCK_PATH := "res://scripts/runtime/base_block.gd"
 
 var _ctx: Node
-var _cache: Dictionary = {}  # source hash -> GDScript
+var _cache: Dictionary = {}  # source string -> GDScript
 
 
 func _init(ctx: Node) -> void:
@@ -28,7 +28,7 @@ func clear_cache() -> void:
 ## Compile a block of statements into an instantiable GDScript. Returns null on
 ## a compile error (already pushed to the error log).
 func compile_block(source: String) -> GDScript:
-	var key := source.hash()
+	var key := source
 	if _cache.has(key):
 		return _cache[key]
 

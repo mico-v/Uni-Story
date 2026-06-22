@@ -142,12 +142,12 @@ func _ensure_confirm() -> void:
 	hbox.add_theme_constant_override("separation", 20)
 	vbox.add_child(hbox)
 	_confirm_ok = Button.new()
-	_confirm_ok.text = "OK"
+	_confirm_ok.text = _t("alert.confirm", "OK")
 	_confirm_ok.custom_minimum_size = Vector2(120, 40)
 	_confirm_ok.pressed.connect(func() -> void: answer_confirm(true))
 	hbox.add_child(_confirm_ok)
 	_confirm_cancel = Button.new()
-	_confirm_cancel.text = "Cancel"
+	_confirm_cancel.text = _t("alert.cancel", "Cancel")
 	_confirm_cancel.custom_minimum_size = Vector2(120, 40)
 	_confirm_cancel.pressed.connect(func() -> void: answer_confirm(false))
 	hbox.add_child(_confirm_cancel)
@@ -161,3 +161,9 @@ func _get_ui_parent() -> Node:
 			return hud
 		return game_view
 	return _ctx.get_tree().root
+
+
+func _t(key: String, fallback: String = "") -> String:
+	if _ctx == null or _ctx.i18n == null:
+		return fallback
+	return _ctx.i18n.t(key, fallback)

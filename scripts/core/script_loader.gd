@@ -61,6 +61,8 @@ func _parse_file(source: String) -> void:
 				_pending_lazy = block["content"]
 			"text":
 				_append_text(block["content"])
+	# Flush any trailing lazy block at end of file (no following text).
+	_flush_pending_lazy_as_silent()
 
 
 func _append_text(line: String) -> void:
