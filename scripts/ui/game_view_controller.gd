@@ -204,6 +204,9 @@ func _connect_signals() -> void:
 	if _choice_list_controller:
 		if not _choice_list_controller.choice_chosen.is_connected(_on_choice):
 			_choice_list_controller.choice_chosen.connect(_on_choice)
+	if _ctx.backlog:
+		if not _ctx.backlog.jump_requested.is_connected(_on_backlog_jump):
+			_ctx.backlog.jump_requested.connect(_on_backlog_jump)
 
 
 # ── Keyboard shortcuts ───────────────────────────────────────────────
@@ -447,7 +450,12 @@ func on_dialogue_changed(speaker: String, text: String) -> void:
 	if _choice_list:
 		_choice_list.visible = false
 	if _ctx.backlog:
-		_ctx.backlog.record(speaker, text)
+		var node_name := ""
+		var entry_idx := -1
+		if _ctx.game_state and _ctx.game_state.current_node:
+			node_name = str(_ctx.game_state.current_node.name)
+			entry_idx = _ctx.game_state.current_index
+		_ctx.backlog.record(speaker, text, node_name, entry_idx)
 	_start_typewriter(text)
 	# Skip mode: fast-forward read entries, stop at unread.
 	if _is_skip and _ctx.game_state and _ctx.game_state.current_node:
@@ -687,7 +695,9 @@ func _open_backlog() -> void:
 		_backlog_panel.visible = true
 	await get_tree().process_frame
 	if _ctx.backlog:
-		for entry in _ctx.backlog.entries():
+		var entries := _ctx.backlog.entries()
+		for i in entries.size():
+			var entry: Dictionary = entries[i]
 			var lbl := RichTextLabel.new()
 			lbl.bbcode_enabled = true
 			lbl.fit_content = true
@@ -699,6 +709,12 @@ func _open_backlog() -> void:
 				lbl.text = text
 			else:
 				lbl.text = "[b]%s[/b]：%s" % [speaker, text]
+			# Make clickable for jump-back (only if position data exists).
+			var node_name := str(entry.get("node", ""))
+			var entry_idx: int = int(entry.get("index", -1))
+			if node_name != "" and entry_idx >= 0:
+				lbl.mouse_filter = Control.MOUSE_FILTER_STOP
+				lbl.gui_input.connect(_on_backlog_entry_click.bind(i, lbl))
 			_backlog_list.add_child(lbl)
 	await get_tree().process_frame
 	# Lock in measured heights so fit_content never recomputes to zero.
@@ -707,6 +723,27 @@ func _open_backlog() -> void:
 			child.custom_minimum_size.y = child.size.y
 	if _backlog_scroll:
 		_backlog_scroll.scroll_vertical = int(_backlog_scroll.get_v_scroll_bar().max_value)
+
+
+func _on_backlog_entry_click(event: InputEvent, entry_index: int, lbl: RichTextLabel) -> void:
+	if event is InputEventMouseButton:
+		var mb := event as InputEventMouseButton
+		if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT and not mb.is_echo():
+			if _ctx.backlog:
+				_ctx.backlog.request_jump(entry_index)
+
+
+func _on_backlog_jump(node_name: String, entry_index: int) -> void:
+	if _ctx.dialog_system:
+		var msg := _t("log.moveback.confirm", "要跳回到这个位置吗？")
+		var sig: Signal = _ctx.dialog_system.show_confirm(_t("ui.label.backlog", "文本回顾"), msg)
+		var confirmed: bool = await sig
+		if not confirmed:
+			return
+	if _backlog_panel:
+		_backlog_panel.visible = false
+	if _ctx.game_state:
+		_ctx.game_state.jump_to_position(node_name, entry_index)
 
 
 # ── Save/load panel ──────────────────────────────────────────────────

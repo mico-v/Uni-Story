@@ -11,9 +11,10 @@ set_box()
     { dest="sec_animation", text="2. 动画链" },
     { dest="sec_char", text="3. 立绘合成" },
     { dest="sec_var", text="4. 变量系统" },
-    { dest="sec_vfx", text="5. VFX 效果" },
-    { dest="sec_prefab", text="6. Prefab 加载" },
-    { dest="sec_full", text="7. 全部顺序执行" },
+    { dest="sec_cond_branch", text="5. 条件分支" },
+    { dest="sec_vfx", text="6. VFX 效果" },
+    { dest="sec_prefab", text="7. Prefab 加载" },
+    { dest="sec_full", text="8. 全部顺序执行" },
 ]) |>
 
 @<| label("sec_runtime") |>
@@ -27,6 +28,9 @@ set_box()
 
 @<| label("sec_var") |>
 @<| jump_to("var_start") |>
+
+@<| label("sec_cond_branch") |>
+@<| jump_to("cond_branch_start") |>
 
 @<| label("sec_vfx") |>
 @<| jump_to("vfx_start") |>
@@ -217,6 +221,72 @@ set_var("flag", true)
 
 @<| label("var_end") |>
 变量系统测试结束
+
+# ── 条件分支测试 ──────────────────────────────────────────────
+
+@<| label("cond_branch_start") |>
+<|
+set_box()
+set_var("cond_score", 10)
+set_var("cond_flag", false)
+|>
+━━━ 条件分支测试 ━━━
+设置 cond_score=10, cond_flag=false
+
+── 测试1: SHOW 模式（条件为真才显示选项）──
+@<| branch([
+    { dest="cond_pass", text="应可见：cond_score >= 5", mode="show", cond="get_var('cond_score') >= 5" },
+    { dest="cond_fail", text="不应可见：cond_flag == true", mode="show", cond="get_var('cond_flag') == true" },
+    { dest="cond_pass2", text="应可见：无条件限制" },
+]) |>
+
+@<| label("cond_pass") |>
+✓ SHOW 模式：条件为真的选项被选中
+@<| jump_to("cond_test2") |>
+
+@<| label("cond_fail") |>
+✗ 不应出现此选项（条件为假时不应可见）
+@<| jump_to("cond_test2") |>
+
+@<| label("cond_pass2") |>
+✓ 无条件限制的选项正常显示
+@<| jump_to("cond_test2") |>
+
+@<| label("cond_test2") |>
+── 测试2: ENABLE 模式（条件为假时灰显不可选）──
+@<| branch([
+    { dest="cond_enabled", text="应可选：cond_score > 0", mode="enable", cond="get_var('cond_score') > 0" },
+    { dest="cond_disabled", text="应灰显：cond_flag == true", mode="enable", cond="get_var('cond_flag') == true" },
+]) |>
+
+@<| label("cond_enabled") |>
+✓ ENABLE 模式：条件为真的选项可选
+@<| jump_to("cond_test3") |>
+
+@<| label("cond_disabled") |>
+✗ 不应到达此处（选项应被禁用）
+@<| jump_to("cond_test3") |>
+
+@<| label("cond_test3") |>
+── 测试3: JUMP 模式（自动跳转到第一个条件为真的分支）──
+<|
+branch([
+    { dest="cond_jump_fail", mode="jump", cond="get_var('cond_flag') == true" },
+    { dest="cond_jump_pass", mode="jump", cond="get_var('cond_score') >= 10" },
+])
+|>
+如果看到这行文字说明 JUMP 模式未生效
+
+@<| label("cond_jump_fail") |>
+✗ JUMP 模式跳转到了错误分支
+@<| jump_to("cond_end") |>
+
+@<| label("cond_jump_pass") |>
+✓ JUMP 模式：自动跳转到第一个条件为真的分支
+@<| jump_to("cond_end") |>
+
+@<| label("cond_end") |>
+条件分支测试结束
 
 # ══════════════════════════════════════════════════════════════
 # Section 5: VFX 效果（原 test_vfx）
