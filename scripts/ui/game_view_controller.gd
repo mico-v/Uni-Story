@@ -890,6 +890,8 @@ func _show_mouse_menu(at_pos: Vector2) -> void:
 	var items := [
 		[_t("ingame.save.button", "存档"), _on_mouse_save],
 		[_t("ingame.load.button", "读档"), _on_mouse_load],
+		[_t("config.key.QuickSave", "快速存档"), _on_mouse_quick_save],
+		[_t("config.key.QuickLoad", "快速读档"), _on_mouse_quick_load],
 		[_t("ingame.log.button", "回顾"), _on_mouse_backlog],
 		[_t("ingame.config.button", "设置"), _on_mouse_settings],
 		[_t("ingame.auto.button", "自动"), _on_mouse_auto],
@@ -926,6 +928,16 @@ func _on_mouse_save() -> void:
 func _on_mouse_load() -> void:
 	_hide_mouse_menu()
 	_open_save_panel(false)
+
+
+func _on_mouse_quick_save() -> void:
+	_hide_mouse_menu()
+	_quick_save()
+
+
+func _on_mouse_quick_load() -> void:
+	_hide_mouse_menu()
+	_quick_load()
 
 
 func _on_mouse_backlog() -> void:
