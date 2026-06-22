@@ -10,18 +10,6 @@ const SCENARIO_FILES := [
 	"res://resources/scenarios/test_all.txt",
 ]
 
-const REVIEW_REGRESSION_FILES := [
-	"res://resources/scenarios/review_regression_branch.txt",
-	"res://resources/scenarios/review_regression_branch_attr.txt",
-	"res://resources/scenarios/review_regression_resume.txt",
-]
-
-const REVIEW_SANITY_FILES := [
-	"res://resources/scenarios/review_regression_sanity.txt",
-]
-
-@export var include_review_scenarios := false
-@export var include_review_sanity := false
 const RESOURCE_ROOT := "res://resources/"
 
 # ── Subsystems (public, BaseBlock reaches them as nova.<name>) ───────
@@ -72,10 +60,6 @@ func _ready() -> void:
 	_setup_locale()
 
 	var scenario_files := SCENARIO_FILES.duplicate()
-	if include_review_scenarios:
-		scenario_files.append_array(REVIEW_REGRESSION_FILES)
-	if include_review_sanity:
-		scenario_files.append_array(REVIEW_SANITY_FILES)
 
 	_bind_view_controllers()
 	_init_view_manager()

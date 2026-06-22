@@ -6,9 +6,7 @@ class_name GameState extends RefCounted
 signal dialogue_changed(speaker: String, text: String)
 signal dialogue_advanced()                 # fired after each dialogue display (for auto-save)
 signal branch_requested(options: Array)        # Array[{dest, text, mode, cond, image, enabled}]
-signal node_changed(node_name: StringName)
 signal game_ended()
-signal game_started()
 
 var _ctx: Node
 var _graph: FlowChartGraph
@@ -71,7 +69,6 @@ func restore(data: Dictionary) -> bool:
 	is_ended = false
 	is_processing = false
 	pending_jump = &""
-	node_changed.emit(node_name)
 
 	var target: int = int(data.get("index", 0))
 	target = clampi(target, 0, current_node.entries.size() - 1)
@@ -118,8 +115,6 @@ func start_node(name: StringName) -> void:
 	is_waiting_input = false
 	is_ended = false
 	is_processing = false
-	node_changed.emit(name)
-	game_started.emit()
 	is_waiting_input = false
 	advance()
 
@@ -309,5 +304,4 @@ func _goto(name: StringName) -> bool:
 		return false
 	current_node = _graph.get_node_named(name)
 	current_index = -1
-	node_changed.emit(name)
 	return true

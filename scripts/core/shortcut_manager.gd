@@ -140,7 +140,6 @@ func _get_defaults() -> Dictionary:
 	d["ui_settings"] = KEY_F1
 	d["ui_leave"] = KEY_ESCAPE
 	d["debug_reload"] = KEY_F9
-	d["debug_unlock"] = KEY_U
 	return d
 
 
