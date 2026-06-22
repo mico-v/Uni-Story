@@ -1,120 +1,176 @@
-# Nova2 重写开发计划（对齐 issue #1）
+# Uni-Story 开发计划
 
-## 0. 架构决策
+> 当前分支：dev | 引擎：Godot 4.6 | 子系统：25
 
-issue #1 规定：**框架用 C#，演出脚本用 GDScript，保留原 NovaScript 格式**。
-`master` 分支已按此实现（NovaController/GameState/ScriptLoader/NovaParser/
-GDRuntime + gdscript runtime），但 `rewrite/godot4.6` 分支曾把整套 C# 架构换成
-一个 1177 行的手写字符串解释器（旧 `GameRoot.gd`）。
+---
 
-本次重写在 **纯 GDScript** 路线下，恢复了开发者本来的设计思想：
-**把每个演出脚本块当作真正的 GDScript 编译运行**，而不是用正则/子串手工解析。
-本机没有 .NET，无法编译 C#，因此用 GDScript 复刻 C# 核心；接口与职责与 master
-对齐，未来装好 .NET 后可逐步迁回 C#。
+## 一、已完成功能
 
-核心洞察：`GDScript.source_code` + `reload()` + `.new()` 可以在运行时编译
-GDScript。于是 `o.anim.X().Y()` 链式调用、`Vector3(...)`、`Color(...)`、字典等
-全部交给 GDScript 编译器，手写解释器彻底删除。
+### 核心引擎
+- NovaScript 解析器（eager/lazy/text 块 + 属性语法）
+- GDRuntime（运行时 GDScript 编译执行 + 缓存）
+- FlowChartGraph（流程图 + 分支 + 跳转 + 条件求值）
+- GameState（状态机 + snapshot/restore + lazy block replay）
+- SaveSystem（6 槽 + 自动存档 + JSON 持久化）
+- Variables（变量存取 + 条件跳转 jump_if）
+- I18n（zh/en 双语 + locale 回退 + 剧本路径本地化）
+- Backlog（200 条滚动历史）
+- ReadTracker（已读记录持久化 + Skip 模式集成）
+- ObjectManager（对象/常量注册 + 冻结语义）
+- ShortcutManager（快捷键自定义 + ConfigFile 持久化）
+- HotReload（文件轮询 + debounce + 自动重新解析）
+- PreloadSystem（ResourceLoader 异步后台加载）
+- ViewManager（视图注册/切换/过渡动画）
 
-## 1. 已完成（本分支，新架构）
+### 运行时子系统
+- Graphics（show/hide/move/tint + 名字解析）
+- AudioSystem（BGM/SE 池/Voice + 音量控制）
+- CameraSystem（逻辑 2D 相机：移动/缩放/旋转）
+- AnimationSystem + AnimationChain（o.anim 链式 Tween）
+- TransitionSystem（fade/flash/fade_out/fade_in）
+- DialogueBoxSystem（7 种锚点预设）
+- VFXSystem（对象 shader + 震屏 + 全屏后处理 + shader 转场）
+- SpriteComposer + CompositeSprite（多图层立绘）
+- AvatarSystem（对话框内肖像）
+- PrefabLoader（.tscn 运行时加载 + ObjectManager 注册 + snapshot）
+- VideoSystem（全屏播放 + 跳过）
+- Timeline（轨道式调度器）
+- DialogSystem（Toast + Confirm）
 
-### 运行时（scripts/runtime/）
-- `base_block.gd`：所有演出脚本块的基类，暴露 label/jump_to/branch/is_*、
-  show/hide/move/tint、set_box、play_bgm/se/voice、cam、trans、wait 等 API。
-- `gd_runtime.gd`：把每个 `<|...|>` / `@<|...|>` 块包成 `extends BaseBlock`
-  的类，编译、实例化、注入 `_ctx`、调用 `run()`。带编译缓存。
-- `graphics.gd`：show/hide/move/tint，支持按名字或节点引用定位对象。
-- `animation_system.gd` + `animation_chain.gd`：`o.anim` 链式动画，
-  链内顺序、跨语句并行（基于 Godot Tween）。
-- `audio_system.gd`：BGM（依赖导入设置的 loop point）、SE 池、Voice。
-- `camera_system.gd`：通过变换 world 容器实现逻辑相机（移动/缩放/旋转）。
-- `transition_system.gd`：fade（完整淡出+淡入，Tween 链式顺序）/ fade_out / fade_in / flash（顺序 Tween 避免并发冲突）。
-- `dialogue_box_system.gd`：`set_box` 预设（bottom/top/center/left/right/full/hide）。
-- `prefab_loader.gd`：运行时加载 `.tscn` 预制体，幂等加载（同名复用），注册到 ObjectManager，世界/UI 双挂载，snapshot/restore 存读档支持。
+### UI 层
+- NovaController（瘦协调器 ~450 行）
+- GameViewController（对话/打字机/选项/自动/快进/存读档面板/回顾/鼠标菜单 ~950 行）
+- TitleViewController（GALGAME 左侧列表菜单）
+- SettingsViewController（文字速度/音量/全屏/语言/字体/快捷键）
+- SaveLoadController（独立存读档视图 + 侧栏）
+- CgGalleryController（缩略图网格 + 全屏预览）
+- MusicGalleryController（曲目列表 + 三种播放模式）
+- ChoiceListController（分支选项渲染）
 
-### 核心模型（scripts/core/）
-- `nova_parser.gd`：把剧本切成 eager / lazy / text 块。
-- `script_loader.gd`：跑 eager 块构建 FlowChartGraph；lazy 块存源码（不执行）。
-- `flow_chart_node.gd` / `flow_chart_graph.gd` / `dialogue_entry.gd`：数据模型。
-- `object_manager.gd`：`o`（对象）/`c`（常量）字典。
-- `game_state.gd`：**纯模型**，遍历流程图、执行 lazy 块、发信号；不持有视图引用，
-  保证相同输入产生相同状态（可重放，利于存档/跳转/快进）。
+### CI/CD
+- GitHub Actions workflow（tag 触发，Win/Linux/Android 并行编译 + Release）
+- Export presets（Windows x86_64 / Linux x86_64 / Android arm64）
 
-### 控制器与视图
-- `NovaController.gd`：唯一的 Node 中枢，创建并持有所有子系统（满足规范
-  “所有 Singleton 从 NovaController 初始化”），用代码构建 HUD/world 场景树，
-  把模型信号桥接到视图。
-- `scene/game.tscn`：精简为只挂 NovaController 的根节点。
+---
 
-### 验证（通过 Godot MCP 实机运行）
-- 标题界面 + 章节选择（6 个章节全部正确解析）。
-- 对话播放、说话人解析（`角色：：内容`）。
-- lazy `show()` 实机加载贴图。
-- 动画链：顺序与并行，position/scale/rotation/modulate 终值正确。
-- 相机：`cam([200,0,1.2])` → world 位移 (-200,0)、缩放 1.2，复位正确。
-- 转场：flash 触发。
-- 分支 + 跳转：选项渲染、选择后跳转到目标节点。
+## 二、Bug 修复（优先级从高到低）
 
-## 2. 路线图进度（对照 issue #1）
+### P0 — 功能阻断
 
-演出系统（开发者要求“先做完再做 UI”）：
-- [x] NovaScript parser（真 GDScript 编译）
-- [x] 基本 GameState（标题、对话框、选项）
-- [x] 演出脚本（真执行，非 print）
-- [x] AssetLoader（贴图按 resource_root + folder 解析）
-- [x] 图片（前后端分离：脚本操作 model，视图随信号刷新）
-- [x] 动画系统（o.anim，Tween）
-- [x] CameraController（逻辑相机）
-- [x] 转场
-- [x] BGM / 音效 / 语音（API 完成，待音频素材接入演示）
-- [x] 立绘合成系统（多图层立绘：body/clothes/face/mouth/effect，可单独换层）
-- [x] 头像（对话框内肖像，随说话人显示/切换）
-- [x] 对话框文字动画（逐字 visible_ratio，点击快进，结束图标）
-- [x] 变量（set_var/get_var/add_var + jump_if 运行时条件跳转）
-- [x] VFX（对象 shader：blur/grayscale/dissolve；震屏；shader 转场：dissolve/wipe；全屏后处理：chromatic/vignette）
-- [x] 自动播放与快进模式（Auto 定时推进 + Skip 跳过已读，ReadTracker 持久化已读记录，存读档集成）
-- [x] 加载场景（PrefabLoader）—— 运行时加载 .tscn 预制体，注册到 ObjectManager，兼容 move/tint/o.anim/vfx，支持存读档快照
-- [x] 脚本热加载 —— HotReload 子系统轮询 FileAccess.get_modified_time()，自动重新解析剧本并返回标题页（仅调试模式）
-- [x] TimelineController（轨道式调度器，精确时间偏移编排动画/相机/音效/转场）
-- [x] 视频（VideoSystem，VideoStreamPlayer 全屏播放，点击/按键跳过，reset_world 自动清理）
+- [ ] **B1 F1 设置快捷键失效**：`ui_settings` 处理只关闭面板不打开设置。改为：关闭面板 + emit `settings_requested`
+- [ ] **B3 `_ui_parent()` 逻辑反转**：PrefabLoader 的 UI 挂载方法找到 GameView 时返回 null，UI 预制体无法加载
+- [ ] **B4 VFXSystem API 过期**：`get_shader_uniform_list(false)` 在 Godot 4.6 可能报错，改为无参数调用
+- [ ] **B5 游戏内读档残留**：`_on_slot_pressed` 的 load 路径调 `load_game()` 前需先 `reset_world()`
+- [ ] **B2 F5 快捷键冲突**：`ui_save` 和 `debug_reload` 共用 F5，重新分配键位
 
-UI / 系统（演出做完后）：
-- [x] 存档系统（每槽一个 JSON 文件，model 快照 + 重放；user://saves/）
-- [x] 存档界面（6 槽存/读档面板）
-- [x] 文本回顾界面（Backlog，回顾按钮，滚动历史）
-- [x] I18n 本地化（zh/en 双语字典，所有可见 UI 文案已接入 `_t()`，locale 回退链路）
-- [x] ViewManager（视图注册/切换/过渡动画：fade/slide/instant，GALGAME 风格左侧列表菜单）
-- [x] 设置界面（文字速度/音量/全屏/语言/字体大小，信号驱动，i18n 完整接入）
-- [x] 图片鉴赏界面（缩略图网格，锁定/解锁占位，全屏预览覆盖层）
-- [x] 音乐鉴赏界面（曲目列表，播放/停止控制，列表循环/单曲循环/随机模式）
-- [x] NovaController 重构（760行→240行瘦协调器，游戏逻辑提取到 GameViewController）
-- [x] 独立存读档界面（SaveLoadController/SaveLoadView，主菜单直接进入，GALGAME 风格侧栏）
-- [x] 鼠标菜单（右键弹出上下文菜单：存档/读档/回顾/设置/自动/快进/标题/退出）
-- [x] 警告框 / 通知框（DialogSystem：Toast 顶部通知 + Confirm 确认对话框，快速存档反馈、返回标题/退出确认）
-- [x] 预加载系统（PreloadSystem，ResourceLoader 异步后台加载，缓存命中免卡顿）
-- [ ] 随意缩放窗口 / 对话框完整功能
-- [x] 快捷键系统
-- [ ] 手柄支持 / 立绘裁剪工具
+### P1 — 数据正确性
 
-## 3. 下一步建议顺序
-1. **随意缩放窗口 / 对话框完整功能**。
-2. **手柄支持 / 立绘裁剪工具**。
+- [ ] **B6 GDRuntime 哈希碰撞**：`source.hash()` 改 `source.sha256_text()` 或全字符串缓存
+- [ ] **B9 尾部 lazy 块丢失**：`script_loader.gd` 的 `load_all()` 末尾补调 `_flush_pending_lazy_as_silent()`
+- [ ] **B7 确认对话框未 i18n**：`dialog_system.gd` OK/Cancel 按钮接入 `_t("alert.confirm")` / `_t("alert.cancel")`
+- [ ] **B12 CompositeSprite 层悬空引用**：`clear_layers()` 改为同步 `remove_child` + `free`，或等一帧后再清空 `_layers`
 
-## 4. 测试剧本
-- `test_all.txt`：综合自检（运行时/动画/立绘/变量/VFX/Prefab，7 项分支菜单可选单项或全部运行）。
-- `plan_demo.txt`：增强演示剧本（5 章结构，说话人标签，fade 转场，center 对白）。
-- `ch1/ch2/demo_full`：其他演示章节。
+### P2 — 代码质量
 
-## 5. 已实现的演出脚本 API（BaseBlock）
-- 流程：`label` `jump_to` `jump_if` `branch` `is_start/is_unlocked_start/is_end/...`
-- 图像：`show` `hide` `move` `tint`
-- 立绘：`show_char` `set_layer` `hide_char`；头像：`set_avatar` `clear_avatar`
-- 动画：`o.anim.PropertyVector3(...).PropertyColor(...)`（链=顺序，分语句=并行）
-- 音频：`play_bgm` `stop_bgm` `play_se` `play_voice`
-- 镜头/转场：`cam` `trans`；对话框：`set_box`
-- 变量：`set_var` `get_var` `has_var` `add_var`；其它：`wait` `print`
-- 预制体：`load_prefab` `show_prefab` `hide_prefab` `destroy_prefab`
-- 时间轴：`timeline().at(time, callable).play()`
-- 视频：`play_video(path, skippable)`
-- 对话框：`show_toast(message)` `show_confirm(title, message)`
-- 预加载：`preload_asset(path)`
+- [ ] **B8 MusicGallery BGM 发现脆弱**：改为 AudioSystem 暴露 `get_bgm_player()` 方法
+- [ ] **B10 AnimationChain 信号语法**：`emit_signal("finished")` 改为 `finished.emit()`
+- [ ] **B11 Graphics snapshot 冗余**：移除 `texture_path` 捕获（restore 不使用）或在 restore 中恢复纹理
+- [ ] **B13 SaveSystem 死代码**：删除 `data.has("version")` 永远为 true 的检查
+- [ ] **B14 Variables 类型偏移**：`add_var` 保持原类型（整数加整数仍为整数）
+- [ ] **B15 TransitionSystem "flash" 重复**：删除与 "fade" 相同的实现，或让 flash 有不同的视觉行为
+- [ ] **B16 Voice restore 缺 seek**：AudioSystem voice restore 加上 `play(pos)` 与 BGM 对齐
+
+---
+
+## 三、架构改进
+
+### 3.1 存档恢复覆盖
+
+- [ ] **VFXSystem snapshot/restore**：捕获活跃的 shader 参数和 uniform 值，restore 时重新应用
+- [ ] **DialogueBoxSystem snapshot/restore**：保存当前预设名（bottom/center/etc.），restore 时重新定位
+- [ ] **SpriteComposer snapshot/restore**：捕获每个角色名的图层状态，restore 时重建
+- [ ] **Backlog 持久化**：存入存档 JSON，读档后回顾面板保留历史
+
+### 3.2 图完整性
+
+- [ ] **循环检测**：`FlowChartGraph.sanity_check()` 加 DFS 检测 A→B→A 路径，报告为 error
+- [ ] **CHAPTER 类型行为**：让 CHAPTER 节点触发章节标题 UI 或自动推进（不等待点击）
+- [ ] **`is_end(name)` 命名结局**：存储结局名称，供画廊解锁和成就系统查询
+
+### 3.3 运行时安全性
+
+- [ ] **GDRuntime 超时机制**：async 操作加安全 timeout（默认 30s），超时 push_error 并继续
+- [ ] **条件编译缓存**：`_eval_condition` 按条件字符串 hash 缓存编译结果
+- [ ] **ReadTracker 自动持久化**：`mark_read()` 加 debounce（2s），自动写磁盘
+- [ ] **PreloadSystem 取消机制**：加 `cancel_preload(path)` 方法
+
+### 3.4 音频系统增强
+
+- [ ] **独立音频总线**：创建 BGM/SE/Voice 三个 AudioBus，分别路由
+- [ ] **BGM 交叉淡入淡出**：fade 改为同时淡出旧 + 淡入新，消除静默间隙
+- [ ] **SE 池抢占策略**：改为抢占播放时间最长或优先级最低的 SE 播放器
+
+---
+
+## 四、功能补完（场景系统已支持但 UI 未暴露）
+
+### 4.1 设置界面扩展
+
+- [ ] **对话框透明度滑块**：i18n 键 `config.item.dialogueopacity` 已有，实现 DialogueBoxSystem.modulate 绑定
+- [ ] **点击停止动画开关**：`config.item.clickstopanimation` — 点击时如果动画还在播放则先完成动画再推进
+- [ ] **点击停止语音开关**：`config.item.clickstopvoice` — 点击时停止当前语音
+- [ ] **快进未读开关**：`config.item.fastforwardunread` — 控制 Skip 模式是否跳过未读文本
+
+### 4.2 存档体验
+
+- [ ] **存档覆盖确认**：使用 i18n 键 `bookmark.overwrite.confirm`
+- [ ] **读档确认**：使用 i18n 键 `bookmark.load.confirm`
+- [ ] **存档删除功能**：使用 i18n 键 `bookmark.delete.confirm`
+
+### 4.3 分支与选项
+
+- [ ] **分支图片**：ChoiceListController 渲染选项的 `image` 字段为缩略图
+- [ ] **条件分支验证**：在 `test_all.txt` 中补充条件分支测试用例
+- [ ] **回顾跳转**：点击回顾条目跳回对应位置（使用 `log.moveback.confirm`）
+
+### 4.4 画廊与解锁
+
+- [ ] **CG 动态解锁**：基于 ReadTracker 或自定义事件触发解锁
+- [ ] **音乐动态解锁**：播放过一次的 BGM 自动解锁
+
+---
+
+## 五、UI/UX 改进
+
+- [ ] **标题界面 ContentArea**：右侧空白区域放置 Logo 图片或动画背景
+- [ ] **ChoiceList 最大尺寸**：约束最大高度，超出时 ScrollContainer
+- [ ] **Toast 视口自适应**：位置从绝对像素改为视口百分比
+- [ ] **主主题补全**：ScrollContainer/GridContainer 样式、自定义 CJK 字体
+- [ ] **ContinueIcon**：从 Unicode "▼" 改为 TextureRect 确保跨字体兼容
+- [ ] **鼠标菜单补充**：添加快速存档 / 快速读档条目
+- [ ] **右键菜单设置快捷键**：F1 设置快捷键连接到 `settings_requested`
+
+---
+
+## 六、清理
+
+- [ ] 删除 `scripts/ui/chapter_select_view_controller.gd.uid`（孤立文件）
+- [ ] 删除 `scene/ui/dialogue_entry.tscn`（未引用场景）
+- [ ] 删除 NovaController 中 `REVIEW_REGRESSION_FILES` / `REVIEW_SANITY_FILES` 常量（对应文件不存在）
+- [ ] 清理 `debug_unlock` (KEY_U) 输入动作或实现其功能
+- [ ] 清理 `game_state.node_changed` / `game_state.game_started` 未消费信号（连接消费者或删除）
+
+---
+
+## 七、建议实施顺序
+
+1. **P0 Bug 修复**（5 项，功能阻断级，1-2 天）
+2. **P1 数据正确性修复**（4 项，1 天）
+3. **清理孤立文件和死代码**（5 项，半天）
+4. **存档恢复覆盖补全**（4 项，2-3 天）
+5. **P2 代码质量改进**（8 项，1-2 天）
+6. **设置界面扩展 + 存档体验**（7 项，2-3 天）
+7. **音频系统增强**（3 项，1 天）
+8. **分支图片 + 条件分支验证**（3 项，1-2 天）
+9. **画廊动态解锁**（2 项，1 天）
+10. **UI/UX 改进**（7 项，2-3 天）
