@@ -191,7 +191,7 @@
 
 > 基于 2026-06-23 的全面代码审阅，分 9 个阶段逐步实施。
 > 每阶段独立提交并经 Godot MCP 编译验证（rescan→wait→clear→run_scene→wait→get_errors→stop_scene）。
-> 进度记录在 review.md 的"九、架构审阅重构记录"章节。
+> 进度记录在 review.md 的"八、实施记录"章节。
 
 ### Phase R1: 死代码清理与 Bug 修复
 - [ ] 删除 NovaController._register_objects() 空方法及调用
@@ -236,5 +236,45 @@
 - **Commit**: `refactor: split GameViewController into SaveLoadPanel, BacklogPanel, and ContextMenu controllers`
 
 ### Phase R9: 代码质量提升
-- [ ] class_name NovaController, 类型化数组, @onready 统一, PreloadSystem LRU, 解析器修复
+- [x] class_name NovaController ✅
+- [x] 类型化数组（Array[String], Array[Dictionary]）✅
+- [ ] @onready 统一
+- [x] PreloadSystem LRU ✅
+- [ ] 解析器修复
 - **Commit**: `refactor: code quality improvements (class_name, typed arrays, @onready, LRU, parser fix)`
+
+---
+
+## 九、2026-06-23 运行时与 UI 修复记录
+
+### 运行时错误修复
+
+| 问题 | 文件 | 修复 |
+|------|------|------|
+| `is_visible()` 覆盖 CanvasItem 原生方法 | save_load_panel_controller.gd, backlog_panel_controller.gd | 重命名为 `panel_is_visible()` |
+| `close` 参数遮蔽 `close()` 方法 | save_load_panel_controller.gd, backlog_panel_controller.gd | 重命名为 `close_btn` |
+| `disconnect_all()` 不存在 | gd_runtime.gd | 删除该调用 |
+| Lambda 捕获按值捕获，无法修改外层变量 | gd_runtime.gd | 用 Dictionary 包装可变状态 |
+| `BtnBack` 节点在继承场景中丢失 | scene/ui/base_menu_view.tscn | 添加到 base scene |
+| Typed array 返回类型不匹配 | gallery_config_loader.gd | 改为 `Array[Dictionary]` |
+| `Array` 构造函数签名不匹配 | composite_sprite.gd | 使用 typed array 常量声明 |
+| `Backlog.restore()` 类型不匹配 | backlog.gd | 迭代并类型检查条目 |
+| BacklogPanelController `get_tree()` 为 null | backlog_panel_controller.gd | 使用 `_ctx.get_tree()` |
+| generate_theme.gd 混合缩进 | generate_theme.gd | 移除多余空格 |
+
+### UI 功能修复
+
+| 问题 | 文件 | 修复 |
+|------|------|------|
+| `_close_save_panel()` 未声明 | game_view_controller.gd | 改为 `_save_load_controller.close()` |
+| `SKIP_DELAY` 未声明 | game_view_controller.gd | 改为 `skip_delay` |
+| `_save_load_controller.slot_pressed` 未连接 | game_view_controller.gd | 添加连接 |
+| Backlog 回顾显示未来文本 | backlog_panel_controller.gd | 按当前进度过滤，不显示当前位置之后的条目 |
+| Backlog 条目无 hover 效果 | backlog_panel_controller.gd | 添加 `modulate` 颜色变化（淡黄色） |
+| Backlog 跳转后选单显示错位 | choice_list_controller.gd, game_view_controller.gd | `clear()` 重置布局约束，`reset_world()` 使用 `_choice_list_controller.clear()` |
+
+### 相关文件变更
+
+- `scripts/ui/choice_list_controller.gd`：添加 `size_flags`、改进 `clear()`
+- `scripts/ui/game_view_controller.gd`：`reset_world()` 中使用 `_choice_list_controller.clear()`
+- `scripts/ui/backlog_panel_controller.gd`：添加过滤逻辑和 hover 效果

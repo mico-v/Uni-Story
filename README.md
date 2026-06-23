@@ -64,7 +64,7 @@ addons/godot_mcp/            # Godot MCP 调试/自动化插件
 
 ## 剧本 API
 
-演出脚本块继承 `BaseBlock`，可使用下列运行时 API。完整说明和当前进度见 [PLAN.md](PLAN.md)。
+演出脚本块继承 `BaseBlock`，可使用下列运行时 API。完整说明和当前进度见 [PLAN.md](PLAN.md)，语法参考见 [review.md](review.md#九novascript-剧本语法参考)。
 
 - 流程：`label`、`jump_to`、`jump_if`、`branch`、`is_start`、`is_end`
 - 图像：`show`、`hide`、`move`、`tint`

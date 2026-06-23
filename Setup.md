@@ -55,4 +55,4 @@ scene/
 
 - 开发计划与路线图：[PLAN.md](PLAN.md)
 - 项目概述与 API 参考：[README.md](README.md)
-- 对齐复盘记录：[review.md](review.md)
+- 对齐复盘记录与 NovaScript 语法：[review.md](review.md)
