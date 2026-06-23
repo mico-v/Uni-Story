@@ -11,6 +11,7 @@ signal title_requested()
 signal settings_requested()
 
 const ButtonRingScene: PackedScene = preload("res://scene/ui/button_ring.tscn")
+const SlotRowScene: PackedScene = preload("res://scene/ui/slot_row.tscn")
 
 # ── Context ──────────────────────────────────────────────────────────
 var _ctx: Node  # NovaController
@@ -788,72 +789,9 @@ func _open_save_panel(save_mode: bool) -> void:
 	if _ctx.save_system == null:
 		return
 	for slot in _ctx.save_system.SLOT_COUNT:
-		var has: bool = _ctx.save_system.has_save(slot)
-		var label := _t("ui.save.slot_format", "存档位 %d：%s") % [slot + 1, _ctx.save_system.slot_label(slot)]
-		var row := HBoxContainer.new()
-		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.add_theme_constant_override("separation", 8)
-		var b := _make_button(label)
-		b.custom_minimum_size = Vector2(300, 40)
-		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		if not save_mode and not has:
-			b.disabled = true
-		b.pressed.connect(_on_slot_pressed.bind(slot))
-		row.add_child(b)
-		if has:
-			var del_btn := Button.new()
-			del_btn.text = _t("bookmark.delete.button", "删除")
-			del_btn.custom_minimum_size = Vector2(60, 40)
-			del_btn.pressed.connect(_on_slot_delete.bind(slot))
-			row.add_child(del_btn)
-		_save_slots.add_child(row)
+		_build_slot_row(slot, save_mode)
 	if _save_panel:
 		_save_panel.visible = true
-
-
-func _close_save_panel() -> void:
-	if _save_panel:
-		_save_panel.visible = false
-
-
-func _on_slot_pressed(slot: int) -> void:
-	if _ctx.save_system == null:
-		return
-	if _save_mode:
-		if _ctx.save_system.has_save(slot) and _ctx.dialog_system:
-			var msg := _t("bookmark.overwrite.confirm", "覆盖存档{0}？").format([slot + 1])
-			var sig: Signal = _ctx.dialog_system.show_confirm(_t("ingame.save.button", "存档"), msg)
-			var confirmed: bool = await sig
-			if not confirmed:
-				return
-		if _ctx.save_system.save(slot):
-			if _status_label:
-				_status_label.text = _t("ui.status.saved", "状态：已存档到位 %d") % (slot + 1)
-			_refresh_save_slots()
-		_close_save_panel()
-	else:
-		if _ctx.dialog_system:
-			var msg := _t("bookmark.load.confirm", "读取存档{0}？").format([slot + 1])
-			var sig: Signal = _ctx.dialog_system.show_confirm(_t("ingame.load.button", "读档"), msg)
-			var confirmed: bool = await sig
-			if not confirmed:
-				return
-		_close_save_panel()
-		if _ctx.save_system.load_slot(slot):
-			reset_world()
-			load_game()
-
-
-func _on_slot_delete(slot: int) -> void:
-	if _ctx.save_system == null or _ctx.dialog_system == null:
-		return
-	var msg := _t("bookmark.delete.confirm", "要删除存档{0}吗？").format([slot + 1])
-	var sig: Signal = _ctx.dialog_system.show_confirm(_t("bookmark.delete.button", "删除"), msg)
-	var confirmed: bool = await sig
-	if not confirmed:
-		return
-	_ctx.save_system.delete_slot(slot)
-	_refresh_save_slots()
 
 
 func _refresh_save_slots() -> void:
@@ -861,25 +799,25 @@ func _refresh_save_slots() -> void:
 		return
 	_clear_children(_save_slots)
 	for slot in _ctx.save_system.SLOT_COUNT:
-		var has: bool = _ctx.save_system.has_save(slot)
-		var label := _t("ui.save.slot_format", "存档位 %d：%s") % [slot + 1, _ctx.save_system.slot_label(slot)]
-		var row := HBoxContainer.new()
-		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.add_theme_constant_override("separation", 8)
-		var b := _make_button(label)
-		b.custom_minimum_size = Vector2(300, 40)
-		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		if not _save_mode and not has:
-			b.disabled = true
-		b.pressed.connect(_on_slot_pressed.bind(slot))
-		row.add_child(b)
-		if has:
-			var del_btn := Button.new()
-			del_btn.text = _t("bookmark.delete.button", "删除")
-			del_btn.custom_minimum_size = Vector2(60, 40)
-			del_btn.pressed.connect(_on_slot_delete.bind(slot))
-			row.add_child(del_btn)
-		_save_slots.add_child(row)
+		_build_slot_row(slot, _save_mode)
+
+
+func _build_slot_row(slot: int, save_mode: bool) -> void:
+	var has: bool = _ctx.save_system.has_save(slot)
+	var label := _t("ui.save.slot_format", "存档位 %d：%s") % [slot + 1, _ctx.save_system.slot_label(slot)]
+	var row := SlotRowScene.instantiate()
+	var main_btn: Button = row.get_node("MainButton")
+	var del_btn: Button = row.get_node("DeleteButton")
+	main_btn.text = label
+	main_btn.custom_minimum_size = Vector2(300, 40)
+	main_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	if not save_mode and not has:
+		main_btn.disabled = true
+	main_btn.pressed.connect(_on_slot_pressed.bind(slot))
+	del_btn.visible = has
+	if has:
+		del_btn.pressed.connect(_on_slot_delete.bind(slot))
+	_save_slots.add_child(row)
 
 
 # ── Mouse menu (right-click context menu) ────────────────────────────
