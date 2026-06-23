@@ -283,6 +283,8 @@ func _on_title_new_game() -> void:
 
 func _on_title_continue() -> void:
 	if save_system and save_system.has_auto_save():
+		if _game_vc:
+			_game_vc.reset_world()
 		if save_system.load_auto_save():
 			view_manager.switch_to("game")
 			if _game_vc:
@@ -309,6 +311,8 @@ func _on_game_title_requested() -> void:
 
 
 func _on_save_load_completed() -> void:
+	if _game_vc:
+		_game_vc.reset_world()
 	view_manager.switch_to("game")
 	if _game_vc:
 		_game_vc.load_game()

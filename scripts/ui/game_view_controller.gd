@@ -1004,6 +1004,7 @@ func _quick_save() -> void:
 
 
 func _quick_load() -> void:
+	reset_world()
 	if _ctx.save_system and _ctx.save_system.load_slot(QUICK_SAVE_SLOT):
 		load_game()
 

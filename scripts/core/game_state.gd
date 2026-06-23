@@ -43,30 +43,19 @@ func setup(graph: FlowChartGraph) -> void:
 			_ctx.variables.changed.connect(_invalidate_cond_cache)
 
 
-## Capture the model state for saving. Front/back separation means this plus the
-## variables fully describe the playthrough; presentation is rebuilt by replay.
+## Capture only the model state (node, index, variables).
+## Subsystem snapshots are orchestrated by NovaController to maintain layer separation.
 func snapshot() -> Dictionary:
-	var system_state := {}
-	if _ctx.animation and _ctx.animation.has_method("snapshot"):
-		system_state["animation"] = _ctx.animation.snapshot()
-	if _ctx.audio and _ctx.audio.has_method("snapshot"):
-		system_state["audio"] = _ctx.audio.snapshot()
-	if _ctx.prefab_loader and _ctx.prefab_loader.has_method("snapshot"):
-		system_state["prefab_loader"] = _ctx.prefab_loader.snapshot()
-	if _ctx.camera and _ctx.camera.has_method("snapshot"):
-		system_state["camera"] = _ctx.camera.snapshot()
-	if _ctx.graphics and _ctx.graphics.has_method("snapshot"):
-		system_state["graphics"] = _ctx.graphics.snapshot()
 	return {
 		"node": String(current_node.name) if current_node else "",
 		"index": current_index,
 		"variables": _ctx.variables.to_dict(),
-		"systems": system_state,
 	}
 
 
 ## Restore a snapshot: set variables, jump to the node, and silently replay
 ## lazy blocks of entries [0, index] to rebuild presentation, then show entry.
+## Note: subsystem restore is orchestrated by NovaController after this call.
 func restore(data: Dictionary) -> bool:
 	var node_name := StringName(data.get("node", ""))
 	if not _graph.has_node_named(node_name):
@@ -87,10 +76,6 @@ func restore(data: Dictionary) -> bool:
 	var target: int = int(data.get("index", 0))
 	target = clampi(target, 0, current_node.entries.size() - 1)
 
-	# Clean up runtime objects before replay (prefabs will be re-created by lazy blocks).
-	if _ctx.prefab_loader:
-		_ctx.prefab_loader.destroy_all()
-
 	# Replay lazy blocks up to and including target entry to rebuild state.
 	for i in range(0, target + 1):
 		current_index = i
@@ -98,20 +83,6 @@ func restore(data: Dictionary) -> bool:
 		if entry.has_lazy():
 			_ctx.runtime.run_block(entry.lazy_source)
 		pending_jump = &""  # ignore mid-node jumps during replay
-
-	# Restore subsystem state after replay so playback can continue from a stable model.
-	var systems = data.get("systems", {})
-	if systems is Dictionary:
-		if _ctx.animation and _ctx.animation.has_method("restore"):
-			_ctx.animation.restore(systems.get("animation", {}))
-		if _ctx.audio and _ctx.audio.has_method("restore"):
-			_ctx.audio.restore(systems.get("audio", {}))
-		if _ctx.prefab_loader and _ctx.prefab_loader.has_method("restore"):
-			_ctx.prefab_loader.restore(systems.get("prefab_loader", {}))
-		if _ctx.camera and _ctx.camera.has_method("restore"):
-			_ctx.camera.restore(systems.get("camera", {}))
-		if _ctx.graphics and _ctx.graphics.has_method("restore"):
-			_ctx.graphics.restore(systems.get("graphics", {}))
 
 	var e = current_node.entries[target]
 	dialogue_changed.emit(e.speaker, e.text)
