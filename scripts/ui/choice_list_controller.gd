@@ -33,6 +33,7 @@ func set_choices(options: Array) -> void:
 			var row := HBoxContainer.new()
 			row.add_theme_constant_override("separation", 12)
 			row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			row.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 			var thumb := TextureRect.new()
 			thumb.custom_minimum_size = THUMB_SIZE
 			thumb.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
@@ -49,6 +50,7 @@ func set_choices(options: Array) -> void:
 			add_child(row)
 		else:
 			var button := _make_button(text)
+			button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			button.disabled = not enabled
 			button.pressed.connect(_on_choice_pressed.bind(dest))
 			add_child(button)
@@ -66,6 +68,9 @@ func set_choices(options: Array) -> void:
 func clear() -> void:
 	for c in get_children():
 		c.queue_free()
+	# Reset layout constraints so the container sizes to content after a reset.
+	custom_minimum_size.y = 0
+	clip_contents = false
 
 
 func _make_button(text: String) -> Button:

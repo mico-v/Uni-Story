@@ -35,24 +35,36 @@ func open() -> void:
 	await _ctx.get_tree().process_frame
 	if _ctx.backlog:
 		var entries = _ctx.backlog.entries()
+		var current_node_name := ""
+		var current_idx := -1
+		if _ctx.game_state and _ctx.game_state.current_node:
+			current_node_name = str(_ctx.game_state.current_node.name)
+			current_idx = _ctx.game_state.current_index
 		for i in entries.size():
 			var entry: Dictionary = entries[i]
+			var node_name := str(entry.get("node", ""))
+			var entry_idx: int = int(entry.get("index", -1))
+			# Skip entries after current position
+			if _is_after_current(node_name, entry_idx, current_node_name, current_idx):
+				continue
 			var lbl := RichTextLabel.new()
 			lbl.bbcode_enabled = true
 			lbl.fit_content = true
 			lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			lbl.size_flags_vertical = Control.SIZE_FILL
+			lbl.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 			var speaker := str(entry["speaker"])
 			var text := str(entry["text"])
 			if speaker.is_empty():
 				lbl.text = text
 			else:
 				lbl.text = "[b]%s[/b]：%s" % [speaker, text]
-			var node_name := str(entry.get("node", ""))
-			var entry_idx: int = int(entry.get("index", -1))
 			if node_name != "" and entry_idx >= 0:
 				lbl.mouse_filter = Control.MOUSE_FILTER_STOP
 				lbl.gui_input.connect(_on_backlog_entry_click.bind(i, lbl))
+				# Hover effects
+				lbl.mouse_entered.connect(func() -> void: _on_entry_hover(lbl, true))
+				lbl.mouse_exited.connect(func() -> void: _on_entry_hover(lbl, false))
 			_backlog_list.add_child(lbl)
 	await _ctx.get_tree().process_frame
 	for child in _backlog_list.get_children():
@@ -60,6 +72,19 @@ func open() -> void:
 			child.custom_minimum_size.y = child.size.y
 	if _backlog_scroll:
 		_backlog_scroll.scroll_vertical = int(_backlog_scroll.get_v_scroll_bar().max_value)
+
+
+func _on_entry_hover(lbl: RichTextLabel, hovered: bool) -> void:
+	if hovered:
+		lbl.modulate = Color(1.0, 1.0, 0.8, 1.0)
+	else:
+		lbl.modulate = Color.WHITE
+
+
+func _is_after_current(entry_node: String, entry_idx: int, current_node: String, current_idx: int) -> bool:
+	if entry_node != current_node:
+		return false
+	return entry_idx > current_idx
 
 
 func close() -> void:

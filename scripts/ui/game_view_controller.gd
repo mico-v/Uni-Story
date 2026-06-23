@@ -211,6 +211,7 @@ func _connect_signals() -> void:
 		_load_btn.pressed.connect(func() -> void: _open_save_panel(false))
 	if _backlog_btn:
 		_backlog_btn.pressed.connect(_open_backlog)
+	_save_load_controller.slot_pressed.connect(_on_save_slot_pressed)
 	if _auto_btn:
 		_auto_btn.pressed.connect(_on_auto_toggled)
 	if _skip_btn:
@@ -380,7 +381,10 @@ func reset_world() -> void:
 		_dbox.visible = false
 	if _choice_list:
 		_choice_list.visible = false
-		_clear_children(_choice_list)
+		if _choice_list_controller:
+			_choice_list_controller.clear()
+		else:
+			_clear_children(_choice_list)
 	if _save_panel:
 		_save_panel.visible = false
 	if _backlog_panel:
@@ -745,8 +749,10 @@ func _on_backlog_jump(node_name: String, entry_index: int) -> void:
 			return
 	if _backlog_panel:
 		_backlog_panel.visible = false
+	reset_world()
 	if _ctx.game_state:
 		_ctx.game_state.jump_to_position(node_name, entry_index)
+	load_game()
 
 
 # ── Save/load panel ──────────────────────────────────────────────────
