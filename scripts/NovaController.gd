@@ -64,7 +64,6 @@ func _ready() -> void:
 	_bind_view_controllers()
 	_init_view_manager()
 	_setup_game_view()
-	_register_objects()
 	_connect_model_signals()
 	_load_gallery_configs()
 	_apply_i18n()
@@ -207,11 +206,6 @@ func _setup_game_view() -> void:
 	# VFX post-fx rect.
 	if vfx and _game_vc.get_post_fx_rect():
 		vfx.set_post_fx_rect(_game_vc.get_post_fx_rect())
-
-
-func _register_objects() -> void:
-	# Objects already registered in _setup_game_view().
-	pass
 
 
 func _connect_model_signals() -> void:

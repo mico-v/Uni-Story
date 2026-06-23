@@ -184,3 +184,57 @@
 ### 剩余未完成
 
 - **五、对话框/按钮 UI 精修**（1 项）：需要正式美术资源替换程序化生成的 StyleBoxFlat
+
+---
+
+## 八、架构审阅重构计划（基于 CODE_REVIEW.md）
+
+> 基于 2026-06-23 的全面代码审阅，分 9 个阶段逐步实施。
+> 每阶段独立提交并经 Godot MCP 编译验证（rescan→wait→clear→run_scene→wait→get_errors→stop_scene）。
+> 进度记录在 review.md 的"九、架构审阅重构记录"章节。
+
+### Phase R1: 死代码清理与 Bug 修复
+- [ ] 删除 NovaController._register_objects() 空方法及调用
+- [ ] 删除 hot_reload.gd 中 _refresh_chapters() 死代码调用
+- [ ] 删除 prefab_loader.gd 中 get_game_vc() 死代码 fallback
+- [ ] 修复 gd_runtime.gd run_block_async() 超时处理（移除死分支，重置 _running_async，停止 timer）
+- [ ] 连接 Variables.changed 信号到 _cond_cache 清空
+- [ ] 添加存档版本号校验
+- **Commit**: `fix: remove dead code, fix GDRuntime timeout, add cond_cache invalidation and save version check`
+
+### Phase R2: 全局 Theme 资源
+- [ ] 创建 resources/themes/default_theme.tres（暗色 GALGAME 风格）
+- [ ] 应用到 game.tscn 根节点
+- **Commit**: `feat: add global dark GALGAME theme resource`
+
+### Phase R3: 存档槽位行场景提取
+- [ ] 创建 scene/ui/slot_row.tscn
+- [ ] 统一 _open_save_panel 和 _refresh_save_slots 逻辑
+- **Commit**: `refactor: extract save slot row to scene, eliminate duplication`
+
+### Phase R4: 动态 UI 迁移到场景文件
+- [ ] 创建 context_menu.tscn, toast.tscn, cg_preview_overlay.tscn
+- [ ] 迁移对应控制器代码
+- **Commit**: `refactor: migrate dynamic UI (context menu, toast, CG preview) to scene files`
+
+### Phase R5: 菜单视图场景继承
+- [ ] 创建 base_menu_view.tscn
+- [ ] 5 个菜单视图继承重构
+- **Commit**: `refactor: use scene inheritance for menu views, eliminate sidebar duplication`
+
+### Phase R6: @export 可配置参数
+- [ ] NovaController, SaveSystem, GameViewController, AudioSystem 等添加 @export
+- **Commit**: `feat: add @export parameters for designer-configurable values`
+
+### Phase R7: GameState 模型层解耦
+- [ ] snapshot/restore 编排移至 NovaController
+- [ ] GameState 只管自身状态
+- **Commit**: `refactor: decouple GameState from presentation layer, move snapshot/restore orchestration to NovaController`
+
+### Phase R8: GameViewController 拆分
+- [ ] 提取 SaveLoadPanelController, BacklogPanelController, ContextMenuController
+- **Commit**: `refactor: split GameViewController into SaveLoadPanel, BacklogPanel, and ContextMenu controllers`
+
+### Phase R9: 代码质量提升
+- [ ] class_name NovaController, 类型化数组, @onready 统一, PreloadSystem LRU, 解析器修复
+- **Commit**: `refactor: code quality improvements (class_name, typed arrays, @onready, LRU, parser fix)`

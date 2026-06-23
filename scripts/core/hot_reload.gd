@@ -117,8 +117,6 @@ func reload() -> bool:
 	_ctx.game_state.setup(_ctx.script_loader.graph)
 
 	# 8. Refresh UI.
-	if _ctx.has_method("_refresh_chapters"):
-		_ctx._refresh_chapters()
 	if _ctx.view_manager:
 		_ctx.view_manager.switch_to("title")
 

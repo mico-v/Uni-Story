@@ -37,6 +37,10 @@ func _init(ctx: Node) -> void:
 
 func setup(graph: FlowChartGraph) -> void:
 	_graph = graph
+	# Invalidate condition cache whenever a story variable changes.
+	if _ctx and _ctx.variables:
+		if not _ctx.variables.changed.is_connected(_invalidate_cond_cache):
+			_ctx.variables.changed.connect(_invalidate_cond_cache)
 
 
 ## Capture the model state for saving. Front/back separation means this plus the
@@ -315,6 +319,10 @@ func _is_enable_mode(mode) -> bool:
 func _is_show_mode(mode) -> bool:
 	var m := int(mode) if mode is int else FlowChartNode.BranchMode.NORMAL
 	return m == FlowChartNode.BranchMode.SHOW || m == FlowChartNode.BranchMode.NORMAL
+
+
+func _invalidate_cond_cache(_name: String, _value: Variant) -> void:
+	_cond_cache.clear()
 
 
 func _eval_condition(cond_expr: String) -> bool:
