@@ -3,7 +3,7 @@ class_name DialogSystem extends RefCounted
 ## Notification toasts and confirm dialogs for the game UI.
 ##
 ## Toast: brief message at top-center that fades out after a delay.
-## Confirm: modal dialog loaded from scene/ui/confirm_dialog.tscn.
+## Confirm: modal dialog defined in game_view.tscn (Hud/ConfirmOverlay + Hud/ConfirmPanel).
 ##
 ## Usage from NovaScript:
 ##   <| show_toast("快速存档完成") |>
@@ -11,18 +11,16 @@ class_name DialogSystem extends RefCounted
 
 signal confirm_result(confirmed: bool)
 
-const CONFIRM_SCENE_PATH := "res://scene/ui/confirm_dialog.tscn"
-
 var _ctx: Node
 var _toast_label: Label = null
 var _toast_tween: Tween = null
-var _confirm_root: Control = null
 var _confirm_overlay: ColorRect = null
 var _confirm_panel: PanelContainer = null
 var _confirm_title: Label = null
 var _confirm_message: Label = null
 var _confirm_ok: Button = null
 var _confirm_cancel: Button = null
+var _confirm_ready: bool = false
 
 
 func _init(ctx: Node) -> void:
@@ -74,11 +72,13 @@ func answer_confirm(confirmed: bool) -> void:
 
 
 func _hide_confirm() -> void:
-	if _confirm_root:
-		_confirm_root.visible = false
+	if _confirm_panel:
+		_confirm_panel.visible = false
+	if _confirm_overlay:
+		_confirm_overlay.visible = false
 
 
-# ── Internal UI creation ──────────────────────────────────────────────
+# ── Internal UI binding ──────────────────────────────────────────────
 
 func _ensure_toast() -> void:
 	if _toast_label != null:
@@ -104,29 +104,34 @@ func _ensure_toast() -> void:
 
 
 func _ensure_confirm() -> void:
-	if _confirm_root != null:
+	if _confirm_ready:
 		return
-	var scene := load(CONFIRM_SCENE_PATH) as PackedScene
-	if scene == null:
-		push_error("DialogSystem: cannot load confirm scene: %s" % CONFIRM_SCENE_PATH)
+	_confirm_ready = true
+	# Bind to nodes defined in game_view.tscn under Hud.
+	var hud := _get_ui_parent()
+	if hud == null:
+		push_error("DialogSystem: cannot find UI parent for confirm dialog")
 		return
-	_confirm_root = scene.instantiate()
-	_get_ui_parent().add_child(_confirm_root)
-	_confirm_root.visible = false
-	# Bind node references.
-	_confirm_overlay = _confirm_root.get_node("Overlay")
-	_confirm_panel = _confirm_root.get_node("Panel")
-	_confirm_title = _confirm_root.get_node("Panel/VBox/Title")
-	_confirm_message = _confirm_root.get_node("Panel/VBox/Message")
-	_confirm_ok = _confirm_root.get_node("Panel/VBox/Buttons/OK")
-	_confirm_cancel = _confirm_root.get_node("Panel/VBox/Buttons/Cancel")
-	# Set i18n text and connect signals.
-	_confirm_ok.text = _t("alert.confirm", "OK")
-	_confirm_cancel.text = _t("alert.cancel", "Cancel")
-	_confirm_title.add_theme_font_size_override("font_size", 24)
-	_confirm_message.add_theme_font_size_override("font_size", 20)
-	_confirm_ok.pressed.connect(func() -> void: answer_confirm(true))
-	_confirm_cancel.pressed.connect(func() -> void: answer_confirm(false))
+	_confirm_overlay = hud.get_node_or_null("ConfirmOverlay")
+	_confirm_panel = hud.get_node_or_null("ConfirmPanel")
+	if _confirm_panel == null:
+		push_error("DialogSystem: ConfirmPanel not found under Hud")
+		return
+	_confirm_title = _confirm_panel.get_node_or_null("VBox/Title")
+	_confirm_message = _confirm_panel.get_node_or_null("VBox/Message")
+	_confirm_ok = _confirm_panel.get_node_or_null("VBox/Buttons/OK")
+	_confirm_cancel = _confirm_panel.get_node_or_null("VBox/Buttons/Cancel")
+	# Apply i18n and connect button signals.
+	if _confirm_ok:
+		_confirm_ok.text = _t("alert.confirm", "OK")
+		_confirm_ok.pressed.connect(func() -> void: answer_confirm(true))
+	if _confirm_cancel:
+		_confirm_cancel.text = _t("alert.cancel", "Cancel")
+		_confirm_cancel.pressed.connect(func() -> void: answer_confirm(false))
+	if _confirm_title:
+		_confirm_title.add_theme_font_size_override("font_size", 24)
+	if _confirm_message:
+		_confirm_message.add_theme_font_size_override("font_size", 20)
 
 
 func _get_ui_parent() -> Node:
