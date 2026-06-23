@@ -60,17 +60,17 @@ var _mouse_menu: PanelContainer
 var _mouse_menu_items: VBoxContainer
 
 # ── Typewriter state ─────────────────────────────────────────────────
-var type_cps := 30.0
 var _type_tween: Tween = null
 var _is_typing := false
+@export var type_cps: float = 30.0
 
 # ── Auto/Skip mode state ─────────────────────────────────────────────
-var auto_delay := 0.10  # seconds per character for auto-play delay
-const SKIP_DELAY := 0.05
 var _is_auto := false
 var _is_skip := false
 var _auto_gen := 0
 var _skip_gen := 0
+@export var auto_delay: float = 0.10  # seconds per character for auto-play delay
+@export var skip_delay: float = 0.05
 
 # ── Chapter auto-advance timer ───────────────────────────────────────
 var _chapter_timer: SceneTreeTimer = null
@@ -677,7 +677,7 @@ func _on_skip_toggled() -> void:
 				if click_stop_voice and _ctx.audio:
 					_ctx.audio.stop_voice()
 				var gen := _skip_gen
-				get_tree().create_timer(SKIP_DELAY).timeout.connect(_on_skip_advance.bind(gen))
+				get_tree().create_timer(skip_delay).timeout.connect(_on_skip_advance.bind(gen))
 			else:
 				_deactivate_modes()
 				return

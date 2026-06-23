@@ -4,13 +4,13 @@ extends Node
 ## Creates subsystems, initializes ViewManager, and routes signals between
 ## view controllers.  All game UI logic lives in GameViewController.
 
-const SCENARIO_FILES := [
+@export var scenario_files: Array[String] = [
 	"res://resources/scenarios/main.txt",
 	"res://resources/scenarios/plan_demo.txt",
 	"res://resources/scenarios/test_all.txt",
 ]
 
-const RESOURCE_ROOT := "res://resources/"
+@export var resource_root: String = "res://resources/"
 
 # ── Subsystems (public, BaseBlock reaches them as nova.<name>) ───────
 var object_manager: ObjectManager
@@ -59,7 +59,7 @@ func _ready() -> void:
 	_init_subsystems()
 	_setup_locale()
 
-	var scenario_files := SCENARIO_FILES.duplicate()
+	var sf := scenario_files.duplicate()
 
 	_bind_view_controllers()
 	_init_view_manager()
@@ -69,8 +69,8 @@ func _ready() -> void:
 	_apply_i18n()
 	_load_settings()
 
-	scenario_files = _localized_scenario_files(scenario_files)
-	script_loader.load_all(scenario_files)
+	sf = _localized_scenario_files(sf)
+	script_loader.load_all(sf)
 	if not script_loader.load_ok:
 		push_error("NovaController: script load failed")
 		return
@@ -200,7 +200,7 @@ func _setup_game_view() -> void:
 	if _game_vc.get_avatar_rect():
 		object_manager.bind_object("avatar", _game_vc.get_avatar_rect())
 	object_manager.bind_object("anim", animation)
-	object_manager.set_constant("resource_root", RESOURCE_ROOT)
+	object_manager.set_constant("resource_root", resource_root)
 	object_manager.freeze_constants()
 	object_manager.freeze_objects()
 	# VFX post-fx rect.
@@ -322,20 +322,20 @@ func _on_quit() -> void:
 
 # ── Gallery configuration ─────────────────────────────────────────────
 
-const CG_GALLERY_CONFIG := "res://resources/gallery/cg_gallery.txt"
-const MUSIC_GALLERY_CONFIG := "res://resources/gallery/music_gallery.txt"
+@export var cg_gallery_config: String = "res://resources/gallery/cg_gallery.txt"
+@export var music_gallery_config: String = "res://resources/gallery/music_gallery.txt"
 
 var _cg_entries: Array = []
 var _music_entries: Array = []
 
 func _load_gallery_configs() -> void:
-	if FileAccess.file_exists(CG_GALLERY_CONFIG):
-		_cg_entries = GalleryConfigLoader.load_cg(CG_GALLERY_CONFIG)
+	if FileAccess.file_exists(cg_gallery_config):
+		_cg_entries = GalleryConfigLoader.load_cg(cg_gallery_config)
 		_apply_gallery_unlocks("cg")
 		if _cg_vc:
 			_cg_vc.set_gallery(_cg_entries)
-	if FileAccess.file_exists(MUSIC_GALLERY_CONFIG):
-		_music_entries = GalleryConfigLoader.load_music(MUSIC_GALLERY_CONFIG)
+	if FileAccess.file_exists(music_gallery_config):
+		_music_entries = GalleryConfigLoader.load_music(music_gallery_config)
 		_apply_gallery_unlocks("music")
 		if _music_vc:
 			_music_vc.set_tracks(_music_entries)
@@ -431,7 +431,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 # ── Settings handler ────────────────────────────────────────────────
 
-const SETTINGS_PATH := "user://config/settings.cfg"
+@export var settings_path: String = "user://config/settings.cfg"
 
 func _on_setting_changed(key: String, value: Variant) -> void:
 	match key:
@@ -492,12 +492,12 @@ func _save_settings() -> void:
 	var data := _settings_vc.snapshot()
 	for k in data:
 		cfg.set_value("settings", k, data[k])
-	cfg.save(SETTINGS_PATH)
+	cfg.save(settings_path)
 
 
 func _load_settings() -> void:
 	var cfg := ConfigFile.new()
-	if cfg.load(SETTINGS_PATH) != OK:
+	if cfg.load(settings_path) != OK:
 		return
 	var data: Dictionary = {}
 	for k in cfg.get_section_keys("settings"):
