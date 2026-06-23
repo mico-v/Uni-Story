@@ -12,14 +12,14 @@ signal gallery_requested()
 signal music_requested()
 signal quit_requested()
 
-@onready var logo_label: Label = $HBox/MenuSidebar/VBox/Logo
-@onready var btn_new_game: Button = $HBox/MenuSidebar/VBox/BtnNewGame
-@onready var btn_continue: Button = $HBox/MenuSidebar/VBox/BtnContinue
-@onready var btn_load: Button = $HBox/MenuSidebar/VBox/BtnLoad
-@onready var btn_settings: Button = $HBox/MenuSidebar/VBox/BtnSettings
-@onready var btn_gallery: Button = $HBox/MenuSidebar/VBox/BtnGallery
-@onready var btn_music: Button = $HBox/MenuSidebar/VBox/BtnMusic
-@onready var btn_quit: Button = $HBox/MenuSidebar/VBox/BtnQuit
+@onready var logo_label: Label = $HBox/Sidebar/VBox/Logo
+@onready var btn_new_game: Button = $HBox/Sidebar/VBox/BtnNewGame
+@onready var btn_continue: Button = $HBox/Sidebar/VBox/BtnContinue
+@onready var btn_load: Button = $HBox/Sidebar/VBox/BtnLoad
+@onready var btn_settings: Button = $HBox/Sidebar/VBox/BtnSettings
+@onready var btn_gallery: Button = $HBox/Sidebar/VBox/BtnGallery
+@onready var btn_music: Button = $HBox/Sidebar/VBox/BtnMusic
+@onready var btn_quit: Button = $HBox/Sidebar/VBox/BtnQuit
 
 
 func _ready() -> void:
