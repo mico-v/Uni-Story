@@ -48,12 +48,14 @@ var _save_panel_title: Label
 var _save_slots: VBoxContainer
 var _save_close_btn: Button
 var _save_mode := true
+var _save_load_controller: SaveLoadPanelController = SaveLoadPanelController.new()
 
 # ── Backlog panel ────────────────────────────────────────────────────
 var _backlog_panel: Panel
 var _backlog_list: VBoxContainer
 var _backlog_scroll: ScrollContainer
 var _backlog_close_btn: Button
+var _backlog_controller: BacklogPanelController = BacklogPanelController.new()
 
 # ── Mouse menu (right-click context menu) ────────────────────────────
 var _mouse_menu: PanelContainer
@@ -89,6 +91,8 @@ func setup(ctx: Node) -> void:
 	_apply_ui_defaults()
 	_connect_signals()
 	_create_mouse_menu()
+	_save_load_controller.setup(ctx)
+	_backlog_controller.setup(ctx)
 
 
 func _bind_nodes() -> void:
@@ -124,6 +128,9 @@ func _bind_nodes() -> void:
 		_backlog_scroll = _hud.get_node_or_null("BacklogPanel/BacklogPanelContainer/BacklogScroll") as ScrollContainer
 		_backlog_close_btn = _hud.get_node_or_null("BacklogPanel/BacklogPanelContainer/CloseButton") as Button
 	_post_fx_rect = get_node_or_null("PostFXRect") as ColorRect
+
+	_save_load_controller.bind_nodes(_save_panel, _save_panel_title, _save_slots, _save_close_btn)
+	_backlog_controller.bind_nodes(_backlog_panel, _backlog_list, _backlog_scroll, _backlog_close_btn)
 
 	# Initial visibility.
 	visible = false
@@ -718,43 +725,7 @@ func _on_skip_advance(gen: int) -> void:
 
 func _open_backlog() -> void:
 	_deactivate_modes()
-	var backlog_title := _backlog_panel_title_node()
-	if backlog_title:
-		backlog_title.text = _t("ui.label.backlog", "文本回顾")
-	_clear_children(_backlog_list)
-	# Show panel first so the container tree is laid out with correct widths.
-	if _backlog_panel:
-		_backlog_panel.visible = true
-	await get_tree().process_frame
-	if _ctx.backlog:
-		var entries = _ctx.backlog.entries()
-		for i in entries.size():
-			var entry: Dictionary = entries[i]
-			var lbl := RichTextLabel.new()
-			lbl.bbcode_enabled = true
-			lbl.fit_content = true
-			lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			lbl.size_flags_vertical = Control.SIZE_FILL
-			var speaker := str(entry["speaker"])
-			var text := str(entry["text"])
-			if speaker.is_empty():
-				lbl.text = text
-			else:
-				lbl.text = "[b]%s[/b]：%s" % [speaker, text]
-			# Make clickable for jump-back (only if position data exists).
-			var node_name := str(entry.get("node", ""))
-			var entry_idx: int = int(entry.get("index", -1))
-			if node_name != "" and entry_idx >= 0:
-				lbl.mouse_filter = Control.MOUSE_FILTER_STOP
-				lbl.gui_input.connect(_on_backlog_entry_click.bind(i, lbl))
-			_backlog_list.add_child(lbl)
-	await get_tree().process_frame
-	# Lock in measured heights so fit_content never recomputes to zero.
-	for child in _backlog_list.get_children():
-		if child is RichTextLabel:
-			child.custom_minimum_size.y = child.size.y
-	if _backlog_scroll:
-		_backlog_scroll.scroll_vertical = int(_backlog_scroll.get_v_scroll_bar().max_value)
+	_backlog_controller.open()
 
 
 func _on_backlog_entry_click(event: InputEvent, entry_index: int, _lbl: RichTextLabel) -> void:
@@ -783,41 +754,27 @@ func _on_backlog_jump(node_name: String, entry_index: int) -> void:
 func _open_save_panel(save_mode: bool) -> void:
 	_deactivate_modes()
 	_save_mode = save_mode
-	if _save_panel_title:
-		_save_panel_title.text = _t("ingame.save.button", "存档") if save_mode else _t("ingame.load.button", "读档")
-	_clear_children(_save_slots)
-	if _ctx.save_system == null:
-		return
-	for slot in _ctx.save_system.SLOT_COUNT:
-		_build_slot_row(slot, save_mode)
-	if _save_panel:
-		_save_panel.visible = true
+	_save_load_controller.open(save_mode)
 
 
 func _refresh_save_slots() -> void:
-	if _save_slots == null or _ctx.save_system == null:
-		return
-	_clear_children(_save_slots)
-	for slot in _ctx.save_system.SLOT_COUNT:
-		_build_slot_row(slot, _save_mode)
+	_save_load_controller.refresh()
 
 
-func _build_slot_row(slot: int, save_mode: bool) -> void:
-	var has: bool = _ctx.save_system.has_save(slot)
-	var label := _t("ui.save.slot_format", "存档位 %d：%s") % [slot + 1, _ctx.save_system.slot_label(slot)]
-	var row := SlotRowScene.instantiate()
-	var main_btn: Button = row.get_node("MainButton")
-	var del_btn: Button = row.get_node("DeleteButton")
-	main_btn.text = label
-	main_btn.custom_minimum_size = Vector2(300, 40)
-	main_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	if not save_mode and not has:
-		main_btn.disabled = true
-	main_btn.pressed.connect(_on_slot_pressed.bind(slot))
-	del_btn.visible = has
-	if has:
-		del_btn.pressed.connect(_on_slot_delete.bind(slot))
-	_save_slots.add_child(row)
+func _on_save_slot_pressed(slot: int, save_mode: bool) -> void:
+	if save_mode:
+		if _ctx.save_system:
+			_ctx.save_system.save(slot)
+			_refresh_save_slots()
+	else:
+		if _ctx.save_system and _ctx.save_system.load_slot(slot):
+			load_game()
+
+
+func _on_slot_delete(slot: int) -> void:
+	if _ctx.save_system:
+		_ctx.save_system.delete_slot(slot)
+		_refresh_save_slots()
 
 
 # ── Mouse menu (right-click context menu) ────────────────────────────
