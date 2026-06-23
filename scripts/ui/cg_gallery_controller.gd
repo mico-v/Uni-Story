@@ -27,23 +27,15 @@ func _ready() -> void:
 
 
 func _create_preview_overlay() -> void:
-	_preview_overlay = ColorRect.new()
-	_preview_overlay.color = Color(0, 0, 0, 0.85)
+	var overlay := preload("res://scene/ui/cg_preview_overlay.tscn").instantiate()
+	_preview_overlay = overlay
 	_preview_overlay.visible = false
-	_preview_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
-	_preview_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	_preview_overlay.gui_input.connect(func(event: InputEvent) -> void:
 		if event is InputEventMouseButton and event.pressed:
 			_preview_overlay.visible = false
 	)
-	add_child(_preview_overlay)
-
-	_preview_texture = TextureRect.new()
-	_preview_texture.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
-	_preview_texture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_preview_texture.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_preview_texture.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_preview_overlay.add_child(_preview_texture)
+	_preview_texture = overlay.get_node("TextureRect")
+	add_child(overlay)
 
 
 func set_gallery(entries: Array) -> void:

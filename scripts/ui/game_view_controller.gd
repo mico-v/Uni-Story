@@ -823,13 +823,9 @@ func _build_slot_row(slot: int, save_mode: bool) -> void:
 # ── Mouse menu (right-click context menu) ────────────────────────────
 
 func _create_mouse_menu() -> void:
-	_mouse_menu = PanelContainer.new()
+	_mouse_menu = preload("res://scene/ui/context_menu.tscn").instantiate()
 	_mouse_menu.visible = false
-	_mouse_menu.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	_mouse_menu.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	_mouse_menu_items = VBoxContainer.new()
-	_mouse_menu_items.add_theme_constant_override("separation", 2)
-	_mouse_menu.add_child(_mouse_menu_items)
+	_mouse_menu_items = _mouse_menu.get_node("VBox")
 	if _hud:
 		_hud.add_child(_mouse_menu)
 

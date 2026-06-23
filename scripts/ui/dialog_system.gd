@@ -83,24 +83,14 @@ func _hide_confirm() -> void:
 func _ensure_toast() -> void:
 	if _toast_label != null:
 		return
-	_toast_label = Label.new()
-	_toast_label.visible = false
-	_toast_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_toast_label.add_theme_font_size_override("font_size", 22)
-	_toast_label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
-	_toast_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	# Add a background panel for readability.
-	var bg := ColorRect.new()
-	bg.color = Color(0, 0, 0, 0.6)
-	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_get_ui_parent().add_child(bg)
-	bg.add_child(_toast_label)
-	# Use anchors for viewport-adaptive positioning (top center, 2% from top).
-	bg.set_anchors_preset(Control.PRESET_CENTER_TOP)
-	bg.anchor_top = 0.02
-	bg.anchor_bottom = 0.02
-	bg.custom_minimum_size = Vector2(300, 40)
-	bg.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var toast := preload("res://scene/ui/toast.tscn").instantiate()
+	_toast_label = toast.get_node("Label")
+	var parent := _get_ui_parent()
+	if parent:
+		parent.add_child(toast)
+		toast.set_anchors_preset(Control.PRESET_CENTER_TOP)
+		toast.anchor_top = 0.02
+		toast.anchor_bottom = 0.02
 
 
 func _ensure_confirm() -> void:
