@@ -32,7 +32,7 @@ func open() -> void:
 		backlog_title.text = _t("ui.label.backlog", "文本回顾")
 	if _backlog_panel:
 		_backlog_panel.visible = true
-	await get_tree().process_frame
+	await _ctx.get_tree().process_frame
 	if _ctx.backlog:
 		var entries = _ctx.backlog.entries()
 		for i in entries.size():
@@ -54,7 +54,7 @@ func open() -> void:
 				lbl.mouse_filter = Control.MOUSE_FILTER_STOP
 				lbl.gui_input.connect(_on_backlog_entry_click.bind(i, lbl))
 			_backlog_list.add_child(lbl)
-	await get_tree().process_frame
+	await _ctx.get_tree().process_frame
 	for child in _backlog_list.get_children():
 		if child is RichTextLabel:
 			child.custom_minimum_size.y = child.size.y
