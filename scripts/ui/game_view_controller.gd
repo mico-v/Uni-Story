@@ -218,7 +218,7 @@ func _connect_signals() -> void:
 	if _quit_btn:
 		_quit_btn.pressed.connect(_request_title)
 	if _save_close_btn:
-		_save_close_btn.pressed.connect(_close_save_panel)
+		_save_close_btn.pressed.connect(func() -> void: _save_load_controller.close())
 	if _backlog_close_btn:
 		_backlog_close_btn.pressed.connect(func() -> void:
 			_backlog_panel.visible = false
@@ -243,7 +243,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	# Step forward works even with panels open (closes them first).
 	if sm.is_action_pressed("ui_step_forward"):
 		if panels_open:
-			_close_save_panel()
+			_save_load_controller.close()
 			if _backlog_panel:
 				_backlog_panel.visible = false
 		_on_next()
@@ -252,7 +252,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	# Block other shortcuts when panels are open.
 	if panels_open:
 		if sm.is_action_pressed("ui_leave"):
-			_close_save_panel()
+			_save_load_controller.close()
 			if _backlog_panel:
 				_backlog_panel.visible = false
 			get_viewport().set_input_as_handled()
@@ -289,7 +289,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_toggle_fullscreen()
 		get_viewport().set_input_as_handled()
 	elif sm.is_action_pressed("ui_settings"):
-		_close_save_panel()
+		_save_load_controller.close()
 		if _backlog_panel:
 			_backlog_panel.visible = false
 		settings_requested.emit()
@@ -484,7 +484,7 @@ func on_dialogue_changed(speaker: String, text: String) -> void:
 		if _ctx.read_tracker and _ctx.read_tracker.is_read(_ctx.game_state.current_node.name, _ctx.game_state.current_index):
 			_finish_typewriter()
 			var gen := _skip_gen
-			get_tree().create_timer(SKIP_DELAY).timeout.connect(_on_skip_advance.bind(gen))
+			get_tree().create_timer(skip_delay).timeout.connect(_on_skip_advance.bind(gen))
 		else:
 			_deactivate_modes()
 
