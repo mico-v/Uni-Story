@@ -19,7 +19,7 @@ enum PlayMode { SEQUENTIAL, LOOP_SINGLE, RANDOM }
 @onready var btn_mode: Button = $HBox/Content/VBox/PlayerBar/BtnMode
 @onready var empty_label: Label = $HBox/Content/VBox/Scroll/TrackList/EmptyLabel
 
-var _tracks: Array = []  # [{name, display_name, path, unlocked}]
+var _tracks: Array[Dictionary] = []  # [{name, display_name, path, unlocked}]
 var _current_index := -1
 var _play_mode: int = PlayMode.SEQUENTIAL
 var _audio: AudioSystem = null  # optional reference for playback

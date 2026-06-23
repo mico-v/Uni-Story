@@ -8,7 +8,7 @@ signal jump_requested(node_name: String, entry_index: int)
 
 const MAX_ENTRIES := 200
 
-var _entries: Array = []  # Array[{speaker, text, node, index}]
+var _entries: Array[Dictionary] = []  # Array[{speaker, text, node, index}]
 
 
 func record(speaker: String, text: String, node_name: String = "", entry_index: int = -1) -> void:

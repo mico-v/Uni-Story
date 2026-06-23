@@ -9,7 +9,7 @@ class_name CompositeSprite extends Node2D
 const DEFAULT_LAYER_ORDER := ["body", "clothes", "face", "mouth", "effect"]
 
 var _layers: Dictionary = {}  # layer_name -> Sprite2D
-var _order: Array = DEFAULT_LAYER_ORDER.duplicate()
+var _order: Array[String] = DEFAULT_LAYER_ORDER.duplicate()
 
 
 func _ensure_layer(layer_name: String) -> Sprite2D:

@@ -17,6 +17,8 @@ var _ctx: Node
 var _cache: Dictionary = {}        # path -> Resource
 var _pending: Array = []           # paths currently loading
 var _polling := false
+var _lru_order: Array[String] = []   # LRU order tracking
+const MAX_CACHE_SIZE := 128
 
 
 func _init(ctx: Node) -> void:
@@ -43,12 +45,15 @@ func preload_asset(path: String) -> void:
 func is_ready(path: String) -> bool:
 	var full_path := _resolve_path(path)
 	if _cache.has(full_path):
+		_touch(full_path)
 		return true
 	var status := ResourceLoader.load_threaded_get_status(full_path)
 	if status == ResourceLoader.THREAD_LOAD_LOADED:
 		var res = ResourceLoader.load_threaded_get(full_path)
 		if res != null:
 			_cache[full_path] = res
+			_touch(full_path)
+			_evict_if_needed()
 		return true
 	return false
 
@@ -57,12 +62,15 @@ func is_ready(path: String) -> bool:
 func get_cached(path: String):
 	var full_path := _resolve_path(path)
 	if _cache.has(full_path):
+		_touch(full_path)
 		return _cache[full_path]
 	var status := ResourceLoader.load_threaded_get_status(full_path)
 	if status == ResourceLoader.THREAD_LOAD_LOADED:
 		var res = ResourceLoader.load_threaded_get(full_path)
 		if res != null:
 			_cache[full_path] = res
+			_touch(full_path)
+			_evict_if_needed()
 			return res
 	return null
 
@@ -91,6 +99,9 @@ func cancel_preload(path: String) -> void:
 	var full_path := _resolve_path(path)
 	_pending.erase(full_path)
 	_cache.erase(full_path)
+	var idx := _lru_order.find(full_path)
+	if idx >= 0:
+		_lru_order.remove_at(idx)
 	if _pending.is_empty():
 		_polling = false
 
@@ -105,6 +116,7 @@ func cancel_all() -> void:
 func clear_cache() -> void:
 	_cache.clear()
 	_pending.clear()
+	_lru_order.clear()
 	_polling = false
 
 
@@ -144,6 +156,8 @@ func _poll() -> void:
 				var res = ResourceLoader.load_threaded_get(p)
 				if res != null:
 					_cache[p] = res
+					_touch(p)
+					_evict_if_needed()
 			ResourceLoader.THREAD_LOAD_FAILED, ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
 				push_warning("PreloadSystem: failed to load '%s'" % p)
 			_:
@@ -154,3 +168,17 @@ func _poll() -> void:
 		_ctx.get_tree().process_frame.connect(_poll, CONNECT_ONE_SHOT)
 	else:
 		_polling = false
+
+
+func _touch(path: String) -> void:
+	var idx := _lru_order.find(path)
+	if idx >= 0:
+		_lru_order.remove_at(idx)
+	_lru_order.append(path)
+
+
+func _evict_if_needed() -> void:
+	while _lru_order.size() > MAX_CACHE_SIZE:
+		var oldest := _lru_order[0]
+		_lru_order.remove_at(0)
+		_cache.erase(oldest)

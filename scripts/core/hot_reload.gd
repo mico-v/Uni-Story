@@ -17,7 +17,7 @@ class_name HotReload extends RefCounted
 var _ctx: Node
 
 ## Scenario file paths to watch (resolved, post-localization).
-var _files: Array = []
+var _files: Array[String] = []
 
 ## Stored modification times for change detection.
 var _file_times: Dictionary = {}

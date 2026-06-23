@@ -14,8 +14,8 @@ var _bgm_b: AudioStreamPlayer
 var _bgm_active: AudioStreamPlayer  # currently playing BGM player
 var _bgm_inactive: AudioStreamPlayer  # the other one, used for crossfade
 var _voice_player: AudioStreamPlayer
-var _se_players: Array = []  # small pool for overlapping SE
-var _se_start_times: Array = []  # track when each SE started (for preemption)
+var _se_players: Array[AudioStreamPlayer] = []  # small pool for overlapping SE
+var _se_start_times: Array[int] = []  # track when each SE started (for preemption)
 
 const SE_POOL_SIZE := 4
 const BUS_BGM := "BGM"

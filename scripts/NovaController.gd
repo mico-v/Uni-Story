@@ -1,4 +1,4 @@
-extends Node
+class_name NovaController extends Node
 
 ## NovaController — slim coordinator.
 ## Creates subsystems, initializes ViewManager, and routes signals between
@@ -329,8 +329,8 @@ func _on_quit() -> void:
 @export var cg_gallery_config: String = "res://resources/gallery/cg_gallery.txt"
 @export var music_gallery_config: String = "res://resources/gallery/music_gallery.txt"
 
-var _cg_entries: Array = []
-var _music_entries: Array = []
+var _cg_entries: Array[Dictionary] = []
+var _music_entries: Array[Dictionary] = []
 
 func _load_gallery_configs() -> void:
 	if FileAccess.file_exists(cg_gallery_config):
