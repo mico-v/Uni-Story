@@ -93,18 +93,18 @@
 - [x] **SpriteComposer snapshot/restore**：捕获每个角色名的图层状态，restore 时重建
 - [x] **Backlog 持久化**：存入存档 JSON，读档后回顾面板保留历史
 
-### 3.2 图完整性
+### 3.2 图完整性（Phase 11 ✅ — `81b5660`）
 
-- [ ] **循环检测**：`FlowChartGraph.sanity_check()` 加 DFS 检测 A→B→A 路径，报告为 error
-- [ ] **CHAPTER 类型行为**：让 CHAPTER 节点触发章节标题 UI 或自动推进（不等待点击）
-- [ ] **`is_end(name)` 命名结局**：存储结局名称，供画廊解锁和成就系统查询
+- [x] **循环检测**：`FlowChartGraph.sanity_check()` 加 DFS 检测 A→B→A 路径，报告为 error
+- [x] **CHAPTER 类型行为**：让 CHAPTER 节点触发章节标题 UI 或自动推进（不等待点击）
+- [x] **`is_end(name)` 命名结局**：存储结局名称，供画廊解锁和成就系统查询
 
-### 3.3 运行时安全性
+### 3.3 运行时安全性（Phase 12 ✅ — `2329b17`）
 
-- [ ] **GDRuntime 超时机制**：async 操作加安全 timeout（默认 30s），超时 push_error 并继续
-- [ ] **条件编译缓存**：`_eval_condition` 按条件字符串 hash 缓存编译结果
-- [ ] **ReadTracker 自动持久化**：`mark_read()` 加 debounce（2s），自动写磁盘
-- [ ] **PreloadSystem 取消机制**：加 `cancel_preload(path)` 方法
+- [x] **GDRuntime 超时机制**：async 操作加安全 timeout（默认 30s），超时 push_error 并继续
+- [x] **条件编译缓存**：`_eval_condition` 按条件字符串 hash 缓存编译结果
+- [x] **ReadTracker 自动持久化**：`mark_read()` 加 debounce（2s），自动写磁盘
+- [x] **PreloadSystem 取消机制**：加 `cancel_preload(path)` 方法
 
 ### 3.4 音频系统增强（Phase 7 ✅）
 
@@ -144,15 +144,15 @@
 
 ## 五、UI/UX 改进
 
-- [ ] **重新设计对话框和按钮元素UI**：按钮改为无边框，字体底色带渐变背景。对话框也是需要符合现代galgame的渐变色框。主题颜色采用亮色系，淡粉色白色淡蓝色等色系。（需美术资源）
+- [ ] **重新设计对话框和按钮元素UI**：按钮改为无边框，字体底色带渐变背景。对话框也是需要符合现代galgame的渐变色框。主题颜色采用亮色系，淡粉色白色淡蓝色等色系。（对话框 StyleBoxFlat 覆盖 + 亮色主题已实现 `5ab07da`，精修需美术资源）
 
-- [ ] **标题界面 ContentArea**：右侧空白区域放置 Logo 图片或动画背景（需美术资源）
+- [x] **标题界面 ContentArea**：右侧放置 Logo 图片（SVG 生成 `5ab07da`，替换为正式美术资源可后续更新）
 - [x] **ChoiceList 最大尺寸**：约束最大高度，超出时 ScrollContainer（Phase 10 ✅）
 - [x] **Toast 视口自适应**：位置从绝对像素改为视口百分比（Phase 10 ✅）
-- [ ] **主主题补全**：ScrollContainer/GridContainer 样式、自定义 CJK 字体（需美术资源）
-- [ ] **ContinueIcon**：从 Unicode "▼" 改为 TextureRect 确保跨字体兼容（需美术资源）
+- [x] **主主题补全**：ScrollContainer/GridContainer 样式、CJK 字体集成（`5ab07da`）
+- [x] **ContinueIcon**：从 Unicode "▼" 改为 TextureRect + 代码生成三角纹理（`5ab07da`）
 - [x] **鼠标菜单补充**：添加快速存档 / 快速读档条目（Phase 10 ✅）
-- [ ] **右键菜单设置快捷键**：F1 设置快捷键连接到 `settings_requested`
+- [x] **右键菜单设置快捷键**：F1 设置快捷键连接到 `settings_requested`（Phase 1 ✅）
 
 ---
 
@@ -178,10 +178,9 @@
 8. ~~**分支图片 + 条件分支验证**（3 项）~~ ✅ Phase 8 — `72b1349`
 9. ~~**画廊动态解锁**（2 项）~~ ✅ Phase 9 — `e0ebbd8`
 10. ~~**UI/UX 改进**（7 项）~~ ✅ Phase 10 — `5b74b61`
+11. ~~**图完整性**（3 项）~~ ✅ Phase 11 — `81b5660`
+12. ~~**运行时安全性**（4 项）~~ ✅ Phase 12 — `2329b17`
 
 ### 剩余未完成
 
-- **3.2 图完整性**（3 项）：循环检测、CHAPTER 行为、命名结局
-- **3.3 运行时安全性**（4 项）：GDRuntime 超时、条件缓存、ReadTracker 自动持久化、PreloadSystem 取消
-- **五、UI/UX 需美术资源**（4 项）：对话框渐变重设计、标题 ContentArea、主主题补全、ContinueIcon TextureRect
-- **五、右键菜单设置快捷键**（1 项）
+- **五、对话框/按钮 UI 精修**（1 项）：需要正式美术资源替换程序化生成的 StyleBoxFlat
