@@ -37,7 +37,10 @@ func snapshot() -> Array:
 
 
 func restore(data: Array) -> void:
-	_entries = data.duplicate(true)
+	_entries.clear()
+	for entry in data:
+		if entry is Dictionary:
+			_entries.append(entry)
 	if _entries.size() > MAX_ENTRIES:
 		_entries = _entries.slice(_entries.size() - MAX_ENTRIES)
 
