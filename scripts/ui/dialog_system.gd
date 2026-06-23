@@ -3,7 +3,7 @@ class_name DialogSystem extends RefCounted
 ## Notification toasts and confirm dialogs for the game UI.
 ##
 ## Toast: brief message at top-center that fades out after a delay.
-## Confirm: modal dialog with title, message, OK/Cancel, returns a signal.
+## Confirm: modal dialog loaded from scene/ui/confirm_dialog.tscn.
 ##
 ## Usage from NovaScript:
 ##   <| show_toast("快速存档完成") |>
@@ -11,15 +11,18 @@ class_name DialogSystem extends RefCounted
 
 signal confirm_result(confirmed: bool)
 
+const CONFIRM_SCENE_PATH := "res://scene/ui/confirm_dialog.tscn"
+
 var _ctx: Node
 var _toast_label: Label = null
 var _toast_tween: Tween = null
+var _confirm_root: Control = null
+var _confirm_overlay: ColorRect = null
 var _confirm_panel: PanelContainer = null
 var _confirm_title: Label = null
 var _confirm_message: Label = null
 var _confirm_ok: Button = null
 var _confirm_cancel: Button = null
-var _confirm_overlay: ColorRect = null
 
 
 func _init(ctx: Node) -> void:
@@ -71,10 +74,8 @@ func answer_confirm(confirmed: bool) -> void:
 
 
 func _hide_confirm() -> void:
-	if _confirm_panel:
-		_confirm_panel.visible = false
-	if _confirm_overlay:
-		_confirm_overlay.visible = false
+	if _confirm_root:
+		_confirm_root.visible = false
 
 
 # ── Internal UI creation ──────────────────────────────────────────────
@@ -103,52 +104,29 @@ func _ensure_toast() -> void:
 
 
 func _ensure_confirm() -> void:
-	if _confirm_panel != null:
+	if _confirm_root != null:
 		return
-	var parent := _get_ui_parent()
-	# Overlay (blocks input to the rest of the UI).
-	_confirm_overlay = ColorRect.new()
-	_confirm_overlay.color = Color(0, 0, 0, 0.4)
-	_confirm_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_confirm_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
-	_confirm_overlay.visible = false
-	parent.add_child(_confirm_overlay)
-	# Panel.
-	_confirm_panel = PanelContainer.new()
-	_confirm_panel.visible = false
-	_confirm_panel.custom_minimum_size = Vector2(400, 200)
-	_confirm_panel.set_anchors_preset(Control.PRESET_CENTER)
-	_confirm_panel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	_confirm_panel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	parent.add_child(_confirm_panel)
-	# Layout.
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 12)
-	_confirm_panel.add_child(vbox)
-	_confirm_title = Label.new()
-	_confirm_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_confirm_title.add_theme_font_size_override("font_size", 24)
-	vbox.add_child(_confirm_title)
-	_confirm_message = Label.new()
-	_confirm_message.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_confirm_message.add_theme_font_size_override("font_size", 20)
-	_confirm_message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	vbox.add_child(_confirm_message)
-	# Buttons.
-	var hbox := HBoxContainer.new()
-	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	hbox.add_theme_constant_override("separation", 20)
-	vbox.add_child(hbox)
-	_confirm_ok = Button.new()
+	var scene := load(CONFIRM_SCENE_PATH) as PackedScene
+	if scene == null:
+		push_error("DialogSystem: cannot load confirm scene: %s" % CONFIRM_SCENE_PATH)
+		return
+	_confirm_root = scene.instantiate()
+	_get_ui_parent().add_child(_confirm_root)
+	_confirm_root.visible = false
+	# Bind node references.
+	_confirm_overlay = _confirm_root.get_node("Overlay")
+	_confirm_panel = _confirm_root.get_node("Panel")
+	_confirm_title = _confirm_root.get_node("Panel/VBox/Title")
+	_confirm_message = _confirm_root.get_node("Panel/VBox/Message")
+	_confirm_ok = _confirm_root.get_node("Panel/VBox/Buttons/OK")
+	_confirm_cancel = _confirm_root.get_node("Panel/VBox/Buttons/Cancel")
+	# Set i18n text and connect signals.
 	_confirm_ok.text = _t("alert.confirm", "OK")
-	_confirm_ok.custom_minimum_size = Vector2(120, 40)
-	_confirm_ok.pressed.connect(func() -> void: answer_confirm(true))
-	hbox.add_child(_confirm_ok)
-	_confirm_cancel = Button.new()
 	_confirm_cancel.text = _t("alert.cancel", "Cancel")
-	_confirm_cancel.custom_minimum_size = Vector2(120, 40)
+	_confirm_title.add_theme_font_size_override("font_size", 24)
+	_confirm_message.add_theme_font_size_override("font_size", 20)
+	_confirm_ok.pressed.connect(func() -> void: answer_confirm(true))
 	_confirm_cancel.pressed.connect(func() -> void: answer_confirm(false))
-	hbox.add_child(_confirm_cancel)
 
 
 func _get_ui_parent() -> Node:
