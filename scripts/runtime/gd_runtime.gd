@@ -75,18 +75,16 @@ func run_block_async(source: String):
 	var result = inst.run()
 
 	if _is_awaitable(result):
-		var timed_out := true
 		var completed := false
 		var timer := _ctx.get_tree().create_timer(ASYNC_TIMEOUT)
 		timer.timeout.connect(func() -> void:
 			if not completed:
-				timed_out = true
 				push_error("GDRuntime: async block timed out after %ds:\n%s" % [ASYNC_TIMEOUT, source])
 		)
 		await _await_possible_async_result(result)
 		completed = true
 		_running_async = false
-		if timed_out and not completed:
+		if not completed:
 			return null
 	else:
 		_running_async = false
@@ -104,7 +102,7 @@ func _is_awaitable(value: Variant) -> bool:
 	if value is Tween:
 		return true
 	if value is Object:
-		var cls := value.get_class()
+		var cls = value.get_class()
 		if cls == "GDScriptFunctionState":
 			return true
 		if cls == "AnimationChain" and value.has_method("await_finished"):

@@ -342,6 +342,7 @@ func _eval_condition(cond_expr: String) -> bool:
 	# Evict oldest entries if cache is full.
 	if _cond_cache.size() >= _COND_CACHE_MAX:
 		var keys := _cond_cache.keys()
+		@warning_ignore("integer_division")
 		for i in range(_COND_CACHE_MAX / 4):
 			_cond_cache.erase(keys[i])
 

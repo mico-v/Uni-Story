@@ -1,8 +1,8 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://ct4snqxceiaps"]
 
-[ext_resource type="Script" path="res://scripts/ui/settings_view_controller.gd" id="1_vc"]
+[ext_resource type="Script" uid="uid://bjjgn68plr1es" path="res://scripts/ui/settings_view_controller.gd" id="1_vc"]
 
-[node name="SettingsView" type="Control"]
+[node name="SettingsView" type="Control" unique_id=1367304590]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -11,7 +11,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_vc")
 
-[node name="HBox" type="HBoxContainer" parent="."]
+[node name="HBox" type="HBoxContainer" parent="." unique_id=74602265]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -19,208 +19,256 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Sidebar" type="PanelContainer" parent="HBox"]
-layout_mode = 2
+[node name="Sidebar" type="PanelContainer" parent="HBox" unique_id=1290078700]
 custom_minimum_size = Vector2(280, 0)
-
-[node name="VBox" type="VBoxContainer" parent="HBox/Sidebar"]
 layout_mode = 2
-alignment = 1
-theme_override_constants/separation = 8
 
-[node name="Title" type="Label" parent="HBox/Sidebar/VBox"]
+[node name="VBox" type="VBoxContainer" parent="HBox/Sidebar" unique_id=2090252080]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="Title" type="Label" parent="HBox/Sidebar/VBox" unique_id=2067258655]
 layout_mode = 2
 text = "设置"
 horizontal_alignment = 1
 
-[node name="Sep" type="HSeparator" parent="HBox/Sidebar/VBox"]
+[node name="Sep" type="HSeparator" parent="HBox/Sidebar/VBox" unique_id=350075710]
 layout_mode = 2
 
-[node name="BtnBack" type="Button" parent="HBox/Sidebar/VBox"]
+[node name="BtnBack" type="Button" parent="HBox/Sidebar/VBox" unique_id=31212454]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 text = "返回"
 
-[node name="Content" type="PanelContainer" parent="HBox"]
+[node name="Content" type="PanelContainer" parent="HBox" unique_id=1468286200]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="Scroll" type="ScrollContainer" parent="HBox/Content"]
+[node name="Scroll" type="ScrollContainer" parent="HBox/Content" unique_id=1091534898]
 layout_mode = 2
 
-[node name="SettingsList" type="VBoxContainer" parent="HBox/Content/Scroll"]
+[node name="SettingsList" type="VBoxContainer" parent="HBox/Content/Scroll" unique_id=931491673]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 12
 
-[node name="SectionText" type="Label" parent="HBox/Content/Scroll/SettingsList"]
+[node name="SectionText" type="Label" parent="HBox/Content/Scroll/SettingsList" unique_id=165398378]
 layout_mode = 2
 text = "文字"
 
-[node name="RowTextSpeed" type="HBoxContainer" parent="HBox/Content/Scroll/SettingsList"]
+[node name="RowTextSpeed" type="HBoxContainer" parent="HBox/Content/Scroll/SettingsList" unique_id=1770848785]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="HBox/Content/Scroll/SettingsList/RowTextSpeed"]
-layout_mode = 2
+[node name="Label" type="Label" parent="HBox/Content/Scroll/SettingsList/RowTextSpeed" unique_id=2053967774]
 custom_minimum_size = Vector2(180, 0)
+layout_mode = 2
 text = "文字显示速度"
 
-[node name="Slider" type="HSlider" parent="HBox/Content/Scroll/SettingsList/RowTextSpeed"]
+[node name="Slider" type="HSlider" parent="HBox/Content/Scroll/SettingsList/RowTextSpeed" unique_id=388437811]
 layout_mode = 2
 size_flags_horizontal = 3
 min_value = 1.0
-max_value = 100.0
 value = 30.0
 
-[node name="RowAutoSpeed" type="HBoxContainer" parent="HBox/Content/Scroll/SettingsList"]
+[node name="RowAutoSpeed" type="HBoxContainer" parent="HBox/Content/Scroll/SettingsList" unique_id=1809568822]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="HBox/Content/Scroll/SettingsList/RowAutoSpeed"]
-layout_mode = 2
+[node name="Label" type="Label" parent="HBox/Content/Scroll/SettingsList/RowAutoSpeed" unique_id=1723043078]
 custom_minimum_size = Vector2(180, 0)
+layout_mode = 2
 text = "自动模式速度"
 
-[node name="Slider" type="HSlider" parent="HBox/Content/Scroll/SettingsList/RowAutoSpeed"]
+[node name="Slider" type="HSlider" parent="HBox/Content/Scroll/SettingsList/RowAutoSpeed" unique_id=2014489019]
 layout_mode = 2
 size_flags_horizontal = 3
 min_value = 1.0
-max_value = 100.0
 value = 50.0
 
-[node name="Sep1" type="HSeparator" parent="HBox/Content/Scroll/SettingsList"]
+[node name="Sep1" type="HSeparator" parent="HBox/Content/Scroll/SettingsList" unique_id=734688067]
 layout_mode = 2
 
-[node name="SectionVolume" type="Label" parent="HBox/Content/Scroll/SettingsList"]
+[node name="SectionVolume" type="Label" parent="HBox/Content/Scroll/SettingsList" unique_id=806810783]
 layout_mode = 2
 text = "音量"
 
-[node name="RowVolGlobal" type="HBoxContainer" parent="HBox/Content/Scroll/SettingsList"]
+[node name="RowVolGlobal" type="HBoxContainer" parent="HBox/Content/Scroll/SettingsList" unique_id=1256880022]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="HBox/Content/Scroll/SettingsList/RowVolGlobal"]
-layout_mode = 2
+[node name="Label" type="Label" parent="HBox/Content/Scroll/SettingsList/RowVolGlobal" unique_id=2066181118]
 custom_minimum_size = Vector2(180, 0)
+layout_mode = 2
 text = "全局音量"
 
-[node name="Slider" type="HSlider" parent="HBox/Content/Scroll/SettingsList/RowVolGlobal"]
+[node name="Slider" type="HSlider" parent="HBox/Content/Scroll/SettingsList/RowVolGlobal" unique_id=1649654785]
 layout_mode = 2
 size_flags_horizontal = 3
-min_value = 0.0
-max_value = 100.0
 value = 100.0
 
-[node name="RowVolBgm" type="HBoxContainer" parent="HBox/Content/Scroll/SettingsList"]
+[node name="RowVolBgm" type="HBoxContainer" parent="HBox/Content/Scroll/SettingsList" unique_id=870723642]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="HBox/Content/Scroll/SettingsList/RowVolBgm"]
-layout_mode = 2
+[node name="Label" type="Label" parent="HBox/Content/Scroll/SettingsList/RowVolBgm" unique_id=452883632]
 custom_minimum_size = Vector2(180, 0)
+layout_mode = 2
 text = "背景音乐"
 
-[node name="Slider" type="HSlider" parent="HBox/Content/Scroll/SettingsList/RowVolBgm"]
+[node name="Slider" type="HSlider" parent="HBox/Content/Scroll/SettingsList/RowVolBgm" unique_id=1429907931]
 layout_mode = 2
 size_flags_horizontal = 3
-min_value = 0.0
-max_value = 100.0
 value = 80.0
 
-[node name="RowVolSe" type="HBoxContainer" parent="HBox/Content/Scroll/SettingsList"]
+[node name="RowVolSe" type="HBoxContainer" parent="HBox/Content/Scroll/SettingsList" unique_id=529206284]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="HBox/Content/Scroll/SettingsList/RowVolSe"]
-layout_mode = 2
+[node name="Label" type="Label" parent="HBox/Content/Scroll/SettingsList/RowVolSe" unique_id=1024340095]
 custom_minimum_size = Vector2(180, 0)
+layout_mode = 2
 text = "音效"
 
-[node name="Slider" type="HSlider" parent="HBox/Content/Scroll/SettingsList/RowVolSe"]
+[node name="Slider" type="HSlider" parent="HBox/Content/Scroll/SettingsList/RowVolSe" unique_id=688118076]
 layout_mode = 2
 size_flags_horizontal = 3
-min_value = 0.0
-max_value = 100.0
 value = 80.0
 
-[node name="RowVolVoice" type="HBoxContainer" parent="HBox/Content/Scroll/SettingsList"]
+[node name="RowVolVoice" type="HBoxContainer" parent="HBox/Content/Scroll/SettingsList" unique_id=381193192]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="HBox/Content/Scroll/SettingsList/RowVolVoice"]
-layout_mode = 2
+[node name="Label" type="Label" parent="HBox/Content/Scroll/SettingsList/RowVolVoice" unique_id=1850918874]
 custom_minimum_size = Vector2(180, 0)
+layout_mode = 2
 text = "语音"
 
-[node name="Slider" type="HSlider" parent="HBox/Content/Scroll/SettingsList/RowVolVoice"]
+[node name="Slider" type="HSlider" parent="HBox/Content/Scroll/SettingsList/RowVolVoice" unique_id=325079543]
 layout_mode = 2
 size_flags_horizontal = 3
-min_value = 0.0
-max_value = 100.0
 value = 100.0
 
-[node name="Sep2" type="HSeparator" parent="HBox/Content/Scroll/SettingsList"]
+[node name="Sep2" type="HSeparator" parent="HBox/Content/Scroll/SettingsList" unique_id=370642898]
 layout_mode = 2
 
-[node name="SectionDisplay" type="Label" parent="HBox/Content/Scroll/SettingsList"]
+[node name="SectionDisplay" type="Label" parent="HBox/Content/Scroll/SettingsList" unique_id=965398007]
 layout_mode = 2
 text = "显示"
 
-[node name="RowFullscreen" type="HBoxContainer" parent="HBox/Content/Scroll/SettingsList"]
+[node name="RowFullscreen" type="HBoxContainer" parent="HBox/Content/Scroll/SettingsList" unique_id=604905496]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="HBox/Content/Scroll/SettingsList/RowFullscreen"]
-layout_mode = 2
+[node name="Label" type="Label" parent="HBox/Content/Scroll/SettingsList/RowFullscreen" unique_id=687275050]
 custom_minimum_size = Vector2(180, 0)
+layout_mode = 2
 text = "全屏显示"
 
-[node name="Check" type="CheckButton" parent="HBox/Content/Scroll/SettingsList/RowFullscreen"]
+[node name="Check" type="CheckButton" parent="HBox/Content/Scroll/SettingsList/RowFullscreen" unique_id=816435608]
 layout_mode = 2
 
-[node name="RowFontSize" type="HBoxContainer" parent="HBox/Content/Scroll/SettingsList"]
+[node name="RowFontSize" type="HBoxContainer" parent="HBox/Content/Scroll/SettingsList" unique_id=321515339]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="HBox/Content/Scroll/SettingsList/RowFontSize"]
-layout_mode = 2
+[node name="Label" type="Label" parent="HBox/Content/Scroll/SettingsList/RowFontSize" unique_id=631547832]
 custom_minimum_size = Vector2(180, 0)
+layout_mode = 2
 text = "字体大小"
 
-[node name="Slider" type="HSlider" parent="HBox/Content/Scroll/SettingsList/RowFontSize"]
+[node name="Slider" type="HSlider" parent="HBox/Content/Scroll/SettingsList/RowFontSize" unique_id=2063444809]
 layout_mode = 2
 size_flags_horizontal = 3
 min_value = 12.0
 max_value = 48.0
-step = 1.0
 value = 26.0
 
-[node name="Sep3" type="HSeparator" parent="HBox/Content/Scroll/SettingsList"]
+[node name="Sep3" type="HSeparator" parent="HBox/Content/Scroll/SettingsList" unique_id=1733259872]
 layout_mode = 2
 
-[node name="SectionLang" type="Label" parent="HBox/Content/Scroll/SettingsList"]
+[node name="SectionLang" type="Label" parent="HBox/Content/Scroll/SettingsList" unique_id=678747448]
 layout_mode = 2
 text = "语言"
 
-[node name="RowLanguage" type="HBoxContainer" parent="HBox/Content/Scroll/SettingsList"]
+[node name="RowLanguage" type="HBoxContainer" parent="HBox/Content/Scroll/SettingsList" unique_id=1599427141]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="HBox/Content/Scroll/SettingsList/RowLanguage"]
-layout_mode = 2
+[node name="Label" type="Label" parent="HBox/Content/Scroll/SettingsList/RowLanguage" unique_id=1502358889]
 custom_minimum_size = Vector2(180, 0)
+layout_mode = 2
 text = "语言"
 
-[node name="Option" type="OptionButton" parent="HBox/Content/Scroll/SettingsList/RowLanguage"]
-layout_mode = 2
+[node name="Option" type="OptionButton" parent="HBox/Content/Scroll/SettingsList/RowLanguage" unique_id=652107051]
 custom_minimum_size = Vector2(160, 0)
+layout_mode = 2
 item_count = 2
 popup/item_0/text = "中文"
+popup/item_0/id = 0
 popup/item_1/text = "English"
+popup/item_1/id = 1
 
-[node name="Sep4" type="HSeparator" parent="HBox/Content/Scroll/SettingsList"]
+[node name="Sep4" type="HSeparator" parent="HBox/Content/Scroll/SettingsList" unique_id=1731105499]
 layout_mode = 2
 
-[node name="BtnResetDefaults" type="Button" parent="HBox/Content/Scroll/SettingsList"]
+[node name="BtnResetDefaults" type="Button" parent="HBox/Content/Scroll/SettingsList" unique_id=1682528055]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 text = "重置默认设置"
 
-[node name="Sep5" type="HSeparator" parent="HBox/Content/Scroll/SettingsList"]
+[node name="Sep5" type="HSeparator" parent="HBox/Content/Scroll/SettingsList" unique_id=1677030805]
 layout_mode = 2
 
-[node name="SectionShortcut" type="Label" parent="HBox/Content/Scroll/SettingsList"]
+[node name="SectionGameplay" type="Label" parent="HBox/Content/Scroll/SettingsList"]
+layout_mode = 2
+text = "游戏"
+
+[node name="RowDialogueOpacity" type="HBoxContainer" parent="HBox/Content/Scroll/SettingsList"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HBox/Content/Scroll/SettingsList/RowDialogueOpacity"]
+custom_minimum_size = Vector2(180, 0)
+layout_mode = 2
+text = "对话框透明度"
+
+[node name="Slider" type="HSlider" parent="HBox/Content/Scroll/SettingsList/RowDialogueOpacity"]
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 100.0
+step = 1.0
+value = 100.0
+
+[node name="RowClickStopAnim" type="HBoxContainer" parent="HBox/Content/Scroll/SettingsList"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HBox/Content/Scroll/SettingsList/RowClickStopAnim"]
+custom_minimum_size = Vector2(180, 0)
+layout_mode = 2
+text = "点击停止动画"
+
+[node name="Check" type="CheckButton" parent="HBox/Content/Scroll/SettingsList/RowClickStopAnim"]
+layout_mode = 2
+button_pressed = true
+
+[node name="RowClickStopVoice" type="HBoxContainer" parent="HBox/Content/Scroll/SettingsList"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HBox/Content/Scroll/SettingsList/RowClickStopVoice"]
+custom_minimum_size = Vector2(180, 0)
+layout_mode = 2
+text = "点击停止语音"
+
+[node name="Check" type="CheckButton" parent="HBox/Content/Scroll/SettingsList/RowClickStopVoice"]
+layout_mode = 2
+button_pressed = true
+
+[node name="RowSkipUnread" type="HBoxContainer" parent="HBox/Content/Scroll/SettingsList"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="HBox/Content/Scroll/SettingsList/RowSkipUnread"]
+custom_minimum_size = Vector2(180, 0)
+layout_mode = 2
+text = "快进未读文本"
+
+[node name="Check" type="CheckButton" parent="HBox/Content/Scroll/SettingsList/RowSkipUnread"]
+layout_mode = 2
+
+[node name="Sep6" type="HSeparator" parent="HBox/Content/Scroll/SettingsList"]
+layout_mode = 2
+
+[node name="SectionShortcut" type="Label" parent="HBox/Content/Scroll/SettingsList" unique_id=1384662166]
 layout_mode = 2
 text = "快捷键"
