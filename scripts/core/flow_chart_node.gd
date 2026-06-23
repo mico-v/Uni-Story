@@ -29,6 +29,9 @@ var jump_target: StringName = &""
 ## } Set by branch().
 var branches: Array = []
 
+## Ending name set by is_end(name). Empty if unnamed or not an end node.
+var end_name: String = ""
+
 
 func add_entry(entry) -> void:
 	entries.append(entry)

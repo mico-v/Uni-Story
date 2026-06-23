@@ -8,6 +8,7 @@ class_name SaveSystem extends RefCounted
 const SAVE_DIR := "user://saves/"
 const SLOT_COUNT := 6
 const AUTO_SAVE_SLOT := 99
+const SAVE_VERSION := 1
 
 var _ctx: Node
 
@@ -26,7 +27,7 @@ func save(slot: int) -> bool:
 		push_warning("SaveSystem: nothing to save (not in a chapter)")
 		return false
 	var data := {
-		"version": 1,
+		"version": SAVE_VERSION,
 		"chapter": String(_ctx.game_state.current_node.name),
 		"state": _ctx.game_state.snapshot(),
 	}
@@ -64,6 +65,10 @@ func load_slot(slot: int) -> bool:
 	var parsed = JSON.parse_string(text)
 	if not (parsed is Dictionary) or not parsed.has("state"):
 		push_error("SaveSystem: corrupt save in slot %d" % slot)
+		return false
+	var ver: int = int(parsed.get("version", 0))
+	if ver != SAVE_VERSION:
+		push_error("SaveSystem: save version mismatch in slot %d (expected %d, got %d)" % [slot, SAVE_VERSION, ver])
 		return false
 	var ok = _ctx.game_state.restore(parsed["state"])
 	if ok:

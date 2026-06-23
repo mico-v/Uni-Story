@@ -217,3 +217,55 @@ size_flags_vertical = 3
 custom_minimum_size = Vector2(220, 44)
 layout_mode = 2
 text = "关闭"
+
+[node name="ConfirmOverlay" type="ColorRect" parent="Hud" unique_id=624606600]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.4)
+
+[node name="ConfirmPanel" type="PanelContainer" parent="Hud" unique_id=930876383]
+visible = false
+custom_minimum_size = Vector2(400, 200)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -100.0
+offset_right = 200.0
+offset_bottom = 100.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="Hud/ConfirmPanel" unique_id=435222107]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Hud/ConfirmPanel/VBox" unique_id=357454364]
+layout_mode = 2
+horizontal_alignment = 1
+
+[node name="Message" type="Label" parent="Hud/ConfirmPanel/VBox" unique_id=271248002]
+layout_mode = 2
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="Buttons" type="HBoxContainer" parent="Hud/ConfirmPanel/VBox" unique_id=1474392218]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="OK" type="Button" parent="Hud/ConfirmPanel/VBox/Buttons" unique_id=1022531230]
+custom_minimum_size = Vector2(120, 40)
+layout_mode = 2
+
+[node name="Cancel" type="Button" parent="Hud/ConfirmPanel/VBox/Buttons" unique_id=1727092101]
+custom_minimum_size = Vector2(120, 40)
+layout_mode = 2

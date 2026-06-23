@@ -3,7 +3,7 @@ class_name DialogSystem extends RefCounted
 ## Notification toasts and confirm dialogs for the game UI.
 ##
 ## Toast: brief message at top-center that fades out after a delay.
-## Confirm: modal dialog with title, message, OK/Cancel, returns a signal.
+## Confirm: modal dialog defined in game_view.tscn (Hud/ConfirmOverlay + Hud/ConfirmPanel).
 ##
 ## Usage from NovaScript:
 ##   <| show_toast("快速存档完成") |>
@@ -14,12 +14,13 @@ signal confirm_result(confirmed: bool)
 var _ctx: Node
 var _toast_label: Label = null
 var _toast_tween: Tween = null
+var _confirm_overlay: ColorRect = null
 var _confirm_panel: PanelContainer = null
 var _confirm_title: Label = null
 var _confirm_message: Label = null
 var _confirm_ok: Button = null
 var _confirm_cancel: Button = null
-var _confirm_overlay: ColorRect = null
+var _confirm_ready: bool = false
 
 
 func _init(ctx: Node) -> void:
@@ -77,78 +78,50 @@ func _hide_confirm() -> void:
 		_confirm_overlay.visible = false
 
 
-# ── Internal UI creation ──────────────────────────────────────────────
+# ── Internal UI binding ──────────────────────────────────────────────
 
 func _ensure_toast() -> void:
 	if _toast_label != null:
 		return
-	_toast_label = Label.new()
-	_toast_label.visible = false
-	_toast_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_toast_label.add_theme_font_size_override("font_size", 22)
-	_toast_label.add_theme_color_override("font_color", Color(1, 1, 1, 1))
-	_toast_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	# Add a background panel for readability.
-	var bg := ColorRect.new()
-	bg.color = Color(0, 0, 0, 0.6)
-	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_get_ui_parent().add_child(bg)
-	bg.add_child(_toast_label)
-	# Use anchors for viewport-adaptive positioning (top center, 2% from top).
-	bg.set_anchors_preset(Control.PRESET_CENTER_TOP)
-	bg.anchor_top = 0.02
-	bg.anchor_bottom = 0.02
-	bg.custom_minimum_size = Vector2(300, 40)
-	bg.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	var toast := preload("res://scene/ui/toast.tscn").instantiate()
+	_toast_label = toast.get_node("Label")
+	var parent := _get_ui_parent()
+	if parent:
+		parent.add_child(toast)
+		toast.set_anchors_preset(Control.PRESET_CENTER_TOP)
+		toast.anchor_top = 0.02
+		toast.anchor_bottom = 0.02
 
 
 func _ensure_confirm() -> void:
-	if _confirm_panel != null:
+	if _confirm_ready:
 		return
-	var parent := _get_ui_parent()
-	# Overlay (blocks input to the rest of the UI).
-	_confirm_overlay = ColorRect.new()
-	_confirm_overlay.color = Color(0, 0, 0, 0.4)
-	_confirm_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_confirm_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
-	_confirm_overlay.visible = false
-	parent.add_child(_confirm_overlay)
-	# Panel.
-	_confirm_panel = PanelContainer.new()
-	_confirm_panel.visible = false
-	_confirm_panel.custom_minimum_size = Vector2(400, 200)
-	_confirm_panel.set_anchors_preset(Control.PRESET_CENTER)
-	_confirm_panel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-	_confirm_panel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	parent.add_child(_confirm_panel)
-	# Layout.
-	var vbox := VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 12)
-	_confirm_panel.add_child(vbox)
-	_confirm_title = Label.new()
-	_confirm_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_confirm_title.add_theme_font_size_override("font_size", 24)
-	vbox.add_child(_confirm_title)
-	_confirm_message = Label.new()
-	_confirm_message.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_confirm_message.add_theme_font_size_override("font_size", 20)
-	_confirm_message.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	vbox.add_child(_confirm_message)
-	# Buttons.
-	var hbox := HBoxContainer.new()
-	hbox.alignment = BoxContainer.ALIGNMENT_CENTER
-	hbox.add_theme_constant_override("separation", 20)
-	vbox.add_child(hbox)
-	_confirm_ok = Button.new()
-	_confirm_ok.text = _t("alert.confirm", "OK")
-	_confirm_ok.custom_minimum_size = Vector2(120, 40)
-	_confirm_ok.pressed.connect(func() -> void: answer_confirm(true))
-	hbox.add_child(_confirm_ok)
-	_confirm_cancel = Button.new()
-	_confirm_cancel.text = _t("alert.cancel", "Cancel")
-	_confirm_cancel.custom_minimum_size = Vector2(120, 40)
-	_confirm_cancel.pressed.connect(func() -> void: answer_confirm(false))
-	hbox.add_child(_confirm_cancel)
+	_confirm_ready = true
+	# Bind to nodes defined in game_view.tscn under Hud.
+	var hud := _get_ui_parent()
+	if hud == null:
+		push_error("DialogSystem: cannot find UI parent for confirm dialog")
+		return
+	_confirm_overlay = hud.get_node_or_null("ConfirmOverlay")
+	_confirm_panel = hud.get_node_or_null("ConfirmPanel")
+	if _confirm_panel == null:
+		push_error("DialogSystem: ConfirmPanel not found under Hud")
+		return
+	_confirm_title = _confirm_panel.get_node_or_null("VBox/Title")
+	_confirm_message = _confirm_panel.get_node_or_null("VBox/Message")
+	_confirm_ok = _confirm_panel.get_node_or_null("VBox/Buttons/OK")
+	_confirm_cancel = _confirm_panel.get_node_or_null("VBox/Buttons/Cancel")
+	# Apply i18n and connect button signals.
+	if _confirm_ok:
+		_confirm_ok.text = _t("alert.confirm", "OK")
+		_confirm_ok.pressed.connect(func() -> void: answer_confirm(true))
+	if _confirm_cancel:
+		_confirm_cancel.text = _t("alert.cancel", "Cancel")
+		_confirm_cancel.pressed.connect(func() -> void: answer_confirm(false))
+	if _confirm_title:
+		_confirm_title.add_theme_font_size_override("font_size", 24)
+	if _confirm_message:
+		_confirm_message.add_theme_font_size_override("font_size", 20)
 
 
 func _get_ui_parent() -> Node:

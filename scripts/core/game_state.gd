@@ -7,12 +7,15 @@ signal dialogue_changed(speaker: String, text: String)
 signal dialogue_advanced()                 # fired after each dialogue display (for auto-save)
 signal branch_requested(options: Array)        # Array[{dest, text, mode, cond, image, enabled}]
 signal game_ended()
+signal chapter_started()                 # fired for CHAPTER-type nodes (UI auto-advances)
+signal ending_reached(ending_name: String)  # fired when a named END node is reached
 
 var _ctx: Node
 var _graph: FlowChartGraph
 
 var current_node: FlowChartNode = null
 var current_index: int = -1
+var current_end_name: String = ""
 var is_waiting_branch: bool = false
 var is_waiting_input: bool = false
 var is_processing: bool = false
@@ -22,6 +25,11 @@ var is_ended: bool = false
 ## current entry's lazy code runs, redirecting the story immediately.
 var pending_jump: StringName = &""
 
+## Cache for _eval_condition results. Keyed by trimmed condition string.
+## Cleared on restore() and start_node() since variables may differ.
+var _cond_cache: Dictionary = {}
+const _COND_CACHE_MAX := 64
+
 
 func _init(ctx: Node) -> void:
 	_ctx = ctx
@@ -29,32 +37,25 @@ func _init(ctx: Node) -> void:
 
 func setup(graph: FlowChartGraph) -> void:
 	_graph = graph
+	# Invalidate condition cache whenever a story variable changes.
+	if _ctx and _ctx.variables:
+		if not _ctx.variables.changed.is_connected(_invalidate_cond_cache):
+			_ctx.variables.changed.connect(_invalidate_cond_cache)
 
 
-## Capture the model state for saving. Front/back separation means this plus the
-## variables fully describe the playthrough; presentation is rebuilt by replay.
+## Capture only the model state (node, index, variables).
+## Subsystem snapshots are orchestrated by NovaController to maintain layer separation.
 func snapshot() -> Dictionary:
-	var system_state := {}
-	if _ctx.animation and _ctx.animation.has_method("snapshot"):
-		system_state["animation"] = _ctx.animation.snapshot()
-	if _ctx.audio and _ctx.audio.has_method("snapshot"):
-		system_state["audio"] = _ctx.audio.snapshot()
-	if _ctx.prefab_loader and _ctx.prefab_loader.has_method("snapshot"):
-		system_state["prefab_loader"] = _ctx.prefab_loader.snapshot()
-	if _ctx.camera and _ctx.camera.has_method("snapshot"):
-		system_state["camera"] = _ctx.camera.snapshot()
-	if _ctx.graphics and _ctx.graphics.has_method("snapshot"):
-		system_state["graphics"] = _ctx.graphics.snapshot()
 	return {
 		"node": String(current_node.name) if current_node else "",
 		"index": current_index,
 		"variables": _ctx.variables.to_dict(),
-		"systems": system_state,
 	}
 
 
 ## Restore a snapshot: set variables, jump to the node, and silently replay
 ## lazy blocks of entries [0, index] to rebuild presentation, then show entry.
+## Note: subsystem restore is orchestrated by NovaController after this call.
 func restore(data: Dictionary) -> bool:
 	var node_name := StringName(data.get("node", ""))
 	if not _graph.has_node_named(node_name):
@@ -68,14 +69,12 @@ func restore(data: Dictionary) -> bool:
 	is_waiting_input = false
 	is_ended = false
 	is_processing = false
+	current_end_name = ""
+	_cond_cache.clear()
 	pending_jump = &""
 
 	var target: int = int(data.get("index", 0))
 	target = clampi(target, 0, current_node.entries.size() - 1)
-
-	# Clean up runtime objects before replay (prefabs will be re-created by lazy blocks).
-	if _ctx.prefab_loader:
-		_ctx.prefab_loader.destroy_all()
 
 	# Replay lazy blocks up to and including target entry to rebuild state.
 	for i in range(0, target + 1):
@@ -84,20 +83,6 @@ func restore(data: Dictionary) -> bool:
 		if entry.has_lazy():
 			_ctx.runtime.run_block(entry.lazy_source)
 		pending_jump = &""  # ignore mid-node jumps during replay
-
-	# Restore subsystem state after replay so playback can continue from a stable model.
-	var systems = data.get("systems", {})
-	if systems is Dictionary:
-		if _ctx.animation and _ctx.animation.has_method("restore"):
-			_ctx.animation.restore(systems.get("animation", {}))
-		if _ctx.audio and _ctx.audio.has_method("restore"):
-			_ctx.audio.restore(systems.get("audio", {}))
-		if _ctx.prefab_loader and _ctx.prefab_loader.has_method("restore"):
-			_ctx.prefab_loader.restore(systems.get("prefab_loader", {}))
-		if _ctx.camera and _ctx.camera.has_method("restore"):
-			_ctx.camera.restore(systems.get("camera", {}))
-		if _ctx.graphics and _ctx.graphics.has_method("restore"):
-			_ctx.graphics.restore(systems.get("graphics", {}))
 
 	var e = current_node.entries[target]
 	dialogue_changed.emit(e.speaker, e.text)
@@ -111,11 +96,12 @@ func start_node(name: StringName) -> void:
 		return
 	current_node = _graph.get_node_named(name)
 	current_index = -1
+	current_end_name = ""
+	_cond_cache.clear()
 	is_waiting_branch = false
 	is_waiting_input = false
 	is_ended = false
 	is_processing = false
-	is_waiting_input = false
 	advance()
 
 
@@ -131,6 +117,7 @@ func jump_to_position(node_name: String, entry_index: int) -> bool:
 	is_waiting_input = false
 	is_ended = false
 	is_processing = false
+	current_end_name = ""
 	pending_jump = &""
 	# Present the target entry directly.
 	if current_index >= 0 and current_index < current_node.entries.size():
@@ -181,6 +168,8 @@ func _continue_after_wait() -> void:
 		if _ctx.read_tracker:
 			_ctx.read_tracker.mark_read(current_node.name, current_index)
 		dialogue_changed.emit(entry.speaker, entry.text)
+		if current_node.type == FlowChartNode.Type.CHAPTER:
+			chapter_started.emit()
 		dialogue_advanced.emit()
 		return
 
@@ -188,6 +177,7 @@ func _continue_after_wait() -> void:
 func _on_node_exhausted() -> bool:
 	is_waiting_input = false
 	is_waiting_branch = false
+	current_end_name = ""
 	if not current_node.branches.is_empty():
 		var opts: Array = []
 		for b in current_node.branches:
@@ -253,6 +243,9 @@ func _on_node_exhausted() -> bool:
 	if current_node.type == FlowChartNode.Type.END:
 		is_waiting_input = false
 		is_ended = true
+		current_end_name = current_node.end_name
+		if current_end_name != "":
+			ending_reached.emit(current_end_name)
 		game_ended.emit()
 		return false
 
@@ -299,10 +292,18 @@ func _is_show_mode(mode) -> bool:
 	return m == FlowChartNode.BranchMode.SHOW || m == FlowChartNode.BranchMode.NORMAL
 
 
+func _invalidate_cond_cache(_name: String, _value: Variant) -> void:
+	_cond_cache.clear()
+
+
 func _eval_condition(cond_expr: String) -> bool:
 	var c := cond_expr.strip_edges()
 	if c.is_empty():
 		return true
+
+	# Check result cache first.
+	if _cond_cache.has(c):
+		return _cond_cache[c]
 
 	var block := "return %s\n" % c
 	var script: GDScript = _ctx.runtime.compile_block(block)
@@ -313,9 +314,19 @@ func _eval_condition(cond_expr: String) -> bool:
 	var inst = script.new()
 	inst._ctx = _ctx
 	var result: Variant = inst.run()
-	if result == null:
-		return false
-	return bool(result)
+	var bool_result := false
+	if result != null:
+		bool_result = bool(result)
+
+	# Evict oldest entries if cache is full.
+	if _cond_cache.size() >= _COND_CACHE_MAX:
+		var keys := _cond_cache.keys()
+		@warning_ignore("integer_division")
+		for i in range(_COND_CACHE_MAX / 4):
+			_cond_cache.erase(keys[i])
+
+	_cond_cache[c] = bool_result
+	return bool_result
 
 
 func _goto(name: StringName) -> bool:

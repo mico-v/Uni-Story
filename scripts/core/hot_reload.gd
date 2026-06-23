@@ -17,7 +17,7 @@ class_name HotReload extends RefCounted
 var _ctx: Node
 
 ## Scenario file paths to watch (resolved, post-localization).
-var _files: Array = []
+var _files: Array[String] = []
 
 ## Stored modification times for change detection.
 var _file_times: Dictionary = {}
@@ -117,8 +117,6 @@ func reload() -> bool:
 	_ctx.game_state.setup(_ctx.script_loader.graph)
 
 	# 8. Refresh UI.
-	if _ctx.has_method("_refresh_chapters"):
-		_ctx._refresh_chapters()
 	if _ctx.view_manager:
 		_ctx.view_manager.switch_to("title")
 

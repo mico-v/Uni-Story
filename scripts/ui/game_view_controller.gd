@@ -11,6 +11,7 @@ signal title_requested()
 signal settings_requested()
 
 const ButtonRingScene: PackedScene = preload("res://scene/ui/button_ring.tscn")
+const SlotRowScene: PackedScene = preload("res://scene/ui/slot_row.tscn")
 
 # ── Context ──────────────────────────────────────────────────────────
 var _ctx: Node  # NovaController
@@ -47,29 +48,34 @@ var _save_panel_title: Label
 var _save_slots: VBoxContainer
 var _save_close_btn: Button
 var _save_mode := true
+var _save_load_controller: SaveLoadPanelController = SaveLoadPanelController.new()
 
 # ── Backlog panel ────────────────────────────────────────────────────
 var _backlog_panel: Panel
 var _backlog_list: VBoxContainer
 var _backlog_scroll: ScrollContainer
 var _backlog_close_btn: Button
+var _backlog_controller: BacklogPanelController = BacklogPanelController.new()
 
 # ── Mouse menu (right-click context menu) ────────────────────────────
 var _mouse_menu: PanelContainer
 var _mouse_menu_items: VBoxContainer
 
 # ── Typewriter state ─────────────────────────────────────────────────
-var type_cps := 30.0
 var _type_tween: Tween = null
 var _is_typing := false
+@export var type_cps: float = 30.0
 
 # ── Auto/Skip mode state ─────────────────────────────────────────────
-var auto_delay := 0.10  # seconds per character for auto-play delay
-const SKIP_DELAY := 0.05
 var _is_auto := false
 var _is_skip := false
 var _auto_gen := 0
 var _skip_gen := 0
+@export var auto_delay: float = 0.10  # seconds per character for auto-play delay
+@export var skip_delay: float = 0.05
+
+# ── Chapter auto-advance timer ───────────────────────────────────────
+var _chapter_timer: SceneTreeTimer = null
 
 # ── Gameplay settings (set by SettingsViewController) ─────────────────
 var click_stop_anim := true
@@ -85,6 +91,8 @@ func setup(ctx: Node) -> void:
 	_apply_ui_defaults()
 	_connect_signals()
 	_create_mouse_menu()
+	_save_load_controller.setup(ctx)
+	_backlog_controller.setup(ctx)
 
 
 func _bind_nodes() -> void:
@@ -121,6 +129,9 @@ func _bind_nodes() -> void:
 		_backlog_close_btn = _hud.get_node_or_null("BacklogPanel/BacklogPanelContainer/CloseButton") as Button
 	_post_fx_rect = get_node_or_null("PostFXRect") as ColorRect
 
+	_save_load_controller.bind_nodes(_save_panel, _save_panel_title, _save_slots, _save_close_btn)
+	_backlog_controller.bind_nodes(_backlog_panel, _backlog_list, _backlog_scroll, _backlog_close_btn)
+
 	# Initial visibility.
 	visible = false
 	if _save_panel:
@@ -147,6 +158,7 @@ func _bind_nodes() -> void:
 		img.fill(Color(0, 0, 0, 0))
 		var tri_color := Color(0.55, 0.38, 0.65, 0.9)
 		for row in 8:
+			@warning_ignore("integer_division")
 			var half := row / 2
 			img.fill_rect(Rect2i(8 - half - 1, row + 1, half * 2 + 2, 1), tri_color)
 		var tex := ImageTexture.create_from_image(img)
@@ -199,6 +211,7 @@ func _connect_signals() -> void:
 		_load_btn.pressed.connect(func() -> void: _open_save_panel(false))
 	if _backlog_btn:
 		_backlog_btn.pressed.connect(_open_backlog)
+	_save_load_controller.slot_pressed.connect(_on_save_slot_pressed)
 	if _auto_btn:
 		_auto_btn.pressed.connect(_on_auto_toggled)
 	if _skip_btn:
@@ -206,7 +219,7 @@ func _connect_signals() -> void:
 	if _quit_btn:
 		_quit_btn.pressed.connect(_request_title)
 	if _save_close_btn:
-		_save_close_btn.pressed.connect(_close_save_panel)
+		_save_close_btn.pressed.connect(func() -> void: _save_load_controller.close())
 	if _backlog_close_btn:
 		_backlog_close_btn.pressed.connect(func() -> void:
 			_backlog_panel.visible = false
@@ -231,7 +244,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	# Step forward works even with panels open (closes them first).
 	if sm.is_action_pressed("ui_step_forward"):
 		if panels_open:
-			_close_save_panel()
+			_save_load_controller.close()
 			if _backlog_panel:
 				_backlog_panel.visible = false
 		_on_next()
@@ -240,7 +253,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	# Block other shortcuts when panels are open.
 	if panels_open:
 		if sm.is_action_pressed("ui_leave"):
-			_close_save_panel()
+			_save_load_controller.close()
 			if _backlog_panel:
 				_backlog_panel.visible = false
 			get_viewport().set_input_as_handled()
@@ -277,7 +290,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		_toggle_fullscreen()
 		get_viewport().set_input_as_handled()
 	elif sm.is_action_pressed("ui_settings"):
-		_close_save_panel()
+		_save_load_controller.close()
 		if _backlog_panel:
 			_backlog_panel.visible = false
 		settings_requested.emit()
@@ -368,7 +381,10 @@ func reset_world() -> void:
 		_dbox.visible = false
 	if _choice_list:
 		_choice_list.visible = false
-		_clear_children(_choice_list)
+		if _choice_list_controller:
+			_choice_list_controller.clear()
+		else:
+			_clear_children(_choice_list)
 	if _save_panel:
 		_save_panel.visible = false
 	if _backlog_panel:
@@ -472,7 +488,7 @@ func on_dialogue_changed(speaker: String, text: String) -> void:
 		if _ctx.read_tracker and _ctx.read_tracker.is_read(_ctx.game_state.current_node.name, _ctx.game_state.current_index):
 			_finish_typewriter()
 			var gen := _skip_gen
-			get_tree().create_timer(SKIP_DELAY).timeout.connect(_on_skip_advance.bind(gen))
+			get_tree().create_timer(skip_delay).timeout.connect(_on_skip_advance.bind(gen))
 		else:
 			_deactivate_modes()
 
@@ -502,6 +518,7 @@ func on_game_ended() -> void:
 	_deactivate_modes()
 	_finish_typewriter()
 	_continue_icon_visible(false)
+	_chapter_timer = null
 	# Reset transition overlay — trans("fade") may have left it opaque.
 	if _overlay:
 		_overlay.visible = false
@@ -512,6 +529,22 @@ func on_game_ended() -> void:
 		_status_label.text = _t("ui.status.ended", "状态：章节结束")
 	if _restart_btn:
 		_restart_btn.visible = true
+
+
+func on_chapter_started() -> void:
+	_continue_icon_visible(false)
+	_chapter_timer = get_tree().create_timer(2.0)
+	_chapter_timer.timeout.connect(func() -> void:
+		if _ctx.game_state.is_waiting_input:
+			_ctx.game_state.is_waiting_input = false
+			_ctx.game_state.continue_after_input()
+		_chapter_timer = null
+	)
+
+
+func on_ending_reached(ending_name: String) -> void:
+	if _status_label and ending_name != "":
+		_status_label.text = _t("ui.status.ending", "状态：结局 — ") + ending_name
 
 
 func on_avatar_changed(shown: bool) -> void:
@@ -655,7 +688,7 @@ func _on_skip_toggled() -> void:
 				if click_stop_voice and _ctx.audio:
 					_ctx.audio.stop_voice()
 				var gen := _skip_gen
-				get_tree().create_timer(SKIP_DELAY).timeout.connect(_on_skip_advance.bind(gen))
+				get_tree().create_timer(skip_delay).timeout.connect(_on_skip_advance.bind(gen))
 			else:
 				_deactivate_modes()
 				return
@@ -696,43 +729,7 @@ func _on_skip_advance(gen: int) -> void:
 
 func _open_backlog() -> void:
 	_deactivate_modes()
-	var backlog_title := _backlog_panel_title_node()
-	if backlog_title:
-		backlog_title.text = _t("ui.label.backlog", "文本回顾")
-	_clear_children(_backlog_list)
-	# Show panel first so the container tree is laid out with correct widths.
-	if _backlog_panel:
-		_backlog_panel.visible = true
-	await get_tree().process_frame
-	if _ctx.backlog:
-		var entries = _ctx.backlog.entries()
-		for i in entries.size():
-			var entry: Dictionary = entries[i]
-			var lbl := RichTextLabel.new()
-			lbl.bbcode_enabled = true
-			lbl.fit_content = true
-			lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			lbl.size_flags_vertical = Control.SIZE_FILL
-			var speaker := str(entry["speaker"])
-			var text := str(entry["text"])
-			if speaker.is_empty():
-				lbl.text = text
-			else:
-				lbl.text = "[b]%s[/b]：%s" % [speaker, text]
-			# Make clickable for jump-back (only if position data exists).
-			var node_name := str(entry.get("node", ""))
-			var entry_idx: int = int(entry.get("index", -1))
-			if node_name != "" and entry_idx >= 0:
-				lbl.mouse_filter = Control.MOUSE_FILTER_STOP
-				lbl.gui_input.connect(_on_backlog_entry_click.bind(i, lbl))
-			_backlog_list.add_child(lbl)
-	await get_tree().process_frame
-	# Lock in measured heights so fit_content never recomputes to zero.
-	for child in _backlog_list.get_children():
-		if child is RichTextLabel:
-			child.custom_minimum_size.y = child.size.y
-	if _backlog_scroll:
-		_backlog_scroll.scroll_vertical = int(_backlog_scroll.get_v_scroll_bar().max_value)
+	_backlog_controller.open()
 
 
 func _on_backlog_entry_click(event: InputEvent, entry_index: int, _lbl: RichTextLabel) -> void:
@@ -752,8 +749,10 @@ func _on_backlog_jump(node_name: String, entry_index: int) -> void:
 			return
 	if _backlog_panel:
 		_backlog_panel.visible = false
+	reset_world()
 	if _ctx.game_state:
 		_ctx.game_state.jump_to_position(node_name, entry_index)
+	load_game()
 
 
 # ── Save/load panel ──────────────────────────────────────────────────
@@ -761,116 +760,35 @@ func _on_backlog_jump(node_name: String, entry_index: int) -> void:
 func _open_save_panel(save_mode: bool) -> void:
 	_deactivate_modes()
 	_save_mode = save_mode
-	if _save_panel_title:
-		_save_panel_title.text = _t("ingame.save.button", "存档") if save_mode else _t("ingame.load.button", "读档")
-	_clear_children(_save_slots)
-	if _ctx.save_system == null:
-		return
-	for slot in _ctx.save_system.SLOT_COUNT:
-		var has: bool = _ctx.save_system.has_save(slot)
-		var label := _t("ui.save.slot_format", "存档位 %d：%s") % [slot + 1, _ctx.save_system.slot_label(slot)]
-		var row := HBoxContainer.new()
-		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.add_theme_constant_override("separation", 8)
-		var b := _make_button(label)
-		b.custom_minimum_size = Vector2(300, 40)
-		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		if not save_mode and not has:
-			b.disabled = true
-		b.pressed.connect(_on_slot_pressed.bind(slot))
-		row.add_child(b)
-		if has:
-			var del_btn := Button.new()
-			del_btn.text = _t("bookmark.delete.button", "删除")
-			del_btn.custom_minimum_size = Vector2(60, 40)
-			del_btn.pressed.connect(_on_slot_delete.bind(slot))
-			row.add_child(del_btn)
-		_save_slots.add_child(row)
-	if _save_panel:
-		_save_panel.visible = true
+	_save_load_controller.open(save_mode)
 
 
-func _close_save_panel() -> void:
-	if _save_panel:
-		_save_panel.visible = false
+func _refresh_save_slots() -> void:
+	_save_load_controller.refresh()
 
 
-func _on_slot_pressed(slot: int) -> void:
-	if _ctx.save_system == null:
-		return
-	if _save_mode:
-		if _ctx.save_system.has_save(slot) and _ctx.dialog_system:
-			var msg := _t("bookmark.overwrite.confirm", "覆盖存档{0}？").format([slot + 1])
-			var sig: Signal = _ctx.dialog_system.show_confirm(_t("ingame.save.button", "存档"), msg)
-			var confirmed: bool = await sig
-			if not confirmed:
-				return
-		if _ctx.save_system.save(slot):
-			if _status_label:
-				_status_label.text = _t("ui.status.saved", "状态：已存档到位 %d") % (slot + 1)
+func _on_save_slot_pressed(slot: int, save_mode: bool) -> void:
+	if save_mode:
+		if _ctx.save_system:
+			_ctx.save_system.save(slot)
 			_refresh_save_slots()
-		_close_save_panel()
 	else:
-		if _ctx.dialog_system:
-			var msg := _t("bookmark.load.confirm", "读取存档{0}？").format([slot + 1])
-			var sig: Signal = _ctx.dialog_system.show_confirm(_t("ingame.load.button", "读档"), msg)
-			var confirmed: bool = await sig
-			if not confirmed:
-				return
-		_close_save_panel()
-		if _ctx.save_system.load_slot(slot):
-			reset_world()
+		if _ctx.save_system and _ctx.save_system.load_slot(slot):
 			load_game()
 
 
 func _on_slot_delete(slot: int) -> void:
-	if _ctx.save_system == null or _ctx.dialog_system == null:
-		return
-	var msg := _t("bookmark.delete.confirm", "要删除存档{0}吗？").format([slot + 1])
-	var sig: Signal = _ctx.dialog_system.show_confirm(_t("bookmark.delete.button", "删除"), msg)
-	var confirmed: bool = await sig
-	if not confirmed:
-		return
-	_ctx.save_system.delete_slot(slot)
-	_refresh_save_slots()
-
-
-func _refresh_save_slots() -> void:
-	if _save_slots == null or _ctx.save_system == null:
-		return
-	_clear_children(_save_slots)
-	for slot in _ctx.save_system.SLOT_COUNT:
-		var has: bool = _ctx.save_system.has_save(slot)
-		var label := _t("ui.save.slot_format", "存档位 %d：%s") % [slot + 1, _ctx.save_system.slot_label(slot)]
-		var row := HBoxContainer.new()
-		row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		row.add_theme_constant_override("separation", 8)
-		var b := _make_button(label)
-		b.custom_minimum_size = Vector2(300, 40)
-		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		if not _save_mode and not has:
-			b.disabled = true
-		b.pressed.connect(_on_slot_pressed.bind(slot))
-		row.add_child(b)
-		if has:
-			var del_btn := Button.new()
-			del_btn.text = _t("bookmark.delete.button", "删除")
-			del_btn.custom_minimum_size = Vector2(60, 40)
-			del_btn.pressed.connect(_on_slot_delete.bind(slot))
-			row.add_child(del_btn)
-		_save_slots.add_child(row)
+	if _ctx.save_system:
+		_ctx.save_system.delete_slot(slot)
+		_refresh_save_slots()
 
 
 # ── Mouse menu (right-click context menu) ────────────────────────────
 
 func _create_mouse_menu() -> void:
-	_mouse_menu = PanelContainer.new()
+	_mouse_menu = preload("res://scene/ui/context_menu.tscn").instantiate()
 	_mouse_menu.visible = false
-	_mouse_menu.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	_mouse_menu.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	_mouse_menu_items = VBoxContainer.new()
-	_mouse_menu_items.add_theme_constant_override("separation", 2)
-	_mouse_menu.add_child(_mouse_menu_items)
+	_mouse_menu_items = _mouse_menu.get_node("VBox")
 	if _hud:
 		_hud.add_child(_mouse_menu)
 
@@ -1049,6 +967,7 @@ func _quick_save() -> void:
 
 
 func _quick_load() -> void:
+	reset_world()
 	if _ctx.save_system and _ctx.save_system.load_slot(QUICK_SAVE_SLOT):
 		load_game()
 

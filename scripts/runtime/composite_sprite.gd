@@ -6,10 +6,10 @@ class_name CompositeSprite extends Node2D
 ## move/tint/o.anim operate on the whole character via its position/scale/modulate.
 
 ## Default draw order; lower index = drawn first (behind).
-const DEFAULT_LAYER_ORDER := ["body", "clothes", "face", "mouth", "effect"]
+const DEFAULT_LAYER_ORDER: Array[String] = ["body", "clothes", "face", "mouth", "effect"]
 
 var _layers: Dictionary = {}  # layer_name -> Sprite2D
-var _order: Array = DEFAULT_LAYER_ORDER.duplicate()
+var _order: Array[String] = DEFAULT_LAYER_ORDER.duplicate()
 
 
 func _ensure_layer(layer_name: String) -> Sprite2D:

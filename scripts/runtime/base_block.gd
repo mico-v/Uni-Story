@@ -65,8 +65,8 @@ func is_unlocked_start() -> void:
 func is_debug() -> void:
 	_ctx.script_loader.is_debug()
 
-func is_end(name = null) -> void:
-	_ctx.script_loader.is_end(name)
+func is_end(end_name = null) -> void:
+	_ctx.script_loader.is_end(end_name)
 
 
 # --- graphics API (meaningful during lazy/runtime execution) -----------------
@@ -177,6 +177,14 @@ func show_confirm(title: String, message: String):
 
 func preload_asset(path: String) -> void:
 	_ctx.preload_system.preload_asset(path)
+
+
+func cancel_preload(path: String) -> void:
+	_ctx.preload_system.cancel_preload(path)
+
+
+func cancel_all_preloads() -> void:
+	_ctx.preload_system.cancel_all()
 
 
 # --- audio API ---------------------------------------------------------------

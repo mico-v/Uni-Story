@@ -20,8 +20,8 @@ class_name Timeline extends RefCounted
 signal finished()
 
 var _ctx: Node
-var _tracks: Array = []
-var _tweens: Array = []
+var _tracks: Array[Dictionary] = []
+var _tweens: Array[Tween] = []
 var _completed_count: int = 0
 var _total_count: int = 0
 var _is_playing := false

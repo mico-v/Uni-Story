@@ -8,7 +8,7 @@ signal jump_requested(node_name: String, entry_index: int)
 
 const MAX_ENTRIES := 200
 
-var _entries: Array = []  # Array[{speaker, text, node, index}]
+var _entries: Array[Dictionary] = []  # Array[{speaker, text, node, index}]
 
 
 func record(speaker: String, text: String, node_name: String = "", entry_index: int = -1) -> void:
@@ -37,7 +37,10 @@ func snapshot() -> Array:
 
 
 func restore(data: Array) -> void:
-	_entries = data.duplicate(true)
+	_entries.clear()
+	for entry in data:
+		if entry is Dictionary:
+			_entries.append(entry)
 	if _entries.size() > MAX_ENTRIES:
 		_entries = _entries.slice(_entries.size() - MAX_ENTRIES)
 
