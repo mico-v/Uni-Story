@@ -3,7 +3,6 @@ class_name SaveLoadPanelController extends Control
 ## Encapsulates save/load panel UI logic extracted from GameViewController.
 
 signal back_requested()
-signal load_completed()
 signal slot_pressed(slot: int, save_mode: bool)
 
 const SlotRowScene: PackedScene = preload("res://scene/ui/slot_row.tscn")
@@ -16,15 +15,16 @@ var _save_close_btn: Button
 var _save_mode := true
 
 
-func bind_nodes(panel: Panel, title: Label, slots: VBoxContainer, close: Button) -> void:
+func bind_nodes(panel: Panel, title: Label, slots: VBoxContainer, close_btn: Button) -> void:
 	_save_panel = panel
 	_save_panel_title = title
 	_save_slots = slots
-	_save_close_btn = close
+	_save_close_btn = close_btn
 	if _save_close_btn:
 		_save_close_btn.pressed.connect(func() -> void:
 			if _save_panel:
 				_save_panel.visible = false
+			back_requested.emit()
 		)
 
 
@@ -46,7 +46,7 @@ func close() -> void:
 		_save_panel.visible = false
 
 
-func is_visible() -> bool:
+func panel_is_visible() -> bool:
 	return _save_panel != null and _save_panel.visible
 
 

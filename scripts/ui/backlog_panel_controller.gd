@@ -2,8 +2,6 @@ class_name BacklogPanelController extends Control
 
 ## Encapsulates backlog panel UI logic extracted from GameViewController.
 
-signal jump_requested(node_name: String, entry_index: int)
-
 var _ctx: Node
 var _backlog_panel: Panel
 var _backlog_list: VBoxContainer
@@ -11,11 +9,11 @@ var _backlog_scroll: ScrollContainer
 var _backlog_close_btn: Button
 
 
-func bind_nodes(panel: Panel, list: VBoxContainer, scroll: ScrollContainer, close: Button) -> void:
+func bind_nodes(panel: Panel, list: VBoxContainer, scroll: ScrollContainer, close_btn: Button) -> void:
 	_backlog_panel = panel
 	_backlog_list = list
 	_backlog_scroll = scroll
-	_backlog_close_btn = close
+	_backlog_close_btn = close_btn
 	if _backlog_close_btn:
 		_backlog_close_btn.pressed.connect(func() -> void:
 			if _backlog_panel:
@@ -69,7 +67,7 @@ func close() -> void:
 		_backlog_panel.visible = false
 
 
-func is_visible() -> bool:
+func panel_is_visible() -> bool:
 	return _backlog_panel != null and _backlog_panel.visible
 
 
