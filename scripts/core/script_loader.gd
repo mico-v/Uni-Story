@@ -181,6 +181,8 @@ func is_debug() -> void:
 	if _current_node:
 		_current_node.is_debug = true
 
-func is_end(_name = null) -> void:
+func is_end(end_name = null) -> void:
 	if _current_node:
 		_current_node.type = FlowChartNode.Type.END
+		if end_name != null:
+			_current_node.end_name = str(end_name)

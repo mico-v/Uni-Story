@@ -220,6 +220,8 @@ func _connect_model_signals() -> void:
 	game_state.dialogue_changed.connect(_game_vc.on_dialogue_changed)
 	game_state.branch_requested.connect(_game_vc.on_branch_requested)
 	game_state.game_ended.connect(_game_vc.on_game_ended)
+	game_state.chapter_started.connect(_game_vc.on_chapter_started)
+	game_state.ending_reached.connect(_game_vc.on_ending_reached)
 	game_state.dialogue_advanced.connect(_auto_save)
 	avatar.avatar_changed.connect(_game_vc.on_avatar_changed)
 	# GameVC → NovaController routing.

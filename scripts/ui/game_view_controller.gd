@@ -71,6 +71,9 @@ var _is_skip := false
 var _auto_gen := 0
 var _skip_gen := 0
 
+# ── Chapter auto-advance timer ───────────────────────────────────────
+var _chapter_timer: SceneTreeTimer = null
+
 # ── Gameplay settings (set by SettingsViewController) ─────────────────
 var click_stop_anim := true
 var click_stop_voice := true
@@ -147,6 +150,7 @@ func _bind_nodes() -> void:
 		img.fill(Color(0, 0, 0, 0))
 		var tri_color := Color(0.55, 0.38, 0.65, 0.9)
 		for row in 8:
+			@warning_ignore("integer_division")
 			var half := row / 2
 			img.fill_rect(Rect2i(8 - half - 1, row + 1, half * 2 + 2, 1), tri_color)
 		var tex := ImageTexture.create_from_image(img)
@@ -502,6 +506,7 @@ func on_game_ended() -> void:
 	_deactivate_modes()
 	_finish_typewriter()
 	_continue_icon_visible(false)
+	_chapter_timer = null
 	# Reset transition overlay — trans("fade") may have left it opaque.
 	if _overlay:
 		_overlay.visible = false
@@ -512,6 +517,22 @@ func on_game_ended() -> void:
 		_status_label.text = _t("ui.status.ended", "状态：章节结束")
 	if _restart_btn:
 		_restart_btn.visible = true
+
+
+func on_chapter_started() -> void:
+	_continue_icon_visible(false)
+	_chapter_timer = get_tree().create_timer(2.0)
+	_chapter_timer.timeout.connect(func() -> void:
+		if _ctx.game_state.is_waiting_input:
+			_ctx.game_state.is_waiting_input = false
+			_ctx.game_state.continue_after_input()
+		_chapter_timer = null
+	)
+
+
+func on_ending_reached(ending_name: String) -> void:
+	if _status_label and ending_name != "":
+		_status_label.text = _t("ui.status.ending", "状态：结局 — ") + ending_name
 
 
 func on_avatar_changed(shown: bool) -> void:

@@ -7,12 +7,15 @@ signal dialogue_changed(speaker: String, text: String)
 signal dialogue_advanced()                 # fired after each dialogue display (for auto-save)
 signal branch_requested(options: Array)        # Array[{dest, text, mode, cond, image, enabled}]
 signal game_ended()
+signal chapter_started()                 # fired for CHAPTER-type nodes (UI auto-advances)
+signal ending_reached(ending_name: String)  # fired when a named END node is reached
 
 var _ctx: Node
 var _graph: FlowChartGraph
 
 var current_node: FlowChartNode = null
 var current_index: int = -1
+var current_end_name: String = ""
 var is_waiting_branch: bool = false
 var is_waiting_input: bool = false
 var is_processing: bool = false
@@ -68,6 +71,7 @@ func restore(data: Dictionary) -> bool:
 	is_waiting_input = false
 	is_ended = false
 	is_processing = false
+	current_end_name = ""
 	pending_jump = &""
 
 	var target: int = int(data.get("index", 0))
@@ -111,11 +115,11 @@ func start_node(name: StringName) -> void:
 		return
 	current_node = _graph.get_node_named(name)
 	current_index = -1
+	current_end_name = ""
 	is_waiting_branch = false
 	is_waiting_input = false
 	is_ended = false
 	is_processing = false
-	is_waiting_input = false
 	advance()
 
 
@@ -131,6 +135,7 @@ func jump_to_position(node_name: String, entry_index: int) -> bool:
 	is_waiting_input = false
 	is_ended = false
 	is_processing = false
+	current_end_name = ""
 	pending_jump = &""
 	# Present the target entry directly.
 	if current_index >= 0 and current_index < current_node.entries.size():
@@ -181,6 +186,8 @@ func _continue_after_wait() -> void:
 		if _ctx.read_tracker:
 			_ctx.read_tracker.mark_read(current_node.name, current_index)
 		dialogue_changed.emit(entry.speaker, entry.text)
+		if current_node.type == FlowChartNode.Type.CHAPTER:
+			chapter_started.emit()
 		dialogue_advanced.emit()
 		return
 
@@ -188,6 +195,7 @@ func _continue_after_wait() -> void:
 func _on_node_exhausted() -> bool:
 	is_waiting_input = false
 	is_waiting_branch = false
+	current_end_name = ""
 	if not current_node.branches.is_empty():
 		var opts: Array = []
 		for b in current_node.branches:
@@ -253,6 +261,9 @@ func _on_node_exhausted() -> bool:
 	if current_node.type == FlowChartNode.Type.END:
 		is_waiting_input = false
 		is_ended = true
+		current_end_name = current_node.end_name
+		if current_end_name != "":
+			ending_reached.emit(current_end_name)
 		game_ended.emit()
 		return false
 

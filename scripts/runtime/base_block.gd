@@ -65,8 +65,8 @@ func is_unlocked_start() -> void:
 func is_debug() -> void:
 	_ctx.script_loader.is_debug()
 
-func is_end(name = null) -> void:
-	_ctx.script_loader.is_end(name)
+func is_end(end_name = null) -> void:
+	_ctx.script_loader.is_end(end_name)
 
 
 # --- graphics API (meaningful during lazy/runtime execution) -----------------
