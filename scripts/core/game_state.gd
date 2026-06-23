@@ -25,6 +25,11 @@ var is_ended: bool = false
 ## current entry's lazy code runs, redirecting the story immediately.
 var pending_jump: StringName = &""
 
+## Cache for _eval_condition results. Keyed by trimmed condition string.
+## Cleared on restore() and start_node() since variables may differ.
+var _cond_cache: Dictionary = {}
+const _COND_CACHE_MAX := 64
+
 
 func _init(ctx: Node) -> void:
 	_ctx = ctx
@@ -72,6 +77,7 @@ func restore(data: Dictionary) -> bool:
 	is_ended = false
 	is_processing = false
 	current_end_name = ""
+	_cond_cache.clear()
 	pending_jump = &""
 
 	var target: int = int(data.get("index", 0))
@@ -116,6 +122,7 @@ func start_node(name: StringName) -> void:
 	current_node = _graph.get_node_named(name)
 	current_index = -1
 	current_end_name = ""
+	_cond_cache.clear()
 	is_waiting_branch = false
 	is_waiting_input = false
 	is_ended = false
@@ -315,6 +322,10 @@ func _eval_condition(cond_expr: String) -> bool:
 	if c.is_empty():
 		return true
 
+	# Check result cache first.
+	if _cond_cache.has(c):
+		return _cond_cache[c]
+
 	var block := "return %s\n" % c
 	var script: GDScript = _ctx.runtime.compile_block(block)
 	if script == null:
@@ -324,9 +335,18 @@ func _eval_condition(cond_expr: String) -> bool:
 	var inst = script.new()
 	inst._ctx = _ctx
 	var result: Variant = inst.run()
-	if result == null:
-		return false
-	return bool(result)
+	var bool_result := false
+	if result != null:
+		bool_result = bool(result)
+
+	# Evict oldest entries if cache is full.
+	if _cond_cache.size() >= _COND_CACHE_MAX:
+		var keys := _cond_cache.keys()
+		for i in range(_COND_CACHE_MAX / 4):
+			_cond_cache.erase(keys[i])
+
+	_cond_cache[c] = bool_result
+	return bool_result
 
 
 func _goto(name: StringName) -> bool:

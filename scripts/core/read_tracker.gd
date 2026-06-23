@@ -10,9 +10,12 @@ signal gallery_unlocked(entry_type: String, entry_name: String)
 var _ctx: Node
 var _read_entries: Dictionary = {}
 var _gallery_unlocks: Dictionary = {}  # {"cg:name": true, "music:name": true}
+var _save_timer = null  # SceneTreeTimer for debounced auto-persist
+var _save_dirty := false
 
 const SAVE_PATH := "user://read_tracker.json"
 const GALLERY_KEY := "gallery_unlocks"
+const SAVE_DEBOUNCE := 2.0
 
 
 func _init(ctx: Node) -> void:
@@ -24,6 +27,7 @@ func _init(ctx: Node) -> void:
 func mark_read(node_name: StringName, index: int) -> void:
 	var key = str(node_name) + ":" + str(index)
 	_read_entries[key] = true
+	_schedule_save()
 
 
 ## Check whether a specific entry has been read.
@@ -35,29 +39,31 @@ func is_read(node_name: StringName, index: int) -> bool:
 # ── Gallery unlock tracking ──────────────────────────────────────────
 
 ## Mark a CG as unlocked in the gallery.
-func mark_cg(name: String) -> void:
-	var key := "cg:" + name
+func mark_cg(cg_name: String) -> void:
+	var key := "cg:" + cg_name
 	if not _gallery_unlocks.has(key):
 		_gallery_unlocks[key] = true
-		gallery_unlocked.emit("cg", name)
+		gallery_unlocked.emit("cg", cg_name)
+	_schedule_save()
 
 
 ## Check if a CG is unlocked.
-func is_cg_unlocked(name: String) -> bool:
-	return _gallery_unlocks.has("cg:" + name)
+func is_cg_unlocked(cg_name: String) -> bool:
+	return _gallery_unlocks.has("cg:" + cg_name)
 
 
 ## Mark a music track as unlocked in the gallery.
-func mark_music(name: String) -> void:
-	var key := "music:" + name
+func mark_music(music_name: String) -> void:
+	var key := "music:" + music_name
 	if not _gallery_unlocks.has(key):
 		_gallery_unlocks[key] = true
-		gallery_unlocked.emit("music", name)
+		gallery_unlocked.emit("music", music_name)
+	_schedule_save()
 
 
 ## Check if a music track is unlocked.
-func is_music_unlocked(name: String) -> bool:
-	return _gallery_unlocks.has("music:" + name)
+func is_music_unlocked(music_name: String) -> bool:
+	return _gallery_unlocks.has("music:" + music_name)
 
 
 # ── Persistence ──────────────────────────────────────────────────────
@@ -101,6 +107,26 @@ func _load() -> void:
 func clear() -> void:
 	_read_entries.clear()
 	_gallery_unlocks.clear()
+	_schedule_save()
+
+
+## Schedule a debounced save to disk. Multiple calls within SAVE_DEBOUNCE
+## seconds coalesce into a single write.
+func _schedule_save() -> void:
+	_save_dirty = true
+	if _save_timer != null:
+		return
+	if _ctx == null or _ctx.get_tree() == null:
+		return
+	_save_timer = _ctx.get_tree().create_timer(SAVE_DEBOUNCE)
+	_save_timer.timeout.connect(_on_save_timer)
+
+
+func _on_save_timer() -> void:
+	_save_timer = null
+	if _save_dirty:
+		_save_dirty = false
+		save_to_disk()
 
 
 ## Return a snapshot for save system integration.

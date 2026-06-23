@@ -179,6 +179,14 @@ func preload_asset(path: String) -> void:
 	_ctx.preload_system.preload_asset(path)
 
 
+func cancel_preload(path: String) -> void:
+	_ctx.preload_system.cancel_preload(path)
+
+
+func cancel_all_preloads() -> void:
+	_ctx.preload_system.cancel_all()
+
+
 # --- audio API ---------------------------------------------------------------
 
 func play_bgm(path: String, fade: float = 0.0):

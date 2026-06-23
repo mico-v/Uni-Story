@@ -84,6 +84,23 @@ func is_all_ready() -> bool:
 	return _pending.is_empty()
 
 
+## Cancel a pending preload. Removes it from the pending list and cache.
+## Note: the underlying ResourceLoader thread cannot be cancelled in Godot 4,
+## so the load may still complete in the background — but the result is discarded.
+func cancel_preload(path: String) -> void:
+	var full_path := _resolve_path(path)
+	_pending.erase(full_path)
+	_cache.erase(full_path)
+	if _pending.is_empty():
+		_polling = false
+
+
+## Cancel all pending preloads.
+func cancel_all() -> void:
+	_pending.clear()
+	_polling = false
+
+
 ## Clear the preload cache (e.g., on hot reload).
 func clear_cache() -> void:
 	_cache.clear()
