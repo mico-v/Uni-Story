@@ -4,6 +4,8 @@ class_name NovaController extends Node
 ## Creates subsystems, initializes ViewManager, and routes signals between
 ## view controllers.  All game UI logic lives in GameViewController.
 
+const GalleryCoordinatorScript := preload("res://scripts/core/gallery_coordinator.gd")
+
 @export var scenario_files: Array[String] = [
 	"res://resources/scenarios/main.txt",
 	"res://resources/scenarios/plan_demo.txt",
@@ -39,6 +41,7 @@ var dialog_system: DialogSystem
 var preload_system: PreloadSystem
 var engine_context: EngineContext
 var restorables: RestorableRegistry
+var gallery_coordinator: RefCounted
 
 # ── View management ─────────────────────────────────────────────────
 var view_manager: ViewManager
@@ -67,7 +70,7 @@ func _ready() -> void:
 	_init_view_manager()
 	_setup_game_view()
 	_connect_model_signals()
-	_load_gallery_configs()
+	_setup_gallery()
 	_apply_i18n()
 	_load_settings()
 
@@ -124,6 +127,7 @@ func _init_subsystems() -> void:
 	video_system = VideoSystem.new(self)
 	dialog_system = DialogSystem.new(self)
 	preload_system = PreloadSystem.new(self)
+	gallery_coordinator = GalleryCoordinatorScript.new(self)
 	_register_restorables()
 
 
@@ -357,74 +361,17 @@ func _on_quit() -> void:
 @export var cg_gallery_config: String = "res://resources/gallery/cg_gallery.txt"
 @export var music_gallery_config: String = "res://resources/gallery/music_gallery.txt"
 
-var _cg_entries: Array[Dictionary] = []
-var _music_entries: Array[Dictionary] = []
-
-func _load_gallery_configs() -> void:
-	if FileAccess.file_exists(cg_gallery_config):
-		_cg_entries = GalleryConfigLoader.load_cg(cg_gallery_config)
-		_apply_gallery_unlocks("cg")
-		if _cg_vc:
-			_cg_vc.set_gallery(_cg_entries)
-	if FileAccess.file_exists(music_gallery_config):
-		_music_entries = GalleryConfigLoader.load_music(music_gallery_config)
-		_apply_gallery_unlocks("music")
-		if _music_vc:
-			_music_vc.set_tracks(_music_entries)
-	# Hook auto-unlock signals.
-	if audio and not audio.bgm_started.is_connected(_on_bgm_started):
-		audio.bgm_started.connect(_on_bgm_started)
-	if read_tracker and not read_tracker.gallery_unlocked.is_connected(_on_gallery_unlocked):
-		read_tracker.gallery_unlocked.connect(_on_gallery_unlocked)
-
-
-func _apply_gallery_unlocks(entry_type: String) -> void:
-	if read_tracker == null:
+func _setup_gallery() -> void:
+	if gallery_coordinator == null:
 		return
-	var entries: Array = _cg_entries if entry_type == "cg" else _music_entries
-	for entry in entries:
-		if entry is Dictionary:
-			var entry_name := str(entry.get("name", ""))
-			if entry_type == "cg" and read_tracker.is_cg_unlocked(entry_name):
-				entry["unlocked"] = true
-			elif entry_type == "music" and read_tracker.is_music_unlocked(entry_name):
-				entry["unlocked"] = true
-
-
-func _on_bgm_started(path: String) -> void:
-	if read_tracker == null:
-		return
-	for entry in _music_entries:
-		if entry is Dictionary:
-			var entry_path := str(entry.get("path", ""))
-			if entry_path == path or entry_path.get_file() == path.get_file():
-				read_tracker.mark_music(str(entry.get("name", "")))
-				return
-
-
-func _on_gallery_unlocked(entry_type: String, entry_name: String) -> void:
-	if entry_type == "cg" and _cg_vc:
-		for entry in _cg_entries:
-			if entry is Dictionary and str(entry.get("name", "")) == entry_name:
-				entry["unlocked"] = true
-		_cg_vc.set_gallery(_cg_entries)
-	elif entry_type == "music" and _music_vc:
-		for entry in _music_entries:
-			if entry is Dictionary and str(entry.get("name", "")) == entry_name:
-				entry["unlocked"] = true
-		_music_vc.set_tracks(_music_entries)
+	gallery_coordinator.setup(_cg_vc, _music_vc, cg_gallery_config, music_gallery_config)
+	gallery_coordinator.load_configs()
 
 
 ## Called by the scenario engine when a CG is displayed in-game.
 func unlock_cg_by_path(tex_path: String) -> void:
-	if read_tracker == null:
-		return
-	for entry in _cg_entries:
-		if entry is Dictionary:
-			var entry_path := str(entry.get("texture_path", ""))
-			if entry_path == tex_path or entry_path.get_file() == tex_path.get_file():
-				read_tracker.mark_cg(str(entry.get("name", "")))
-				return
+	if gallery_coordinator:
+		gallery_coordinator.unlock_cg_by_path(tex_path)
 
 
 # ── Keyboard shortcuts (non-game views + debug) ──────────────────────

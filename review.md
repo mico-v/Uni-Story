@@ -327,3 +327,25 @@ Nova 的目标工程包含大量非运行时代码：
 - `parse_scenarios_test` 解析 3 个 scenario、33 个节点。
 - `game_state_smoke_test` 推进 5 条对白、2 个分支选项。
 - 主场景 headless 加载和 `--quit-after` 对照均不再出现失效 UID、CanvasItem/ObjectDB/resource leaked 警告。
+
+### 2026-06-24：Gallery 职责下沉与 typed facade 使用
+
+已完成：
+
+- 新增 `scripts/core/gallery_coordinator.gd`，承接 CG/BGM 鉴赏配置读取、已解锁状态套用、BGM/CG 自动解锁和视图刷新。
+- `NovaController.gd` 保留 `cg_gallery_config` / `music_gallery_config` 导出配置与 `unlock_cg_by_path()` 兼容入口，实际逻辑委托给 `GalleryCoordinator`。
+- `GalleryCoordinator` 内部通过 `EngineContext` 访问 `AudioSystem` 与 `ReadTracker`，作为后续新代码减少 `_ctx.xxx` 弱类型访问的样板。
+- `scripts/tests/main_scene_smoke_test.gd` 增加 GalleryCoordinator 装配与 CG/BGM 配置加载断言。
+
+验证：
+
+- 通过：`Godot_v4.6.3-stable_win64_console.exe --headless --path <project> --script res://scripts/tests/parse_scenarios_test.gd`
+- 通过：`Godot_v4.6.3-stable_win64_console.exe --headless --path <project> --script res://scripts/tests/game_state_smoke_test.gd`
+- 通过：`Godot_v4.6.3-stable_win64_console.exe --headless --path <project> --script res://scripts/tests/main_scene_smoke_test.gd`
+- 通过：`Godot_v4.6.3-stable_win64_console.exe --headless --path <project> --scene res://scene/game.tscn --quit-after 3`
+
+影响：
+
+- `NovaController.gd` 的 Gallery 业务代码已从约 60 行降为装配/委托逻辑。
+- 该抽取不改变现有剧本 API；`Graphics.show()` 仍可通过 `NovaController.unlock_cg_by_path()` 自动解锁 CG。
+- 下一步适合按同样方式拆 `Save/Load`、`Settings` 和标题导航 coordinator。

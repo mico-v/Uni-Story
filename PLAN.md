@@ -92,10 +92,12 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 - [x] 新增主场景生命周期 smoke test：`scripts/tests/main_scene_smoke_test.gd`，显式加载、校验并释放 `scene/game.tscn`。
 - [x] 新增 `EngineContext` typed facade 草案，作为后续减少 `_ctx` 弱类型访问的入口。
 - [x] 新增 `RestorableRegistry`，定义 `snapshot()` / `restore(data)` 的 duck-typed checkpoint 约定。
+- [x] 抽出 `GalleryCoordinator`，把 CG/BGM 鉴赏配置、自动解锁和视图刷新从 `NovaController.gd` 下沉。
+- [x] 新增代码优先使用 `EngineContext`：`GalleryCoordinator` 通过 typed facade 访问 `AudioSystem` 与 `ReadTracker`。
 - [ ] 给核心子系统补 `class_name`、明确类型、返回值和错误策略。
 - [ ] 设计 `EngineContext` 或 typed facade，减少任意 `_ctx.xxx` 弱类型访问。
 - [ ] 把可配置路径、槽位数量、预加载容量、自动存档策略迁移为 `@export` 或 `Resource` 配置。
-- [ ] 梳理 `NovaController.gd`：只保留装配、导航、全局信号路由；业务逻辑下沉到 coordinator/service。
+- [ ] 梳理 `NovaController.gd`：只保留装配、导航、全局信号路由；业务逻辑下沉到 coordinator/service。（已完成 Gallery 切片）
 - [ ] 建立统一日志/错误分级：parse error、runtime warning、save corruption、asset missing。
 - [x] 扩展最小测试入口：跑一段无 UI 的 GameState。
 
@@ -346,8 +348,9 @@ Phase 1 建议从以下任务开始：
 
 1. [x] 扩展 headless 测试：从“只解析流程图”推进到“无 UI 推进若干对白 entry”。
 2. [x] 清理主场景 headless 退出时的 UID 与渲染资源泄漏警告，确认真实残留并修复。
-3. [ ] 梳理 `NovaController.gd` 目前职责，拆出 gallery/save/settings/navigation 的 coordinator 方案。
-4. [ ] 开始把新代码的上下文访问改用 `EngineContext`，旧系统暂不强迁移。
+3. [x] 梳理 `NovaController.gd` 目前职责，先拆出 gallery coordinator 作为业务下沉样板。
+4. [x] 开始把新代码的上下文访问改用 `EngineContext`，旧系统暂不强迁移。
 5. [ ] 把 `RestorableRegistry` 接入下一版 Save/Checkpoint 设计草案。
+6. [ ] 继续拆出 save/settings/navigation coordinator，收敛 `NovaController.gd` 的导航与配置职责。
 
 完成 Phase 1 后，再进入 NovaScript 兼容层和 Checkpoint 核心，不建议先继续扩展单个 UI 或演出 API。

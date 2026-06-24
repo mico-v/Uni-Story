@@ -34,6 +34,12 @@ func _run() -> void:
 		_expect(nova.script_loader.graph.nodes.size() >= 1, "scenario graph should contain nodes")
 		_expect(nova.game_state != null and nova.game_state.current_node == null, "GameState should be initialized but not playing at title")
 		_expect(nova.view_manager != null and nova.view_manager.current() == "title", "ViewManager should enter title view")
+		_expect(nova.gallery_coordinator != null, "GalleryCoordinator should be initialized")
+		if nova.gallery_coordinator:
+			var cg_entries: Array = nova.gallery_coordinator.call("cg_entries")
+			var music_entries: Array = nova.gallery_coordinator.call("music_entries")
+			_expect(cg_entries.size() >= 1, "GalleryCoordinator should load CG entries")
+			_expect(music_entries.size() >= 1, "GalleryCoordinator should load music entries")
 		if nova.hot_reload:
 			nova.hot_reload.stop()
 
