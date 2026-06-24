@@ -9,9 +9,34 @@ const SettingsCoordinatorScript := preload("res://scripts/core/settings_coordina
 const EngineLogScript := preload("res://scripts/core/engine_log.gd")
 
 @export var scenario_files: Array[String] = [
-	"res://resources/scenarios/main.txt",
-	"res://resources/scenarios/plan_demo.txt",
-	"res://resources/scenarios/test_all.txt",
+	"res://resources/scenarios/ch1.txt",
+	"res://resources/scenarios/ch2.txt",
+	"res://resources/scenarios/ch3.txt",
+	"res://resources/scenarios/ch4.txt",
+	"res://resources/scenarios/test_anim_hold.txt",
+	"res://resources/scenarios/test_avatar.txt",
+	"res://resources/scenarios/test_box.txt",
+	"res://resources/scenarios/test_box_anim.txt",
+	"res://resources/scenarios/test_branch.txt",
+	"res://resources/scenarios/test_branch_image.txt",
+	"res://resources/scenarios/test_dialogue_length.txt",
+	"res://resources/scenarios/test_empty_node.txt",
+	"res://resources/scenarios/test_fade.txt",
+	"res://resources/scenarios/test_global_variable.txt",
+	"res://resources/scenarios/test_immediate_step.txt",
+	"res://resources/scenarios/test_input.txt",
+	"res://resources/scenarios/test_many_chara.txt",
+	"res://resources/scenarios/test_minigame.txt",
+	"res://resources/scenarios/test_transition.txt",
+	"res://resources/scenarios/test_upgrade.txt",
+	"res://resources/scenarios/test_variables.txt",
+	"res://resources/scenarios/test_video.txt",
+	"res://resources/scenarios/tut01.txt",
+	"res://resources/scenarios/tut02.txt",
+	"res://resources/scenarios/tut03.txt",
+	"res://resources/scenarios/tut04.txt",
+	"res://resources/scenarios/tut05.txt",
+	"res://resources/scenarios/tut06.txt",
 ]
 
 @export var resource_root: String = "res://resources/"

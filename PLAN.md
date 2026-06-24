@@ -105,7 +105,7 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 验收：
 
 - Godot 打开主场景无脚本错误。
-- 能用命令或工具脚本解析所有 `resources/scenarios/*.txt`。
+- 能用命令或工具脚本解析默认 Nova 剧本 `resources/scenarios/*.txt`。
 - 能在 headless 下推进最小 GameState 剧本并覆盖分支/结局。
 - 能在 headless 下保存/读取最小状态，并通过 `RestorableRegistry` 恢复扩展子系统。
 - 能在 headless 下加载并释放主场景，不留下 UID 或 ObjectDB/CanvasItem 泄漏警告。
@@ -117,22 +117,24 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 
 任务：
 
-- [ ] 支持 `l_` 局部 label：按文件名生成稳定命名空间。
-- [ ] 支持 `is_save_point()`，并先接入普通 checkpoint 标记。
-- [ ] 支持 `is_debug()`、locked/unlocked/debug start 的完整分类。
-- [ ] 支持 block attribute：如 `[stage = before_checkpoint]`、branch 默认属性。
-- [ ] 支持 lazy block stage：default、before_checkpoint、after_dialogue。
-- [ ] 支持文本插值：`{{var_name}}` 映射到变量系统。
-- [ ] 支持 `v_` / `gv_` 变量兼容层：局部变量进入当前存档，全局变量进入 global save。
-- [ ] 支持 Nova branch image tuple：`image = {"name", {x, y, scale}}` 映射为 Godot 可渲染数据。
-- [ ] 支持条件表达式兼容：字符串条件继续编译为 GDScript；函数式条件先定义兼容限制。
-- [ ] 迁移 Nova 测试剧本最小集：`test_branch.txt`、`test_variables.txt`、`test_empty_node.txt`。
+- [x] 支持 `l_` 局部 label：按文件名生成稳定命名空间。
+- [x] 支持 `is_save_point()`，并先接入普通 checkpoint 标记。
+- [x] 支持 `is_debug()`、locked/unlocked/debug start 的基础分类。
+- [x] 支持 block attribute：如 `[stage = before_checkpoint]`、branch 默认属性。
+- [x] 支持 lazy block stage：default、before_checkpoint、after_dialogue。
+- [x] 支持文本插值：`{{var_name}}` 映射到变量系统。
+- [x] 支持 `v_` / `gv_` 变量兼容层：局部变量进入当前存档，全局变量进入 global save。
+- [x] 支持 Nova branch image tuple：`image = {"name", {x, y, scale}}` 映射为 Godot 可渲染数据。
+- [x] 支持条件表达式兼容：字符串条件继续编译为 GDScript；函数式条件限定为简单 `return` 表达式。
+- [x] 迁移 Nova 测试剧本最小集：`test_branch.txt`、`test_variables.txt`、`test_empty_node.txt`。
+- [x] 完整导入 Nova 原始剧本、Lua 参考脚本和媒体资源到 `resources/`。
 
 验收：
 
-- 以上三个迁移测试剧本可以被解析并完成基本播放。
+- 以上三个迁移测试剧本可以被解析，并由 `nova_compat_smoke_test.gd` 覆盖基本播放路径。
+- 28 个导入的 Nova 原始中文剧本可以被解析并构建流程图。
 - 兼容语法和不兼容语法在 `docs/NovaScript.md` 中明确列出。
-- 解析错误能定位到文件、行号和块类型。
+- 解析错误保留块类型和 Godot 编译错误；更细的用户友好定位继续放入后续 parser/lint 工具链。
 
 ### Phase 3：Checkpoint / Bookmark 存档核心
 
@@ -322,7 +324,7 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 |-------|------|------|--------|
 | 0 | 计划锁定与基线整理 | 进行中 | P0 |
 | 1 | 架构边界与工程骨架 | 完成 | P0 |
-| 2 | NovaScript 兼容基线 | 待开始 | P0 |
+| 2 | NovaScript 兼容基线 | 完成 | P0 |
 | 3 | Checkpoint / Bookmark 存档核心 | 待开始 | P0 |
 | 4 | 章节选择、全局进度与标题体验 | 待开始 | P0 |
 | 5 | ViewManager 与 UI 产品层成熟化 | 待开始 | P1 |
@@ -355,4 +357,16 @@ Phase 1 已完成。执行记录：
 5. [x] 把 `RestorableRegistry` 接入 SaveSystem 的 restorable snapshot envelope，为下一版 Save/Checkpoint 设计预留接口。
 6. [x] 拆出 settings coordinator，并将 save/preload/gallery/settings 配置和业务边界收敛到明确子系统。
 
-下一步进入 Phase 2：NovaScript 兼容基线。优先从 `l_` 局部 label、`is_save_point()`、block attribute、文本插值、`v_` / `gv_` 变量兼容层开始。
+Phase 2 已完成。执行记录：
+
+1. [x] 增量导入 Nova 原始剧本、Lua 参考脚本和媒体资源到 `resources/`，旧 demo 资源保留。
+2. [x] 新增 `NovaScriptCompat` 翻译层，在 GDScript runtime 上兼容 Nova 常用 Lua 风格剧本语法。
+3. [x] 支持 `l_` 局部 label、`is_save_point()`、block attribute、lazy action stage、文本插值、`v_` / `gv_` 变量、branch image tuple 和简单条件表达式。
+4. [x] 放宽流程图检查：允许 Nova 合法循环；允许 debug-only 剧本没有普通 start node。
+5. [x] 新增 `NovaAnimationCompat`，兼容 Nova 原剧本常见 `anim:*` / `anim_hold:*` 链式调用。
+6. [x] 扩展 `BaseBlock` 播放兼容 API：位置常量、资源类型常量、`play()`、`sound()`、`auto_voice_*()`、对话框/头像/视频/输入/提示等入口。
+7. [x] 默认剧本入口切换到 `resources/scenarios/*.txt` 的 Nova 剧本。
+8. [x] 新增 `nova_compat_smoke_test.gd`、`nova_runtime_compile_test.gd`、`nova_ch1_playback_smoke_test.gd`，覆盖兼容转换、全量 runtime 编译和 ch1 基础播放。
+9. [x] 更新 `docs/NovaScript.md`，明确 Phase 2 支持范围和不支持完整 Lua VM 的限制。
+
+下一步进入 Phase 3：Checkpoint / Bookmark 存档核心。优先建立 `CheckpointManager`、`NodeRecord`、reached dialogue/end、bookmark metadata，并把 `is_save_point()` 从流程图标记接入真实恢复路径。

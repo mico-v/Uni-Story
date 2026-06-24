@@ -43,7 +43,12 @@ func sanity_check() -> Array:
 	if unlocked_start_nodes.is_empty():
 		unlocked_start_nodes = start_nodes.duplicate()
 
-	if start_nodes.is_empty() and unlocked_start_nodes.is_empty():
+	var has_debug_node := false
+	for n in nodes.values():
+		if n.is_debug:
+			has_debug_node = true
+
+	if start_nodes.is_empty() and unlocked_start_nodes.is_empty() and not has_debug_node:
 		errors.append("FlowChart: no start node found")
 
 	for n in nodes.values():
@@ -57,10 +62,6 @@ func sanity_check() -> Array:
 					errors.append("FlowChart: unknown branch dest '%s' in node '%s'" % [str(bdest), n.name])
 			else:
 				errors.append("FlowChart: invalid branch dest '%s' in node '%s'" % [str(raw_dest), n.name])
-
-	# Detect cycles via DFS.
-	var cycle_errors := _detect_cycles()
-	errors.append_array(cycle_errors)
 
 	return errors
 

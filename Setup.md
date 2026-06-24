@@ -31,13 +31,13 @@ scene/
 
 ## 剧本文件
 
-剧本位于 `resources/scenarios/`，使用 NovaScript 格式。`NovaController` 在启动时加载以下剧本：
+默认剧本位于 `resources/scenarios/`，使用 NovaScript 格式。`NovaController` 在启动时加载 Nova 原始剧本：
 
-- `plan_demo.txt`、`ch1.txt`、`ch2.txt` — 正式章节
-- `test_animation.txt`、`test_runtime.txt`、`test_char.txt`、`test_var.txt` — 功能自检
-- `demo_full.txt` — 综合演示
+- `ch1.txt` 到 `ch4.txt` — 示例章节
+- `tut01.txt` 到 `tut06.txt` — 教程剧本
+- `test_*.txt` — Nova 原始功能自检剧本
 
-回归测试场景（`review_regression_*.txt`）默认不加载，可在 `NovaController` 的导出属性中启用 `include_review_scenarios` / `include_review_sanity`。
+旧 demo 剧本（如 `main.txt`、`plan_demo.txt`、`test_all.txt`）仍保留在同一目录，可在测试命令中显式传入，或在 `NovaController` 的 `scenario_files` 导出属性中手动切换。
 
 ## 本地化
 

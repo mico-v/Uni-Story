@@ -9,6 +9,7 @@ class_name SpriteComposer extends RefCounted
 ## base name: characters/renna/body.png (or body_<key> if a key is given).
 
 const CHAR_ROOT := "characters/"
+const NOVA_STANDING_ROOT := "Standings/"
 
 var _ctx: Node
 var _chars: Dictionary = {}  # name -> CompositeSprite
@@ -24,7 +25,24 @@ func _world() -> Node2D:
 
 func _char_dir(char_name: String) -> String:
 	var root: String = _ctx.object_manager.constants.get("resource_root", "res://resources/")
+	var nova_dir := _nova_standing_dir(char_name)
+	if not nova_dir.is_empty():
+		return root + NOVA_STANDING_ROOT + nova_dir + "/"
 	return root + CHAR_ROOT + char_name + "/"
+
+
+func _nova_standing_dir(char_name: String) -> String:
+	match char_name.to_lower():
+		"ergong":
+			return "Ergong"
+		"gaotian":
+			return "Gaotian"
+		"qianye":
+			return "Qianye"
+		"xiben":
+			return "Xiben"
+		_:
+			return ""
 
 
 func _load_layer_texture(char_name: String, layer: String, key: Variant) -> Texture2D:

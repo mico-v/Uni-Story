@@ -80,12 +80,16 @@ func restore(data: Dictionary) -> bool:
 	for i in range(0, target + 1):
 		current_index = i
 		var entry = current_node.entries[i]
+		if entry.has_before_checkpoint():
+			_ctx.runtime.run_block(entry.before_checkpoint_source)
 		if entry.has_lazy():
 			_ctx.runtime.run_block(entry.lazy_source)
+		if entry.has_after_dialogue():
+			_ctx.runtime.run_block(entry.after_dialogue_source)
 		pending_jump = &""  # ignore mid-node jumps during replay
 
 	var e = current_node.entries[target]
-	dialogue_changed.emit(e.speaker, e.text)
+	dialogue_changed.emit(_format_text(e.speaker), _format_text(e.text))
 	dialogue_advanced.emit()
 	return true
 
@@ -122,7 +126,7 @@ func jump_to_position(node_name: String, entry_index: int) -> bool:
 	# Present the target entry directly.
 	if current_index >= 0 and current_index < current_node.entries.size():
 		var e = current_node.entries[current_index]
-		dialogue_changed.emit(e.speaker, e.text)
+		dialogue_changed.emit(_format_text(e.speaker), _format_text(e.text))
 		is_waiting_input = true
 		return true
 	return false
@@ -151,6 +155,8 @@ func _continue_after_wait() -> void:
 			continue
 
 		var entry = current_node.entries[current_index]
+		if entry.has_before_checkpoint():
+			await _ctx.runtime.run_block_async(entry.before_checkpoint_source)
 		if entry.has_lazy():
 			await _ctx.runtime.run_block_async(entry.lazy_source)
 			# A lazy block may request a runtime jump (jump_if/jump_to).
@@ -167,10 +173,12 @@ func _continue_after_wait() -> void:
 		is_waiting_input = true
 		if _ctx.read_tracker:
 			_ctx.read_tracker.mark_read(current_node.name, current_index)
-		dialogue_changed.emit(entry.speaker, entry.text)
+		dialogue_changed.emit(_format_text(entry.speaker), _format_text(entry.text))
 		if current_node.type == FlowChartNode.Type.CHAPTER:
 			chapter_started.emit()
 		dialogue_advanced.emit()
+		if entry.has_after_dialogue():
+			await _ctx.runtime.run_block_async(entry.after_dialogue_source)
 		return
 
 
@@ -200,10 +208,10 @@ func _on_node_exhausted() -> bool:
 			if _is_enable_mode(mode):
 				var item: Dictionary = {
 					"dest": dest,
-					"text": str(b.get("text", "")),
+					"text": _format_text(str(b.get("text", ""))),
 					"mode": mode,
 					"cond": cond,
-					"image": str(b.get("image", "")),
+					"image": b.get("image", ""),
 					"enabled": cond_ok,
 				}
 				opts.append(item)
@@ -214,10 +222,10 @@ func _on_node_exhausted() -> bool:
 					continue
 				var item: Dictionary = {
 					"dest": dest,
-					"text": str(b.get("text", "")),
+					"text": _format_text(str(b.get("text", ""))),
 					"mode": mode,
 					"cond": cond,
-					"image": str(b.get("image", "")),
+					"image": b.get("image", ""),
 					"enabled": true,
 				}
 				opts.append(item)
@@ -338,3 +346,9 @@ func _goto(name: StringName) -> bool:
 	current_node = _graph.get_node_named(name)
 	current_index = -1
 	return true
+
+
+func _format_text(text: String) -> String:
+	if _ctx and _ctx.script_loader and _ctx.script_loader.has_method("interpolate_text"):
+		return _ctx.script_loader.interpolate_text(text)
+	return text

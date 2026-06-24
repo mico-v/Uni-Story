@@ -106,7 +106,7 @@ func reload() -> bool:
 	# 6. Re-resolve localized paths and reload.
 	var scenario_files := _files.duplicate()
 	if _ctx.has_method("_localized_scenario_files"):
-		scenario_files = _ctx._localized_scenario_files(_ctx.SCENARIO_FILES.duplicate())
+		scenario_files = _ctx._localized_scenario_files(_ctx.scenario_files.duplicate())
 
 	_ctx.script_loader.load_all(scenario_files)
 	if not _ctx.script_loader.load_ok:

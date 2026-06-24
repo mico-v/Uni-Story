@@ -27,8 +27,8 @@ func _init(ctx: Node) -> void:
 	_ctx = ctx
 
 
-func configure(cache_size: int) -> void:
-	max_cache_size = max(1, cache_size)
+func configure(cache_limit: int) -> void:
+	max_cache_size = max(1, cache_limit)
 	_evict_if_needed()
 
 

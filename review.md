@@ -11,7 +11,7 @@
 
 `Nova/` 是一个成熟的 Unity 视觉小说框架，包含完整示例工程、脚本解析、Lua 运行时、检查点式存档/回跳、章节选择、设置、鉴赏、输入映射、UI 预制体、shader 生成与素材处理工具链。
 
-当前 Uni-Story 是 Godot 版重写工程，已经完成了核心视觉小说运行时原型，并补齐了很多常用演出 API：脚本解析、流程图、对话推进、分支、变量、基础存档、回顾、图片、立绘、头像、音频、镜头、转场、VFX、Prefab、视频、Timeline、设置、CG/音乐鉴赏、热重载等。
+当前 Uni-Story 是 Godot 版重写工程，已经完成了核心视觉小说运行时原型，并补齐了很多常用演出 API：脚本解析、流程图、对话推进、分支、变量、基础存档、回顾、图片、立绘、头像、音频、镜头、转场、VFX、Prefab、视频、Timeline、设置、CG/音乐鉴赏、热重载等。Phase 2 已经导入 Nova 原始剧本和媒体资源，并建立 GDScript-first 的 NovaScript 常用语法兼容层。
 
 两者关系不是“同一代码库的进度差”，而是“目标框架能力向 Godot 的迁移差”。当前项目在核心运行时上已具备可跑 demo 的基础，但距离 Nova 的产品级框架还有明显差距，尤其是：
 
@@ -25,11 +25,11 @@
 | 模块 | 当前完成度判断 | 说明 |
 |------|----------------|------|
 | 核心 VN 运行时 | 约 60%-70% | 可解析并播放 Godot 版脚本，基础演出 API 已覆盖较多 |
-| NovaScript 行为兼容 | 约 35%-45% | 语法块概念相近，但 Lua 语义、局部 label、action stage、变量规则等未完整对齐 |
+| NovaScript 行为兼容 | 约 55%-65% | 已支持局部 label、save point 标记、stage、`v_`/`gv_`、文本插值、branch tuple 和简单 Lua 风格条件；仍不是完整 Lua VM |
 | 存档/回跳/升级体系 | 约 25%-35% | 有 JSON 存读档和 replay，但缺 Nova 最核心的 checkpoint 历史树 |
 | UI 产品功能 | 约 45%-55% | 标题、游戏、设置、存读档、鉴赏已存在，章节/帮助/输入映射等缺失 |
-| 资源与工具链 | 约 20%-30% | 当前资源较少，缺 Nova 的素材导入、shader 生成、剧本工具和构建工具 |
-| 整体对齐 | 约 45%-55% | 已经是可继续推进的 Godot 框架骨架，但还不是 Nova 的完整替代品 |
+| 资源与工具链 | 约 30%-40% | Nova 原始资源已增量导入到 `resources/`，但仍缺资源扫描、shader 生成、立绘工具和剧本工具 |
+| 整体对齐 | 约 50%-60% | 已经完成架构骨架和 NovaScript 兼容基线，但 checkpoint、章节 UI、动画/VFX 和工具链仍是主要差距 |
 
 ---
 
@@ -43,8 +43,8 @@
 | 运行时脚本 | `Nova/Assets/Nova/Lua/*.lua`，24 个核心 Lua 文件 | `scripts/runtime/*.gd` + `scripts/runtime/base_block.gd` |
 | 核心 C#/GDScript | Nova `Core` + `Scripts` 约 233 个 C# 文件；全 Assets 约 307 个 C# 文件 | 当前 `scripts/` 下 46 个 `.gd` 文件 |
 | UI 资产 | 大量 Unity prefab：Title、Game、Config、SaveLoad、Log、Choice、Alert、Gallery 等 | 14 个 Godot `.tscn` 场景 |
-| 示例剧本 | 默认 28 个中文剧本 + 4 个英文本地化剧本 | 3 个示例/测试剧本 |
-| 资源规模 | 背景、BGM、CG、Choices、Standings、Videos、Voices、Shaders、Prefabs 等完整示例资产 | 少量 demo 图片、音乐、立绘、shader、prefab |
+| 示例剧本 | 默认 28 个中文剧本 + 4 个英文本地化剧本 | 默认加载 28 个 Nova 中文剧本；旧 demo/test 剧本保留但不作为默认入口 |
+| 资源规模 | 背景、BGM、CG、Choices、Standings、Videos、Voices、Shaders、Prefabs 等完整示例资产 | 保留当前 demo 资源，并已将 Nova `Assets/Resources` 的脚本/图片/音频/视频/JSON 增量导入 `resources/` |
 | 构建/工具 | `Tools/Scenarios`、`Tools/Standings`、`Tools/Resources`、`Tools/Build` | GitHub Actions export presets + 少量 Godot 工具脚本 |
 
 ---
@@ -56,7 +56,7 @@
 | 能力 | Nova 目标 | 当前实现 | 差异 |
 |------|-----------|----------|------|
 | 剧本块模型 | eager block / lazy block / text chunk | `NovaParser` + `ScriptLoader` 支持 eager/lazy/text | 概念已对齐，但解析严谨度和 Lua 兼容不足 |
-| 流程图 | `FlowChartGraph` / `FlowChartNode` / branch / jump / start / end | `FlowChartGraph` / `FlowChartNode` / branch / jump / start / end | 基础流程已对齐，缺 save point、局部 label 规则、章节解锁完整逻辑 |
+| 流程图 | `FlowChartGraph` / `FlowChartNode` / branch / jump / start / end | `FlowChartGraph` / `FlowChartNode` / branch / jump / start / end | Phase 2 已补 save point 标记和局部 label；章节解锁完整 UI 仍待 Phase 4 |
 | 对话推进 | `GameState.Step()` + dialogue events | `GameState.advance()` + signals | 基础推进可用，缺 Nova 历史树和精确回跳语义 |
 | 分支 | normal / jump / show / enable | normal / jump / show / enable | 模式已覆盖，条件表达式语言不同 |
 | 基础演出 API | show/hide/move/tint、音频、镜头、转场 | `BaseBlock` 暴露对应方法 | 常用 API 已覆盖，但参数兼容和资源解析规则不同 |
@@ -70,7 +70,7 @@
 |------|---------------|----------|----------|
 | 存档恢复 | `CheckpointManager` 保存 node record、checkpoint、reached data、bookmark、global save | `SaveSystem` 保存 JSON snapshot，`GameState.restore()` replay lazy block | 缺历史树、存档截图、全局进度、脚本升级、备份恢复、bookmark metadata |
 | 回顾/回跳 | 基于 reached dialogue 与 checkpoint 精确回跳 | `Backlog` 保存文本，支持跳回指定 entry | 当前跳回直接展示目标行，未完整重建前置 checkpoint 历史 |
-| 变量系统 | Lua 中 `v_` / `gv_` 自动映射局部/全局变量 | `Variables` 显式 `set_var/get_var/add_var` | 缺 Lua 风格自动变量、全局变量持久化、变量 hash 驱动的 node record 复用 |
+| 变量系统 | Lua 中 `v_` / `gv_` 自动映射局部/全局变量 | `Variables` 支持普通变量、临时变量、`v_` 存档变量和 `gv_` 全局变量 | Phase 2 已补自动变量兼容；仍缺变量 hash 驱动的 node record 复用 |
 | I18n | 同一节点维护多语言 display/dialogue/branch text，本地化资源路径 | UI JSON + 本地化剧本路径替换 | 缺按节点合并多语言 dialogue entries、localized branch text 校验 |
 | 预加载 | Lua `add_preload_pattern` 自动分析剧本资源 | `PreloadSystem.preload_asset()` 手动 API | 缺自动预处理、资源类型识别、unpreload/need_preload 语义 |
 | 动画 | `NovaAnimation` 支持 per-dialogue/holding/UI/text 四类、Then/And、pause/resume/stop/group | `AnimationChain` 基于 Godot Tween，链内顺序、跨语句并行 | 缺 holding animation、动画组、暂停恢复、丰富 property 类型和 easing 体系 |
@@ -90,7 +90,7 @@
 | before_checkpoint / after_dialogue stage | `[stage = before_checkpoint]`、`DialogueActionStage` | 当前 lazy block 只有单一执行阶段 |
 | 中断/小游戏协议 | `minigame.lua`、`StartInterrupt/StopInterrupt`、fence | 当前只支持加载 prefab，没有中断恢复协议 |
 | 输入映射界面 | `UI/InputMapping/*` | 当前设置界面有快捷键能力雏形，但没有完整输入录制界面 |
-| 自动语音 | `AutoVoice.cs`、`auto_voice.lua` | 当前只有显式 `play_voice()` |
+| 自动语音 | `AutoVoice.cs`、`auto_voice.lua` | 已补 `auto_voice_on/off` 兼容桩，真实自动语音调度仍待后续实现 |
 | 立绘裁剪/PSD 工具 | `Tools/Standings/*`、`SpriteCropping/*` | 当前没有对应工具链 |
 | 剧本工具 | `Tools/Scenarios/lint.py`、`visualize.py`、`show_branches.py` 等 | 当前没有完整 NovaScript lint/可视化/统计工具 |
 | shader 生成工具 | `Tools/Resources/generate_shaders.py` | 当前 shader 手写，数量少 |
@@ -212,10 +212,10 @@ Nova 的目标工程包含大量非运行时代码：
 | `Core/Restoration/CheckpointManager.cs` | `scripts/core/save_system.gd`、`scripts/core/read_tracker.gd` | 主要缺口 |
 | `Core/ScriptParsing/ScriptLoader.cs` | `scripts/core/script_loader.gd` | 部分对齐 |
 | `Core/ScriptParsing/Parser/*` | `scripts/core/nova_parser.gd` | 当前 parser 更轻量 |
-| `Nova/Lua/script_loader.lua` | `scripts/runtime/base_block.gd` + `script_loader.gd` | API 名称部分对齐，语义不同 |
-| `Nova/Lua/built_in.lua` | 无直接对应 | 缺 `v_` / `gv_` / `__Nova` 等 Lua 环境语义 |
+| `Nova/Lua/script_loader.lua` | `scripts/runtime/base_block.gd` + `script_loader.gd` + `scripts/core/nova_script_compat.gd` | API 名称部分对齐，Phase 2 已补常用 NovaScript 翻译和基础播放兼容 |
+| `Nova/Lua/built_in.lua` | `scripts/core/nova_script_compat.gd` + `scripts/core/variables.gd` | 已补 `v_` / `gv_` 基线，`__Nova` 和 Lua 环境语义仍不完整 |
 | `Nova/Lua/graphics.lua` | `scripts/runtime/graphics.gd` | 基础 show/hide/move/tint 对齐，参数/自动 fade/解锁规则不同 |
-| `Nova/Lua/animation*.lua` + `Core/Animation/*` | `scripts/runtime/animation_system.gd`、`animation_chain.gd` | 当前为简化版 |
+| `Nova/Lua/animation*.lua` + `Core/Animation/*` | `scripts/runtime/animation_system.gd`、`animation_chain.gd`、`scripts/runtime/nova_animation_compat.gd` | 已有轻量 `anim`/`anim_hold` 兼容代理；完整 NovaAnimation parity 待 Phase 6 |
 | `Nova/Lua/transition.lua`、`shader_info.lua`、`Core/VFX/*` | `scripts/runtime/transition_system.gd`、`vfx_system.gd` | 当前 shader/VFX 规模明显不足 |
 | `Scripts/Controllers/*` | `scripts/runtime/*` | 功能被拆成 Godot 子系统，部分覆盖 |
 | `Scripts/UI/Views/*` | `scripts/ui/*` + `scene/view/*` | 部分覆盖，缺多个视图 |
@@ -223,6 +223,7 @@ Nova 的目标工程包含大量非运行时代码：
 | `Tools/Scenarios/*` | 无 | 缺剧本工具链 |
 | `Tools/Standings/*` | 无 | 缺立绘生产工具链 |
 | `Tools/Resources/*` | `scripts/editor/generate_theme.gd` 等少量脚本 | 资源生成能力不足 |
+| `Nova/Assets/Resources/*` | `resources/` | Phase 2 已增量导入脚本、图片、音频、视频和 JSON 资源 |
 
 ---
 
@@ -230,7 +231,7 @@ Nova 的目标工程包含大量非运行时代码：
 
 ### P0：先对齐 Nova 的核心卖点
 
-1. 明确兼容目标：决定当前脚本语言是“Godot 方言”还是“NovaScript 兼容实现”。如果要以 `Nova/` 为开发目标，应补齐常用 NovaScript 语义：`l_` 局部 label、`v_` / `gv_` 变量、`is_save_point()`、`only_included_scenario_names`、`branch.image` 的 tuple 格式、`cond` function/string、文本插值、block attribute。
+1. NovaScript 兼容基线已完成：已补 `l_` 局部 label、`v_` / `gv_` 变量、`is_save_point()`、`branch.image` tuple、`cond` function/string 子集、文本插值和 block attribute。后续需要继续补完整 Lua runtime API、`only_included_scenario_names`、资源路径规则和工具链 lint。
 2. 重做存档核心：引入 checkpoint、node record、reached dialogue、reached end、bookmark metadata、全局存档、存档截图。
 3. 实现章节选择：支持多 start node、locked/unlocked/debug start、按 reached history 解锁章节。
 4. 把回顾跳转改成 checkpoint restore + replay，而不是直接定位 entry。
@@ -271,7 +272,7 @@ Nova 的目标工程包含大量非运行时代码：
 
 | 里程碑 | 目标 | 完成判据 |
 |--------|------|----------|
-| M1 NovaScript 兼容基线 | 补齐局部 label、变量前缀、is_save_point、block stage、文本插值、branch 兼容 | 能跑通从 Nova 迁移来的 `test_branch.txt`、`test_variables.txt`、`test_empty_node.txt` |
+| M1 NovaScript 兼容基线 | 已完成局部 label、变量前缀、is_save_point、block stage、文本插值、branch 兼容和 Nova 资源导入 | 已通过 `test_branch.txt`、`test_variables.txt`、`test_empty_node.txt` 解析与 `nova_compat_smoke_test.gd` |
 | M2 Checkpoint 存档骨架 | 引入 node record + checkpoint + reached dialogue | 能从任意已读对白回跳并正确重建视觉状态 |
 | M3 章节选择与解锁 | 实现 ChapterSelectView 和 start node 解锁 | 多章节脚本可按已读进度解锁 |
 | M4 动画/VFX parity 第一轮 | 扩展动画组和 shader registry | 能跑通 `test_anim_hold.txt`、`test_transition.txt` 的 Godot 等价测试 |
@@ -295,7 +296,7 @@ Nova 的目标工程包含大量非运行时代码：
 
 - 新增 `EngineContext` typed facade 草案，保留现有 `_ctx` 兼容路径，为后续逐步减少弱类型访问做入口。
 - 新增 `RestorableRegistry`，用 duck typing 约定 `snapshot()` / `restore(data)`，并在 `NovaController` 中注册现有可恢复子系统。
-- 新增 `scripts/tests/parse_scenarios_test.gd`，可用 Godot headless 解析 `resources/scenarios/*.txt` 并构建流程图。
+- 新增 `scripts/tests/parse_scenarios_test.gd`，可用 Godot headless 解析默认 Nova 剧本 `resources/scenarios/*.txt` 并构建流程图。
 - `GDRuntime` 增加 `had_error` / `last_error` / `clear_errors()`，`ScriptLoader` 在 eager block 编译失败时会把 `load_ok` 标为 false。
 
 验证：
@@ -358,7 +359,7 @@ Nova 的目标工程包含大量非运行时代码：
 - 新增 `scripts/core/settings_coordinator.gd`，把设置读取、保存、应用和语言刷新从 `NovaController.gd` 下沉。
 - `NovaController.gd` 新增 `@export` 配置：存档目录、槽位数量、自动存档槽、自动存档开关、设置路径、预加载缓存容量、图库配置路径。
 - `SaveSystem` 支持 `configure()`，槽位数量、存档目录、自动存档策略不再写死；保存数据新增 `restorables` envelope，通过 `RestorableRegistry` 快照/恢复扩展子系统，同时保留旧 `state` 字段兼容。
-- `PreloadSystem` 支持 `configure(cache_size)`，LRU 容量可由组合根注入。
+- `PreloadSystem` 支持 `configure(cache_limit)`，LRU 容量可由组合根注入。
 - `EngineContext` 补充 `restorables`、`gallery_coordinator`、`settings_coordinator` getter，新增代码可以继续走 typed facade。
 - 新增 `scripts/tests/save_system_smoke_test.gd`，覆盖可配置槽位、禁用自动存档、手动存档、`GameState` 恢复和额外 restorable 恢复。
 - `scripts/tests/main_scene_smoke_test.gd` 扩展断言：Settings/Gallery coordinator 装配、SaveSystem 槽位配置、PreloadSystem 缓存配置。
@@ -376,4 +377,46 @@ Phase 1 结论：
 
 - 架构边界已从“单控制器集中业务”推进为“组合根 + typed facade + coordinator/service + restorable registry”的骨架。
 - 当前自动测试覆盖解析、无 UI 推进、存读档/restorable、主场景生命周期四条基础路径。
-- Phase 1 可以关闭；下一步应进入 Phase 2 NovaScript 兼容基线，而不是继续扩展单点 UI 或演出 API。
+- Phase 1 可以关闭；Phase 2 已在后续记录中完成，下一步应进入 checkpoint/bookmark，而不是继续扩展单点 UI 或演出 API。
+
+---
+
+## 十一、Phase 2 实施记录
+
+### 2026-06-24：NovaScript 兼容基线与 Nova 资源导入
+
+已完成：
+
+- 将 Nova 原始资源增量导入 `resources/`，包括 28 个中文 scenario、24 个 Lua 参考脚本和 170 个媒体/JSON 资源；旧 demo 资源保留。
+- 新增 `scripts/core/nova_script_compat.gd`，在 GDScript runtime 前增加 Nova 常用 Lua 风格语法翻译层。
+- 新增 `scripts/runtime/nova_animation_compat.gd`，为 Nova 上游剧本常见的 `anim:*` / `anim_hold:*` 链式调用提供轻量兼容代理。
+- `ScriptLoader` 按文件名建立 namespace，支持 `l_` 局部 label、`label 'x'`、`jump_to 'x'`、`is_end 'x'`、`branch { ... }`、branch 默认属性、branch image tuple。
+- `NovaParser` 支持 Nova 上游 `[stage = before_checkpoint]<| ... |>` 属性块写法。
+- `DialogueEntry` 与 `GameState` 支持 `before_checkpoint`、`default`、`after_dialogue` 三段 lazy action，并在对白显示前后执行。
+- `Variables` 支持普通变量、临时变量、`v_` 存档变量和 `gv_` 全局变量；`BaseBlock` 增加 Nova 变量读写 helper。
+- `BaseBlock` 补齐 Nova 原剧本基础播放所需的常量与 API：`pos_c/pos_l/pos_r`、`bg/fg/cg/bgm/bgs/voice`、`play()`、`sound()`、`auto_voice_*()`、`set_box()` 多参数兼容、头像/视频/输入/文本/提示等兼容入口。
+- `SpriteComposer` 支持直接读取 `resources/Standings/<Ergong|Gaotian|Qianye|Xiben>/`，`show("ergong"...)` 等 Nova 角色名可映射到 Godot 组合立绘。
+- `GameState` 对 speaker、正文、branch text 做 `{{var_name}}` 文本插值。
+- `FlowChartGraph` 不再把 Nova 合法循环视为错误，并允许 debug-only 剧本没有普通 start node。
+- 新增 `scripts/tests/nova_compat_smoke_test.gd`，覆盖局部 label、`is_save_point()`、branch image tuple、`v_`/`gv_`、临时变量插值和 stage 执行。
+- 更新 `docs/NovaScript.md`，明确 Phase 2 支持范围、不支持完整 Lua VM 的边界和迁移示例。
+
+验证：
+
+- 通过：原有项目剧本解析，`ParseScenariosTest: OK, nodes=33`。
+- 通过：`game_state_smoke_test.gd`，`GameStateSmokeTest: OK, dialogues=5, branches=2`。
+- 通过：`save_system_smoke_test.gd`，`SaveSystemSmokeTest: OK, slot_count=3`。
+- 通过：`main_scene_smoke_test.gd`，`MainSceneSmokeTest: OK`。
+- 通过：Nova Phase 2 三个目标剧本解析：`test_branch.txt`、`test_variables.txt`、`test_empty_node.txt`，`ParseScenariosTest: OK, nodes=16`。
+- 通过：28 个导入 Nova scenario 全量解析，`ParseScenariosTest: OK, nodes=53`。
+- 通过：28 个导入 Nova scenario 的 runtime block 与 branch condition 全量编译，`NovaRuntimeCompileTest: OK, nodes=53`。
+- 通过：`nova_compat_smoke_test.gd`，`NovaCompatSmokeTest: OK, nodes=21`。
+- 通过：Nova 原剧本 `ch1` 基础播放冒烟，`NovaCh1PlaybackSmokeTest: OK`。
+- 通过：主场景 headless 启动退出，`--scene res://scene/game.tscn --quit-after 3` 无错误。
+- 通过：`git diff --check`。
+
+Phase 2 结论：
+
+- NovaScript 兼容基线已经可作为后续迁移入口：全量导入的 Nova 原始 scenario 能解析，核心兼容语义有 smoke test 覆盖。
+- 该实现仍是 GDScript-first 翻译层，不是完整 Lua runtime。复杂 Lua API、工具链 lint、资源引用扫描、真实 checkpoint/bookmark 恢复仍需后续 Phase 完成。
+- 下一阶段应进入 Phase 3：把 `is_save_point()`、lazy stage 和变量快照接入 `CheckpointManager`、`NodeRecord`、reached dialogue/end 与 bookmark metadata。

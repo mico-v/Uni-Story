@@ -4,7 +4,7 @@ extends SceneTree
 ##
 ## Usage:
 ##   godot --headless --path . --script res://scripts/tests/parse_scenarios_test.gd
-##   godot --headless --path . --script res://scripts/tests/parse_scenarios_test.gd -- res://resources/scenarios/main.txt
+##   godot --headless --path . --script res://scripts/tests/parse_scenarios_test.gd -- res://resources/scenarios/ch1.txt
 
 
 class TestContext:
@@ -40,7 +40,7 @@ func _init() -> void:
 
 	var files := _scenario_files_from_args()
 	if files.is_empty():
-		files = _collect_scenario_files("res://resources/scenarios")
+		files = _default_scenario_files()
 
 	if files.is_empty():
 		push_error("ParseScenariosTest: no scenario files found")
@@ -72,6 +72,16 @@ func _scenario_files_from_args() -> Array[String]:
 		var path := str(arg).strip_edges()
 		if path.ends_with(".txt"):
 			files.append(path)
+	files.sort()
+	return files
+
+
+func _default_scenario_files() -> Array[String]:
+	var nova := NovaController.new()
+	var files: Array[String] = []
+	for path in nova.scenario_files:
+		files.append(path)
+	nova.free()
 	files.sort()
 	return files
 

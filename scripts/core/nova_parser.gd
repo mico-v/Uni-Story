@@ -69,14 +69,27 @@ static func _parse_block_open(line: String) -> Dictionary:
 		out["open_token"] = "<|"
 		return out
 
+	var attr_offset := 2
 	if not line.begins_with("@["):
+		if not line.begins_with("["):
+			return out
+		attr_offset = 1
+
+	if attr_offset == 2:
+		pass
+	else:
+		# Nova upstream uses `[stage = before_checkpoint]<| ... |>` for
+		# attributed lazy blocks, without the leading `@`.
+		pass
+
+	if not line.begins_with("@[") and not line.begins_with("["):
 		return out
 
 	var close_idx := line.find("]")
 	if close_idx == -1:
 		return out
 
-	var attrs := _parse_attrs(line.substr(2, close_idx - 2))
+	var attrs := _parse_attrs(line.substr(attr_offset, close_idx - attr_offset))
 	var rest := line.substr(close_idx + 1).strip_edges()
 	if rest.begins_with("@<|"):
 		out["type"] = "eager"
