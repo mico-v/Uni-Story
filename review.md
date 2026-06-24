@@ -349,3 +349,31 @@ Nova 的目标工程包含大量非运行时代码：
 - `NovaController.gd` 的 Gallery 业务代码已从约 60 行降为装配/委托逻辑。
 - 该抽取不改变现有剧本 API；`Graphics.show()` 仍可通过 `NovaController.unlock_cg_by_path()` 自动解锁 CG。
 - 下一步适合按同样方式拆 `Save/Load`、`Settings` 和标题导航 coordinator。
+
+### 2026-06-24：Phase 1 收尾与验收
+
+已完成：
+
+- 新增 `scripts/core/engine_log.gd`，定义 parse/runtime/save/asset/config/restore/ui 分类，关键路径已接入：`ScriptLoader`、`GDRuntime`、`SaveSystem`、`PreloadSystem`、`NovaController`。
+- 新增 `scripts/core/settings_coordinator.gd`，把设置读取、保存、应用和语言刷新从 `NovaController.gd` 下沉。
+- `NovaController.gd` 新增 `@export` 配置：存档目录、槽位数量、自动存档槽、自动存档开关、设置路径、预加载缓存容量、图库配置路径。
+- `SaveSystem` 支持 `configure()`，槽位数量、存档目录、自动存档策略不再写死；保存数据新增 `restorables` envelope，通过 `RestorableRegistry` 快照/恢复扩展子系统，同时保留旧 `state` 字段兼容。
+- `PreloadSystem` 支持 `configure(cache_size)`，LRU 容量可由组合根注入。
+- `EngineContext` 补充 `restorables`、`gallery_coordinator`、`settings_coordinator` getter，新增代码可以继续走 typed facade。
+- 新增 `scripts/tests/save_system_smoke_test.gd`，覆盖可配置槽位、禁用自动存档、手动存档、`GameState` 恢复和额外 restorable 恢复。
+- `scripts/tests/main_scene_smoke_test.gd` 扩展断言：Settings/Gallery coordinator 装配、SaveSystem 槽位配置、PreloadSystem 缓存配置。
+
+验证：
+
+- 通过：`Godot_v4.6.3-stable_win64_console.exe --headless --path <project> --script res://scripts/tests/parse_scenarios_test.gd`
+- 通过：`Godot_v4.6.3-stable_win64_console.exe --headless --path <project> --script res://scripts/tests/game_state_smoke_test.gd`
+- 通过：`Godot_v4.6.3-stable_win64_console.exe --headless --path <project> --script res://scripts/tests/save_system_smoke_test.gd`
+- 通过：`Godot_v4.6.3-stable_win64_console.exe --headless --path <project> --script res://scripts/tests/main_scene_smoke_test.gd`
+- 通过：`Godot_v4.6.3-stable_win64_console.exe --headless --path <project> --scene res://scene/game.tscn --quit-after 3`
+- 通过：`git diff --check`
+
+Phase 1 结论：
+
+- 架构边界已从“单控制器集中业务”推进为“组合根 + typed facade + coordinator/service + restorable registry”的骨架。
+- 当前自动测试覆盖解析、无 UI 推进、存读档/restorable、主场景生命周期四条基础路径。
+- Phase 1 可以关闭；下一步应进入 Phase 2 NovaScript 兼容基线，而不是继续扩展单点 UI 或演出 API。

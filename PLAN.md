@@ -94,11 +94,12 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 - [x] 新增 `RestorableRegistry`，定义 `snapshot()` / `restore(data)` 的 duck-typed checkpoint 约定。
 - [x] 抽出 `GalleryCoordinator`，把 CG/BGM 鉴赏配置、自动解锁和视图刷新从 `NovaController.gd` 下沉。
 - [x] 新增代码优先使用 `EngineContext`：`GalleryCoordinator` 通过 typed facade 访问 `AudioSystem` 与 `ReadTracker`。
-- [ ] 给核心子系统补 `class_name`、明确类型、返回值和错误策略。
-- [ ] 设计 `EngineContext` 或 typed facade，减少任意 `_ctx.xxx` 弱类型访问。
-- [ ] 把可配置路径、槽位数量、预加载容量、自动存档策略迁移为 `@export` 或 `Resource` 配置。
-- [ ] 梳理 `NovaController.gd`：只保留装配、导航、全局信号路由；业务逻辑下沉到 coordinator/service。（已完成 Gallery 切片）
-- [ ] 建立统一日志/错误分级：parse error、runtime warning、save corruption、asset missing。
+- [x] 新增 headless SaveSystem smoke test：`scripts/tests/save_system_smoke_test.gd`，覆盖可配置槽位、禁用自动存档、`RestorableRegistry` 快照与恢复。
+- [x] 给核心子系统补 `class_name`、明确类型、返回值和错误策略。
+- [x] 设计 `EngineContext` typed facade，减少新增代码的 `_ctx.xxx` 弱类型访问。
+- [x] 把可配置路径、槽位数量、预加载容量、自动存档策略迁移为 `@export` 配置并传入子系统。
+- [x] 梳理 `NovaController.gd`：保留装配、导航、全局信号路由；Gallery/Settings 业务逻辑下沉到 coordinator/service。
+- [x] 建立统一日志/错误分级：parse error、runtime warning、save corruption、asset missing。
 - [x] 扩展最小测试入口：跑一段无 UI 的 GameState。
 
 验收：
@@ -106,6 +107,7 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 - Godot 打开主场景无脚本错误。
 - 能用命令或工具脚本解析所有 `resources/scenarios/*.txt`。
 - 能在 headless 下推进最小 GameState 剧本并覆盖分支/结局。
+- 能在 headless 下保存/读取最小状态，并通过 `RestorableRegistry` 恢复扩展子系统。
 - 能在 headless 下加载并释放主场景，不留下 UID 或 ObjectDB/CanvasItem 泄漏警告。
 - `NovaController.gd` 的职责说明写清楚，新增逻辑优先进入子系统。
 
@@ -319,7 +321,7 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 | Phase | 名称 | 状态 | 优先级 |
 |-------|------|------|--------|
 | 0 | 计划锁定与基线整理 | 进行中 | P0 |
-| 1 | 架构边界与工程骨架 | 进行中 | P0 |
+| 1 | 架构边界与工程骨架 | 完成 | P0 |
 | 2 | NovaScript 兼容基线 | 待开始 | P0 |
 | 3 | Checkpoint / Bookmark 存档核心 | 待开始 | P0 |
 | 4 | 章节选择、全局进度与标题体验 | 待开始 | P0 |
@@ -344,13 +346,13 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 
 ## 八、下一步具体任务
 
-Phase 1 建议从以下任务开始：
+Phase 1 已完成。执行记录：
 
 1. [x] 扩展 headless 测试：从“只解析流程图”推进到“无 UI 推进若干对白 entry”。
 2. [x] 清理主场景 headless 退出时的 UID 与渲染资源泄漏警告，确认真实残留并修复。
 3. [x] 梳理 `NovaController.gd` 目前职责，先拆出 gallery coordinator 作为业务下沉样板。
 4. [x] 开始把新代码的上下文访问改用 `EngineContext`，旧系统暂不强迁移。
-5. [ ] 把 `RestorableRegistry` 接入下一版 Save/Checkpoint 设计草案。
-6. [ ] 继续拆出 save/settings/navigation coordinator，收敛 `NovaController.gd` 的导航与配置职责。
+5. [x] 把 `RestorableRegistry` 接入 SaveSystem 的 restorable snapshot envelope，为下一版 Save/Checkpoint 设计预留接口。
+6. [x] 拆出 settings coordinator，并将 save/preload/gallery/settings 配置和业务边界收敛到明确子系统。
 
-完成 Phase 1 后，再进入 NovaScript 兼容层和 Checkpoint 核心，不建议先继续扩展单个 UI 或演出 API。
+下一步进入 Phase 2：NovaScript 兼容基线。优先从 `l_` 局部 label、`is_save_point()`、block attribute、文本插值、`v_` / `gv_` 变量兼容层开始。

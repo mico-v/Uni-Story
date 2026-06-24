@@ -109,9 +109,21 @@ var preload_system: PreloadSystem:
 	get:
 		return _owner.preload_system if _owner else null
 
+var restorables: RestorableRegistry:
+	get:
+		return _owner.restorables if _owner else null
+
 var view_manager: ViewManager:
 	get:
 		return _owner.view_manager if _owner else null
+
+var gallery_coordinator: RefCounted:
+	get:
+		return _owner.gallery_coordinator if _owner else null
+
+var settings_coordinator: RefCounted:
+	get:
+		return _owner.settings_coordinator if _owner else null
 
 
 func validate_core() -> Array[String]:
@@ -124,6 +136,7 @@ func validate_core() -> Array[String]:
 		"variables",
 		"i18n",
 		"save_system",
+		"restorables",
 	]:
 		if _owner == null or _owner.get(name) == null:
 			errors.append("EngineContext: missing required subsystem '%s'" % name)

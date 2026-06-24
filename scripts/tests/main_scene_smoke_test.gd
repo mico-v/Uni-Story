@@ -34,6 +34,9 @@ func _run() -> void:
 		_expect(nova.script_loader.graph.nodes.size() >= 1, "scenario graph should contain nodes")
 		_expect(nova.game_state != null and nova.game_state.current_node == null, "GameState should be initialized but not playing at title")
 		_expect(nova.view_manager != null and nova.view_manager.current() == "title", "ViewManager should enter title view")
+		_expect(nova.settings_coordinator != null, "SettingsCoordinator should be initialized")
+		_expect(nova.save_system != null and nova.save_system.slot_count == nova.save_slot_count, "SaveSystem should receive exported slot count")
+		_expect(nova.preload_system != null and nova.preload_system.max_cache_size == nova.preload_cache_size, "PreloadSystem should receive exported cache size")
 		_expect(nova.gallery_coordinator != null, "GalleryCoordinator should be initialized")
 		if nova.gallery_coordinator:
 			var cg_entries: Array = nova.gallery_coordinator.call("cg_entries")

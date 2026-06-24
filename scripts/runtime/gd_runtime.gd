@@ -10,6 +10,7 @@ class_name GDRuntime extends RefCounted
 ## etc. are all handled natively by the GDScript compiler.
 
 const BASE_BLOCK_PATH := "res://scripts/runtime/base_block.gd"
+const EngineLogScript := preload("res://scripts/core/engine_log.gd")
 const ASYNC_TIMEOUT := 30.0
 
 var _ctx: Node
@@ -48,7 +49,7 @@ func compile_block(source: String) -> GDScript:
 	if err != OK:
 		had_error = true
 		last_error = "GDRuntime: failed to compile block (err %d):\n%s" % [err, wrapped]
-		push_error(last_error)
+		EngineLogScript.error(EngineLogScript.Category.RUNTIME, "GDRuntime", last_error)
 		return null
 
 	_cache[key] = script
@@ -72,7 +73,7 @@ func run_block_async(source: String):
 	# Safety valve: if a previous async is stuck, force-clear the guard
 	# so the story can continue rather than deadlocking.
 	if _running_async:
-		push_warning("GDRuntime: previous async still running, forcing continue")
+		EngineLogScript.warn(EngineLogScript.Category.RUNTIME, "GDRuntime", "previous async still running, forcing continue")
 	_running_async = true
 
 	var script := compile_block(source)
@@ -91,7 +92,7 @@ func run_block_async(source: String):
 				state["timed_out"] = true
 				had_error = true
 				last_error = "GDRuntime: async block timed out after %ds:\n%s" % [ASYNC_TIMEOUT, source]
-				push_error(last_error)
+				EngineLogScript.error(EngineLogScript.Category.RUNTIME, "GDRuntime", last_error)
 		)
 		await _await_possible_async_result(result)
 		if not state["timed_out"]:

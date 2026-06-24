@@ -8,6 +8,8 @@ class_name ScriptLoader extends RefCounted
 ##   - text + lazy block: accumulated into DialogueEntry objects on the current
 ##     node. Lazy source is stored (not run) — it runs later, during play.
 
+const EngineLogScript := preload("res://scripts/core/engine_log.gd")
+
 var graph: FlowChartGraph
 
 var _ctx: Node
@@ -29,7 +31,7 @@ func load_all(file_paths: Array) -> void:
 	_runtime = _ctx.runtime
 	for path in file_paths:
 		if not FileAccess.file_exists(path):
-			push_warning("ScriptLoader: missing scenario %s" % path)
+			EngineLogScript.warn(EngineLogScript.Category.PARSE, "ScriptLoader", "missing scenario %s" % path)
 			load_ok = false
 			continue
 		_current_node = null
@@ -39,7 +41,7 @@ func load_all(file_paths: Array) -> void:
 	var errors := graph.sanity_check()
 	if not errors.is_empty():
 		for e in errors:
-			push_error(str(e))
+			EngineLogScript.error(EngineLogScript.Category.PARSE, "ScriptLoader", str(e))
 		load_ok = false
 
 
@@ -70,7 +72,7 @@ func _parse_file(source: String) -> void:
 
 func _append_text(line: String) -> void:
 	if _current_node == null:
-		push_warning("ScriptLoader: dialogue text before any label(): '%s'" % line)
+		EngineLogScript.warn(EngineLogScript.Category.PARSE, "ScriptLoader", "dialogue text before any label(): '%s'" % line)
 		return
 	var entry := DialogueEntry.new()
 	entry.lazy_source = _pending_lazy

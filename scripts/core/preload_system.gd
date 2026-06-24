@@ -13,16 +13,23 @@ class_name PreloadSystem extends RefCounted
 ##
 ## Preloaded resources are cached and returned by the regular load() path.
 
+const EngineLogScript := preload("res://scripts/core/engine_log.gd")
+
 var _ctx: Node
 var _cache: Dictionary = {}        # path -> Resource
 var _pending: Array = []           # paths currently loading
 var _polling := false
 var _lru_order: Array[String] = []   # LRU order tracking
-const MAX_CACHE_SIZE := 128
+var max_cache_size := 128
 
 
 func _init(ctx: Node) -> void:
 	_ctx = ctx
+
+
+func configure(cache_size: int) -> void:
+	max_cache_size = max(1, cache_size)
+	_evict_if_needed()
 
 
 ## Request an asset to be preloaded in the background.
@@ -32,7 +39,7 @@ func preload_asset(path: String) -> void:
 	if _cache.has(full_path):
 		return  # already cached
 	if not ResourceLoader.exists(full_path):
-		push_warning("PreloadSystem: asset not found '%s'" % full_path)
+		EngineLogScript.warn(EngineLogScript.Category.ASSET, "PreloadSystem", "asset not found '%s'" % full_path)
 		return
 	# Start threaded load.
 	ResourceLoader.load_threaded_request(full_path, "", true)
@@ -159,7 +166,7 @@ func _poll() -> void:
 					_touch(p)
 					_evict_if_needed()
 			ResourceLoader.THREAD_LOAD_FAILED, ResourceLoader.THREAD_LOAD_INVALID_RESOURCE:
-				push_warning("PreloadSystem: failed to load '%s'" % p)
+				EngineLogScript.warn(EngineLogScript.Category.ASSET, "PreloadSystem", "failed to load '%s'" % p)
 			_:
 				still_pending.append(p)
 	_pending = still_pending
@@ -178,7 +185,7 @@ func _touch(path: String) -> void:
 
 
 func _evict_if_needed() -> void:
-	while _lru_order.size() > MAX_CACHE_SIZE:
+	while _lru_order.size() > max_cache_size:
 		var oldest := _lru_order[0]
 		_lru_order.remove_at(0)
 		_cache.erase(oldest)

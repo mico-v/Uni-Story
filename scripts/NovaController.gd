@@ -5,6 +5,8 @@ class_name NovaController extends Node
 ## view controllers.  All game UI logic lives in GameViewController.
 
 const GalleryCoordinatorScript := preload("res://scripts/core/gallery_coordinator.gd")
+const SettingsCoordinatorScript := preload("res://scripts/core/settings_coordinator.gd")
+const EngineLogScript := preload("res://scripts/core/engine_log.gd")
 
 @export var scenario_files: Array[String] = [
 	"res://resources/scenarios/main.txt",
@@ -13,6 +15,18 @@ const GalleryCoordinatorScript := preload("res://scripts/core/gallery_coordinato
 ]
 
 @export var resource_root: String = "res://resources/"
+@export_group("Save")
+@export var save_dir: String = "user://saves/"
+@export_range(1, 100, 1) var save_slot_count: int = 6
+@export var auto_save_slot: int = 99
+@export var auto_save_enabled: bool = true
+@export var settings_path: String = "user://config/settings.cfg"
+@export_group("Preload")
+@export_range(1, 1024, 1) var preload_cache_size: int = 128
+@export_group("Gallery")
+@export var cg_gallery_config: String = "res://resources/gallery/cg_gallery.txt"
+@export var music_gallery_config: String = "res://resources/gallery/music_gallery.txt"
+@export_group("")
 
 # ── Subsystems (public, BaseBlock reaches them as nova.<name>) ───────
 var object_manager: ObjectManager
@@ -42,6 +56,7 @@ var preload_system: PreloadSystem
 var engine_context: EngineContext
 var restorables: RestorableRegistry
 var gallery_coordinator: RefCounted
+var settings_coordinator: RefCounted
 
 # ── View management ─────────────────────────────────────────────────
 var view_manager: ViewManager
@@ -69,6 +84,7 @@ func _ready() -> void:
 	_bind_view_controllers()
 	_init_view_manager()
 	_setup_game_view()
+	_setup_settings()
 	_connect_model_signals()
 	_setup_gallery()
 	_apply_i18n()
@@ -77,7 +93,7 @@ func _ready() -> void:
 	sf = _localized_scenario_files(sf)
 	script_loader.load_all(sf)
 	if not script_loader.load_ok:
-		push_error("NovaController: script load failed")
+		EngineLogScript.error(EngineLogScript.Category.PARSE, "NovaController", "script load failed")
 		return
 
 	game_state.setup(script_loader.graph)
@@ -110,6 +126,7 @@ func _init_subsystems() -> void:
 	variables = Variables.new()
 	i18n = I18n.new()
 	save_system = SaveSystem.new(self)
+	save_system.configure(save_dir, save_slot_count, auto_save_slot, auto_save_enabled)
 	backlog = Backlog.new()
 	graphics = Graphics.new(self)
 	animation = AnimationSystem.new(self)
@@ -127,7 +144,9 @@ func _init_subsystems() -> void:
 	video_system = VideoSystem.new(self)
 	dialog_system = DialogSystem.new(self)
 	preload_system = PreloadSystem.new(self)
+	preload_system.configure(preload_cache_size)
 	gallery_coordinator = GalleryCoordinatorScript.new(self)
+	settings_coordinator = SettingsCoordinatorScript.new(self)
 	_register_restorables()
 
 
@@ -306,7 +325,7 @@ func _on_title_new_game() -> void:
 	elif script_loader.graph.unlocked_start_nodes.size() > 0:
 		first_node = script_loader.graph.unlocked_start_nodes[0]
 	if first_node == &"":
-		push_error("NovaController: no start node found")
+		EngineLogScript.error(EngineLogScript.Category.RUNTIME, "NovaController", "no start node found")
 		return
 	view_manager.switch_to("game")
 	if _game_vc:
@@ -355,11 +374,6 @@ func _on_quit() -> void:
 		read_tracker.save_to_disk()
 	get_tree().quit()
 
-
-# ── Gallery configuration ─────────────────────────────────────────────
-
-@export var cg_gallery_config: String = "res://resources/gallery/cg_gallery.txt"
-@export var music_gallery_config: String = "res://resources/gallery/music_gallery.txt"
 
 func _setup_gallery() -> void:
 	if gallery_coordinator == null:
@@ -410,82 +424,19 @@ func _unhandled_input(event: InputEvent) -> void:
 
 # ── Settings handler ────────────────────────────────────────────────
 
-@export var settings_path: String = "user://config/settings.cfg"
+func _setup_settings() -> void:
+	if settings_coordinator == null:
+		return
+	settings_coordinator.setup(_settings_vc, _game_vc, settings_path, Callable(self, "_apply_i18n"))
 
 func _on_setting_changed(key: String, value: Variant) -> void:
-	match key:
-		"text_speed":
-			if _game_vc:
-				_game_vc.type_cps = clampf(float(value) * 2.0, 1.0, 200.0)
-		"auto_speed":
-			if _game_vc:
-				_game_vc.auto_delay = clampf(float(101 - value) * 0.002, 0.02, 0.2)
-		"vol_global":
-			if audio:
-				audio.set_master_volume(float(value) / 100.0)
-		"vol_bgm":
-			if audio:
-				audio.set_bgm_volume(float(value) / 100.0)
-		"vol_se":
-			if audio:
-				audio.set_se_volume(float(value) / 100.0)
-		"vol_voice":
-			if audio:
-				audio.set_voice_volume(float(value) / 100.0)
-		"font_size":
-			if _game_vc:
-				var dbox := _game_vc.get_dbox()
-				if dbox:
-					var story = dbox.get_node_or_null("Story")
-					if story is RichTextLabel:
-						story.add_theme_font_size_override("normal_font_size", int(value))
-		"language":
-			if str(value) != i18n.locale:
-				i18n.locale = str(value)
-				_apply_i18n()
-		"fullscreen":
-			if bool(value):
-				DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
-			else:
-				DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
-		"dialogue_opacity":
-			if dialogue_box:
-				dialogue_box.set_opacity(float(value) / 100.0)
-		"click_stop_anim":
-			if _game_vc:
-				_game_vc.click_stop_anim = bool(value)
-		"click_stop_voice":
-			if _game_vc:
-				_game_vc.click_stop_voice = bool(value)
-		"skip_unread":
-			if _game_vc:
-				_game_vc.skip_unread = bool(value)
-	_save_settings()
-
-
-func _save_settings() -> void:
-	if _settings_vc == null:
-		return
-	DirAccess.make_dir_recursive_absolute("user://config")
-	var cfg := ConfigFile.new()
-	var data := _settings_vc.snapshot()
-	for k in data:
-		cfg.set_value("settings", k, data[k])
-	cfg.save(settings_path)
+	if settings_coordinator:
+		settings_coordinator.apply_setting(key, value)
 
 
 func _load_settings() -> void:
-	var cfg := ConfigFile.new()
-	if cfg.load(settings_path) != OK:
-		return
-	var data: Dictionary = {}
-	for k in cfg.get_section_keys("settings"):
-		data[k] = cfg.get_value("settings", k)
-	if _settings_vc:
-		_settings_vc.apply_settings(data)
-	# Apply each setting to subsystems.
-	for k in data:
-		_on_setting_changed(str(k), data[k])
+	if settings_coordinator:
+		settings_coordinator.load_settings()
 
 
 # ── I18n helper ─────────────────────────────────────────────────────
