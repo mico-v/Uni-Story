@@ -1,374 +1,306 @@
-# Uni-Story 代码审查与对齐记录
+# Nova 与 Uni-Story 差异评审
 
-> 审查范围：全部 33 个 GDScript 源文件 + 10 个场景文件 + 配置文件 + 剧本文件
-> 审查日期：2026-06-22
-> 最后更新：2026-06-23（Phase R1-R9 实施 + Backlog/ChoiceList 修复后同步）
-> 分支：dev（基于 rewrite/godot4.6 squash 后）
-
----
-
-## 一、架构审阅总评
-
-### 架构设计
-
-Uni-Story 采用**服务定位器模式**：NovaController 作为中央协调器，创建全部 24 个子系统（均为 `RefCounted` 对象），每个子系统通过 `_ctx: Node` 反向引用 NovaController 来访问兄弟系统。
-
-**优势**：
-- 模型与表现完全分离，GameState 不持有任何视图引用
-- 存档通过 snapshot + lazy block replay 恢复，设计优雅
-- GDScript 运行时编译让剧本拥有完整语言能力（循环、条件、Vector3、Color 等）
-- 子系统 API 表面丰富，BaseBlock 暴露 ~40 个方法覆盖所有系统
-
-**已知结构性问题**（CODE_REVIEW 阶段识别）：
-- 模型层不纯粹：GameState 的 `snapshot()` / `restore()` 直接调用表现层子系统
-- `_ctx: Node` 全局弱类型：为避免循环依赖失去类型检查
-- 子系统间存在双向运行时依赖：TransitionSystem ↔ VFXSystem，GameState ↔ GDRuntime
-
-### 架构改进方向
-
-1. **GameState 模型层解耦**：将 snapshot/restore 编排移至 NovaController 或 SaveCoordinator
-2. **全局 Theme 资源**：创建 `resources/themes/default_theme.tres` 统一定义视觉风格
-3. **场景文件提取**：将动态构建的 UI（slot_row、context_menu、toast、cg_preview）迁移到 .tscn
-4. **GameViewController 拆分**：提取 SaveLoadPanelController、BacklogPanelController、ContextMenuController
-5. **类型化数组**：使用 `Array[FlowChartNode]`、`Array[DialogueEntry]` 等提升类型安全
+> 审查日期：2026-06-24  
+> 目标工程：`Nova/`，Unity 2020.3.48f1 + C# + Lua(ToLua#)  
+> 当前工程：仓库根目录，Godot 4.6 + GDScript  
+> 结论范围：开发进度、运行时能力、架构差异、后续对齐优先级
 
 ---
 
-## 二、Bug 与修复记录
+## 一、总评
 
-### HIGH — 已修复 ✅
+`Nova/` 是一个成熟的 Unity 视觉小说框架，包含完整示例工程、脚本解析、Lua 运行时、检查点式存档/回跳、章节选择、设置、鉴赏、输入映射、UI 预制体、shader 生成与素材处理工具链。
 
-| # | 位置 | 问题 | 修复 |
-|---|------|------|------|
-| B1 | `game_view_controller.gd` | `ui_settings` 快捷键只关闭面板，不打开设置 | 改为关闭面板 + emit `settings_requested` |
-| B2 | `project.godot` | `ui_save` 和 `debug_reload` 共用 F5 | 重新分配键位 |
-| B3 | `prefab_loader.gd` | `_ui_parent()` 逻辑反转 | 修正返回值 |
-| B4 | `vfx_system.gd` | `get_shader_uniform_list(false)` 是 Godot 3.x API | 改为无参数调用 |
-| B5 | `game_view_controller.gd` | 读档调用 `load_game()` 前没有 `reset_world()` | 添加 `reset_world()` 调用 |
-| B6 | `gd_runtime.gd` | 缓存键用 `source.hash()` 可能哈希碰撞 | 改用 `sha256_text()` |
+当前 Uni-Story 是 Godot 版重写工程，已经完成了核心视觉小说运行时原型，并补齐了很多常用演出 API：脚本解析、流程图、对话推进、分支、变量、基础存档、回顾、图片、立绘、头像、音频、镜头、转场、VFX、Prefab、视频、Timeline、设置、CG/音乐鉴赏、热重载等。
 
-### MEDIUM — 已修复 ✅
+两者关系不是“同一代码库的进度差”，而是“目标框架能力向 Godot 的迁移差”。当前项目在核心运行时上已具备可跑 demo 的基础，但距离 Nova 的产品级框架还有明显差距，尤其是：
 
-| # | 位置 | 问题 | 修复 |
-|---|------|------|------|
-| B7 | `dialog_system.gd` | 确认对话框 OK/Cancel 硬编码英文 | 接入 i18n |
-| B8 | `music_gallery_controller.gd` | BGM 播放器遍历子节点查找，耦合脆弱 | AudioSystem 暴露 `get_bgm_player()` |
-| B9 | `script_loader.gd` | 末尾 pending lazy 块未 flush | 补调 `_flush_pending_lazy_as_silent()` |
-| B10 | `animation_chain.gd` | `emit_signal("finished")` 使用 Godot 3 语法 | 改为 `finished.emit()` |
-| B11 | `graphics.gd` | `snapshot()` 捕获 `texture_path` 但 `restore()` 不恢复 | 移除冗余捕获 |
-| B12 | `composite_sprite.gd` | `clear_layers()` 异步删除但立即清空 `_layers` | 同步 `remove_child` + `free` |
+- Nova 的 checkpoint / node record / reached data / save upgrade 体系尚未迁移。
+- NovaScript 兼容层还不完整，当前是 GDScript 风格 API，不是 Lua NovaScript 的行为等价实现。
+- UI 产品层缺少章节选择、帮助页、通知系统、输入映射、存档截图、首次提示等 Nova 体验。
+- 资源、shader、预加载、立绘裁剪、剧本检查与构建工具链差距较大。
 
-### LOW — 已修复 ✅
+按“能否承载 Nova 同类项目”的标准估算，当前进度大致为：
 
-| # | 位置 | 问题 | 修复 |
-|---|------|------|------|
-| B13 | `save_system.gd` | `data.has("version")` 永远为 true | 删除死代码 |
-| B14 | `variables.gd` | `add_var` 用 `float()` 强转 | 保持原类型 |
-| B15 | `transition_system.gd` | "flash" 实现与 "fade" 完全相同 | 删除冗余 |
-| B16 | `audio_system.gd` | Voice restore 不 seek | 加上 `play(pos)` |
-| B17 | `dialogue_box.tscn` | Speaker offset 144.6px（亚像素） | 调整为整数 |
+| 模块 | 当前完成度判断 | 说明 |
+|------|----------------|------|
+| 核心 VN 运行时 | 约 60%-70% | 可解析并播放 Godot 版脚本，基础演出 API 已覆盖较多 |
+| NovaScript 行为兼容 | 约 35%-45% | 语法块概念相近，但 Lua 语义、局部 label、action stage、变量规则等未完整对齐 |
+| 存档/回跳/升级体系 | 约 25%-35% | 有 JSON 存读档和 replay，但缺 Nova 最核心的 checkpoint 历史树 |
+| UI 产品功能 | 约 45%-55% | 标题、游戏、设置、存读档、鉴赏已存在，章节/帮助/输入映射等缺失 |
+| 资源与工具链 | 约 20%-30% | 当前资源较少，缺 Nova 的素材导入、shader 生成、剧本工具和构建工具 |
+| 整体对齐 | 约 45%-55% | 已经是可继续推进的 Godot 框架骨架，但还不是 Nova 的完整替代品 |
 
-### 运行时 Bug — 已修复 ✅（2026-06-23）
+---
 
-| 问题 | 位置 | 修复 |
+## 二、工程规模与入口对比
+
+| 项目项 | Nova 目标工程 | 当前 Uni-Story |
+|--------|---------------|----------------|
+| 引擎 | Unity 2020.3.48f1，URP | Godot 4.6 |
+| 主场景 | `Nova/Assets/Scenes/Main.unity` | `scene/game.tscn` |
+| 核心语言 | C# 组件 + Lua 剧本运行时 | GDScript 组件 + GDScript 剧本块运行时 |
+| 运行时脚本 | `Nova/Assets/Nova/Lua/*.lua`，24 个核心 Lua 文件 | `scripts/runtime/*.gd` + `scripts/runtime/base_block.gd` |
+| 核心 C#/GDScript | Nova `Core` + `Scripts` 约 233 个 C# 文件；全 Assets 约 307 个 C# 文件 | 当前 `scripts/` 下 46 个 `.gd` 文件 |
+| UI 资产 | 大量 Unity prefab：Title、Game、Config、SaveLoad、Log、Choice、Alert、Gallery 等 | 14 个 Godot `.tscn` 场景 |
+| 示例剧本 | 默认 28 个中文剧本 + 4 个英文本地化剧本 | 3 个示例/测试剧本 |
+| 资源规模 | 背景、BGM、CG、Choices、Standings、Videos、Voices、Shaders、Prefabs 等完整示例资产 | 少量 demo 图片、音乐、立绘、shader、prefab |
+| 构建/工具 | `Tools/Scenarios`、`Tools/Standings`、`Tools/Resources`、`Tools/Build` | GitHub Actions export presets + 少量 Godot 工具脚本 |
+
+---
+
+## 三、开发进度差异
+
+### 3.1 已基本对齐的能力
+
+| 能力 | Nova 目标 | 当前实现 | 差异 |
+|------|-----------|----------|------|
+| 剧本块模型 | eager block / lazy block / text chunk | `NovaParser` + `ScriptLoader` 支持 eager/lazy/text | 概念已对齐，但解析严谨度和 Lua 兼容不足 |
+| 流程图 | `FlowChartGraph` / `FlowChartNode` / branch / jump / start / end | `FlowChartGraph` / `FlowChartNode` / branch / jump / start / end | 基础流程已对齐，缺 save point、局部 label 规则、章节解锁完整逻辑 |
+| 对话推进 | `GameState.Step()` + dialogue events | `GameState.advance()` + signals | 基础推进可用，缺 Nova 历史树和精确回跳语义 |
+| 分支 | normal / jump / show / enable | normal / jump / show / enable | 模式已覆盖，条件表达式语言不同 |
+| 基础演出 API | show/hide/move/tint、音频、镜头、转场 | `BaseBlock` 暴露对应方法 | 常用 API 已覆盖，但参数兼容和资源解析规则不同 |
+| 立绘/头像 | GameCharacterController、AvatarController | SpriteComposer、AvatarSystem | 基础功能可用，缺 Nova 的 standing asset/cropping 工具链 |
+| 设置/鉴赏/存读档 UI | Config、ImageGallery、MusicGallery、SaveLoad | Settings、CG Gallery、Music Gallery、SaveLoad | 当前已有可用版本，但功能深度和 UI 交互不如 Nova |
+| 热重载 | `GameState.ReloadScripts()` + upgrade | `HotReload` 文件轮询重载 | 当前是开发便利功能，未接入 save upgrade 体系 |
+
+### 3.2 部分对齐但需要重构的能力
+
+| 能力 | Nova 目标状态 | 当前状态 | 主要缺口 |
+|------|---------------|----------|----------|
+| 存档恢复 | `CheckpointManager` 保存 node record、checkpoint、reached data、bookmark、global save | `SaveSystem` 保存 JSON snapshot，`GameState.restore()` replay lazy block | 缺历史树、存档截图、全局进度、脚本升级、备份恢复、bookmark metadata |
+| 回顾/回跳 | 基于 reached dialogue 与 checkpoint 精确回跳 | `Backlog` 保存文本，支持跳回指定 entry | 当前跳回直接展示目标行，未完整重建前置 checkpoint 历史 |
+| 变量系统 | Lua 中 `v_` / `gv_` 自动映射局部/全局变量 | `Variables` 显式 `set_var/get_var/add_var` | 缺 Lua 风格自动变量、全局变量持久化、变量 hash 驱动的 node record 复用 |
+| I18n | 同一节点维护多语言 display/dialogue/branch text，本地化资源路径 | UI JSON + 本地化剧本路径替换 | 缺按节点合并多语言 dialogue entries、localized branch text 校验 |
+| 预加载 | Lua `add_preload_pattern` 自动分析剧本资源 | `PreloadSystem.preload_asset()` 手动 API | 缺自动预处理、资源类型识别、unpreload/need_preload 语义 |
+| 动画 | `NovaAnimation` 支持 per-dialogue/holding/UI/text 四类、Then/And、pause/resume/stop/group | `AnimationChain` 基于 Godot Tween，链内顺序、跨语句并行 | 缺 holding animation、动画组、暂停恢复、丰富 property 类型和 easing 体系 |
+| VFX/shader | 37 个 shaderproto 生成 176 个 shader，支持变体/PP/material pool/restorable material | 6 个 Godot shader + 固定 registry | 缺 shaderproto 生成链、变体层、MaterialPool、多参数动画、render target |
+| View 管理 | `ViewManager` 追踪 UI/Game/InTransition/Alert，切 UI 时暂停游戏动画/音频 | `ViewManager` 字符串注册和切换淡入/滑动 | 缺视图状态枚举、切换输入阻挡、游戏动画/音频 pause/resume 策略 |
+| 输入系统 | Unity Input System + 输入映射 UI + touch/pointer helper | Godot InputMap + `ShortcutManager` + 设置项 | 缺完整按键录制 UI、复合键、移动端输入分层 |
+
+### 3.3 明显缺失的目标能力
+
+| Nova 能力 | 目标位置 | 当前缺口 |
+|-----------|----------|----------|
+| 章节选择视图 | `ChapterSelectViewController.cs`、`ChapterSelectView.prefab` | 当前没有章节选择视图；标题页直接取第一个 start/unlocked start |
+| Help / 新手提示 | `HelpViewController.cs`、`TitleController.ShowHints()` | 当前没有帮助页和首次提示流程 |
+| Notification / Alert 完整系统 | `NotificationController.cs`、`AlertController.cs`、Alert prefab | 当前有 Toast/Confirm，但不是 Nova 的通知/警告体系 |
+| 存档截图 | `ScreenCapturer.cs`、`Bookmark.screenshot` | 当前存档槽只有文本标签 |
+| Script upgrade | `CheckpointUpgrader.cs`、`Differ.cs`、node text hash | 当前只有版本号校验，没有节点 diff 和旧存档升级 |
+| before_checkpoint / after_dialogue stage | `[stage = before_checkpoint]`、`DialogueActionStage` | 当前 lazy block 只有单一执行阶段 |
+| 中断/小游戏协议 | `minigame.lua`、`StartInterrupt/StopInterrupt`、fence | 当前只支持加载 prefab，没有中断恢复协议 |
+| 输入映射界面 | `UI/InputMapping/*` | 当前设置界面有快捷键能力雏形，但没有完整输入录制界面 |
+| 自动语音 | `AutoVoice.cs`、`auto_voice.lua` | 当前只有显式 `play_voice()` |
+| 立绘裁剪/PSD 工具 | `Tools/Standings/*`、`SpriteCropping/*` | 当前没有对应工具链 |
+| 剧本工具 | `Tools/Scenarios/lint.py`、`visualize.py`、`show_branches.py` 等 | 当前没有完整 NovaScript lint/可视化/统计工具 |
+| shader 生成工具 | `Tools/Resources/generate_shaders.py` | 当前 shader 手写，数量少 |
+| 构建工具 | `Tools/Build/build_all.py` | 当前有 Godot export presets 和 CI，但未形成 Nova 同等级发布脚本 |
+
+---
+
+## 四、架构差异
+
+### 4.1 组合根与依赖方式
+
+Nova 的 `NovaController.cs` 是 Unity prefab 里的组件聚合器，只负责查找 `GameState`、`DialogueState`、`CheckpointManager`、`ConfigManager`、`InputManager`、多组 `NovaAnimation` 等组件。业务能力分散在 MonoBehaviour、C# Core 类和 Lua 脚本之间。
+
+当前 `scripts/NovaController.gd` 是 Godot 版的服务定位器和总协调器，直接创建 20 多个 `RefCounted` 子系统，并通过 `_ctx` 注入给所有系统访问。
+
+差异判断：
+
+- 当前架构更集中，启动路径清楚，适合快速重写。
+- Nova 架构更贴近 Unity 的 prefab/inspector 组合方式，可视化配置和资产复用更成熟。
+- 当前 `_ctx: Node` 弱类型访问会继续扩大耦合；若要长期维护，应逐步引入明确接口或专门 coordinator。
+
+### 4.2 剧本运行时
+
+Nova 的剧本块本质上是 Lua 代码，通过 `LuaRuntime`、`script_loader.lua`、`graphics.lua`、`animation.lua` 等脚本把 DSL 函数注入 Lua 环境。NovaScript 的许多行为来自 Lua 元表和 helper：
+
+- `v_` / `gv_` 变量自动映射。
+- `l_` 局部 label 自动加文件名前缀。
+- `branch` 的 `cond` 可以是 Lua function 或字符串表达式。
+- `__Nova` 暴露 C# 对象。
+- `action_new_file`、`only_included_scenario_names`、`is_restoring()` 等运行时钩子。
+
+当前把 `<|...|>` 和 `@<|...|>` 包装为 `extends BaseBlock` 的 GDScript，直接编译执行。这让 Godot 版实现简单、性能和调试路径也直观，但它不是 NovaScript 的语义兼容实现。
+
+需要选择路线：
+
+| 路线 | 优点 | 代价 |
 |------|------|------|
-| `is_visible()` 覆盖 CanvasItem 原生方法 | save_load_panel_controller.gd, backlog_panel_controller.gd | 重命名为 `panel_is_visible()` |
-| `close` 参数遮蔽 `close()` 方法 | save_load_panel_controller.gd, backlog_panel_controller.gd | 重命名为 `close_btn` |
-| `disconnect_all()` 不存在 | gd_runtime.gd | 删除该调用 |
-| Lambda 捕获按值捕获，无法修改外层变量 | gd_runtime.gd | 用 Dictionary 包装可变状态 |
-| `BtnBack` 节点在继承场景中丢失 | scene/ui/base_menu_view.tscn | 添加到 base scene |
-| Typed array 返回类型不匹配 | gallery_config_loader.gd | 改为 `Array[Dictionary]` |
-| `Array` 构造函数签名不匹配 | composite_sprite.gd | 使用 typed array 常量声明 |
-| `Backlog.restore()` 类型不匹配 | backlog.gd | 迭代并类型检查条目 |
-| BacklogPanelController `get_tree()` 为 null | backlog_panel_controller.gd | 使用 `_ctx.get_tree()` |
-| generate_theme.gd 混合缩进 | generate_theme.gd | 移除多余空格 |
+| 保持 GDScript NovaScript 方言 | Godot 原生，维护简单 | 不能直接复用 Nova 既有剧本 |
+| 做 Lua 兼容层 | 可迁移 Nova 剧本和工具 | 需要嵌 Lua 或实现 Lua 到 GDScript 转译 |
+| 做语法兼容但语义映射到 GDScript | 不引入 Lua VM，兼容常用脚本 | 需要完整 parser/translator，边界复杂 |
 
-### UI 功能 Bug — 已修复 ✅（2026-06-23）
+如果 `Nova/` 是严格开发目标，建议至少实现“NovaScript 常用语义兼容层”，否则后续差异会越来越难收敛。
 
-| 问题 | 位置 | 修复 |
-|------|------|------|
-| `_close_save_panel()` 未声明 | game_view_controller.gd | 改为 `_save_load_controller.close()` |
-| `SKIP_DELAY` 未声明 | game_view_controller.gd | 改为 `skip_delay` |
-| `_save_load_controller.slot_pressed` 未连接 | game_view_controller.gd | 添加连接 |
-| Backlog 回顾显示未来文本 | backlog_panel_controller.gd | 按当前进度过滤，不显示当前位置之后的条目 |
-| Backlog 条目无 hover 效果 | backlog_panel_controller.gd | 添加 `modulate` 颜色变化（淡黄色） |
-| Backlog 跳转后选单显示错位 | choice_list_controller.gd, game_view_controller.gd | `clear()` 重置布局约束，`reset_world()` 使用 `_choice_list_controller.clear()` |
+### 4.3 状态、存档与回跳
 
----
+这是当前与 Nova 最大的架构差距。
 
-## 三、设计问题与改进
+Nova 的核心不是普通 slot 存档，而是 checkpoint 历史系统：
 
-### 3.1 存档恢复覆盖（Phase 4 ✅）
+- `GameState` 维护 `NodeRecord` 历史树。
+- `CheckpointManager` 持久化 checkpoint、reached dialogue、reached end、global save。
+- 每隔若干对话或在关键点强制保存 checkpoint。
+- 回跳时从最近 checkpoint restore，再向前 replay 到目标行。
+- 剧本变化后通过 node hash、`Differ` 和 `CheckpointUpgrader` 尝试升级旧存档。
+- bookmark 存储截图、创建时间、global save identifier。
 
-- [x] VFXSystem snapshot/restore
-- [x] DialogueBoxSystem snapshot/restore
-- [x] SpriteComposer snapshot/restore
-- [x] Backlog 持久化
+当前 `SaveSystem` 是 JSON slot 存档：
 
-### 3.2 图完整性（Phase 11 ✅）
+- 保存 `GameState.snapshot()`、变量、部分子系统 snapshot。
+- 读档时 `GameState.restore()` 从节点开头 replay lazy block 到目标 index。
+- 回顾跳转目前直接定位并展示目标 entry，恢复精度低于 Nova。
 
-- [x] 循环检测（FlowChartGraph.sanity_check 加 DFS）
-- [x] CHAPTER 类型行为（触发章节标题 UI 或自动推进）
-- [x] `is_end(name)` 命名结局
+当前实现适合小型 demo，但不足以支持 Nova 的“随时回跳到之前任意一句并保持状态一致”的核心卖点。后续必须把 `SaveSystem` 升级为 checkpoint / reached data / bookmark 三层模型。
 
-### 3.3 运行时安全性（Phase 12 ✅）
+### 4.4 UI 架构
 
-- [x] GDRuntime 超时机制（async 操作加安全 timeout）
-- [x] 条件编译缓存（按条件字符串 hash 缓存）
-- [x] ReadTracker 自动持久化（debounce 2s 自动写磁盘）
-- [x] PreloadSystem 取消机制
+Nova UI 是 prefab + controller 体系：
 
-### 3.4 音频系统增强（Phase 7 ✅）
+- `TitleController`
+- `ChapterSelectViewController`
+- `GameViewController`
+- `ConfigViewController`
+- `SaveViewController`
+- `LogController`
+- `ImageGalleryController`
+- `MusicGalleryController`
+- `HelpViewController`
+- `AlertController`
+- `NotificationController`
+- `InputMappingController`
 
-- [x] 独立音频总线（BGM/SE/Voice 三个 AudioBus）
-- [x] BGM 交叉淡入淡出（双播放器 crossfade）
-- [x] SE 池抢占策略（抢占最早播放的 SE）
+当前 UI 已有：
 
-### 3.5 架构审阅重构（Phase R1-R9）
+- TitleView
+- GameView
+- SettingsView
+- SaveLoadView
+- CgGalleryView
+- MusicGalleryView
+- Toast / Confirm / ContextMenu / Backlog / ChoiceList 等组件
 
-> 基于 2026-06-23 的全面代码审阅，分 9 个阶段逐步实施。
+主要差异：
 
-| Phase | 内容 | 状态 |
-|-------|------|------|
-| R1 | 死代码清理与 Bug 修复 | ✅ 已计划 |
-| R2 | 全局 Theme 资源 | ✅ 已计划 |
-| R3 | 存档槽位行场景提取 | ✅ 已计划 |
-| R4 | 动态 UI 迁移到场景文件 | ✅ 已计划 |
-| R5 | 菜单视图场景继承 | ✅ 已计划 |
-| R6 | @export 可配置参数 | ✅ 已计划 |
-| R7 | GameState 模型层解耦 | ✅ 已计划 |
-| R8 | GameViewController 拆分 | ✅ 已计划 |
-| R9 | 代码质量提升 | ✅ 已计划 |
+- 缺章节选择和 start node 解锁逻辑。
+- 缺帮助页、首次进入提示、通知列表。
+- 缺完整输入映射 UI。
+- 缺存档截图、更多 metadata、列表虚拟化。
+- View 切换时没有像 Nova 那样统一暂停/恢复游戏动画、音频、语音。
 
----
+### 4.5 资源与工具链
 
-## 四、功能缺口与实现状态
+Nova 的目标工程包含大量非运行时代码：
 
-| 功能 | 剧本 API / i18n 支持 | UI 状态 |
-|------|---------------------|---------|
-| 分支图片 | `branch([{image="..."}])` 解析+存储完整 | ✅ ChoiceListController 渲染缩略图（Phase 8） |
-| 回顾跳转 | `log.moveback.confirm` i18n 键存在 | ✅ 点击回顾条目跳回对应位置（Phase 8 + 2026-06-23 修复） |
-| 对话框透明度 | `config.item.dialogueopacity` i18n 键 | ✅ SettingsViewController 滑块绑定（Phase 6） |
-| 点击停止动画 | `config.item.clickstopanimation` i18n 键 | ✅ SettingsViewController 开关（Phase 6） |
-| 点击停止语音 | `config.item.clickstopvoice` i18n 键 | ✅ SettingsViewController 开关（Phase 6） |
-| 快进未读文本 | `config.item.fastforwardunread` i18n 键 | ✅ SettingsViewController 开关（Phase 6） |
-| 存档覆盖确认 | `bookmark.overwrite.confirm` i18n 键 | ✅ show_confirm 确认对话框（Phase 6） |
-| 存档删除 | `bookmark.delete.confirm` i18n 键 | ✅ 每槽删除按钮（Phase 6） |
-| 条件分支 | `branch()` 的 `cond` 字段完整实现 | ✅ test_all.txt 补充测试用例（Phase 8） |
-| CG 动态解锁 | gallery 配置 `unlocked=true` 硬编码 | ✅ ReadTracker + graphics.show() 自动解锁（Phase 9） |
-| 音乐动态解锁 | — | ✅ AudioSystem.bgm_started 信号自动解锁（Phase 9） |
-| 快速存档/读档 | — | ✅ 鼠标右键菜单快存快读条目（Phase 10） |
+- 剧本工具：lint、merge、visualize、show_branches、统计对白长度、列出 bg/bgm/pos。
+- 立绘工具：PSD 图层导出、姿势排序、图层合成。
+- 资源工具：shader 生成、本地化路径生成、charset 生成。
+- 构建工具：多平台打包。
+
+当前工程有 CI 和 Godot export presets，但还没有与 Nova 同级的内容生产工具。对于视觉小说框架来说，工具链不是外围功能，而是内容规模变大后的主要生产力来源。
 
 ---
 
-## 五、代码质量观察
+## 五、文件级映射
 
-### 5.1 正面评价
-
-- **一致性高**：所有子系统遵循相同模式（RefCounted + _ctx + snapshot/restore）
-- **无 TODO/FIXME/stub**：所有声明的功能都已实现，代码完成度极高
-- **错误处理合理**：null 检查、push_warning 降级、早期返回的模式贯穿全部代码
-- **NovaScript 设计优雅**：把剧本块当真正的 GDScript 编译，避免手写表达式求值器
-- **存档架构健壮**：snapshot/replay/restore 三层机制，理论上可恢复任意状态
-
-### 5.2 改进建议（非 Bug）
-
-1. **条件表达式缓存**：`_eval_condition` 每次编译新 GDScript，频繁分支会重复编译。加 hash 缓存
-2. **TextureRect 支持**：`Graphics.show()` 硬编码 `.png` 扩展名，不支持 JPG/WebP/SVG
-3. **存档系统缩略图**：当前只有文本标签，无截图缩略图、时间戳、章节信息
-
----
-
-## 六、场景文件问题（已修复）
-
-| 文件 | 问题 | 状态 |
-|------|------|------|
-| `title_view.tscn` | ContentArea 空白（右侧占满屏幕但不显示任何内容） | ✅ 已添加 Logo（Phase 10，程序化生成 SVG） |
-| `game_view.tscn` | TransitionOverlay `layout_mode=0` 与其他 Hud 子节点不一致 | ✅ 已统一 |
-| `game_view.tscn` | ChoiceList 无最大尺寸约束 | ✅ 已添加最大高度约束（Phase 10） |
-| `dialogue_box.tscn` | ContinueIcon 用 Unicode "▼"，换字体时可能缺失字形 | ✅ 改为 TextureRect + 代码生成三角纹理 |
-| `main_theme.tres` | 无 ScrollContainer/GridContainer 样式 | ✅ 已添加（Phase 10） |
-| `main_theme.tres` | 无自定义字体资源 | ✅ 已添加 CJK 字体集成 |
+| Nova 目标文件/目录 | 当前对应文件/目录 | 状态 |
+|-------------------|-------------------|------|
+| `Nova/Assets/Nova/Sources/Core/NovaController.cs` | `scripts/NovaController.gd` | 职责不同；当前更像总装配器 |
+| `Core/GameState.cs` | `scripts/core/game_state.gd` | 基础推进已实现，缺 checkpoint 历史树 |
+| `Core/Restoration/CheckpointManager.cs` | `scripts/core/save_system.gd`、`scripts/core/read_tracker.gd` | 主要缺口 |
+| `Core/ScriptParsing/ScriptLoader.cs` | `scripts/core/script_loader.gd` | 部分对齐 |
+| `Core/ScriptParsing/Parser/*` | `scripts/core/nova_parser.gd` | 当前 parser 更轻量 |
+| `Nova/Lua/script_loader.lua` | `scripts/runtime/base_block.gd` + `script_loader.gd` | API 名称部分对齐，语义不同 |
+| `Nova/Lua/built_in.lua` | 无直接对应 | 缺 `v_` / `gv_` / `__Nova` 等 Lua 环境语义 |
+| `Nova/Lua/graphics.lua` | `scripts/runtime/graphics.gd` | 基础 show/hide/move/tint 对齐，参数/自动 fade/解锁规则不同 |
+| `Nova/Lua/animation*.lua` + `Core/Animation/*` | `scripts/runtime/animation_system.gd`、`animation_chain.gd` | 当前为简化版 |
+| `Nova/Lua/transition.lua`、`shader_info.lua`、`Core/VFX/*` | `scripts/runtime/transition_system.gd`、`vfx_system.gd` | 当前 shader/VFX 规模明显不足 |
+| `Scripts/Controllers/*` | `scripts/runtime/*` | 功能被拆成 Godot 子系统，部分覆盖 |
+| `Scripts/UI/Views/*` | `scripts/ui/*` + `scene/view/*` | 部分覆盖，缺多个视图 |
+| `Scripts/UI/InputMapping/*` | `scripts/core/shortcut_manager.gd` + Settings UI | 只覆盖底层快捷键，缺完整 UI |
+| `Tools/Scenarios/*` | 无 | 缺剧本工具链 |
+| `Tools/Standings/*` | 无 | 缺立绘生产工具链 |
+| `Tools/Resources/*` | `scripts/editor/generate_theme.gd` 等少量脚本 | 资源生成能力不足 |
 
 ---
 
-## 七、统计
+## 六、优先级建议
 
-| 类别 | 数量 |
-|------|------|
-| GDScript 源文件 | 34 |
-| 场景文件 (.tscn) | 10 |
-| Shader 文件 | 6 |
-| 剧本文件 | 3 |
-| i18n 语言文件 | 2 (zh/en) |
-| 总代码行数 | ~4800 |
-| 子系统数 | 25 |
-| BaseBlock API 方法 | ~40 |
-| Bug (HIGH) | 6 ✅ 已修复 |
-| Bug (MEDIUM) | 6 ✅ 已修复 |
-| Bug (LOW) | 5 ✅ 已修复 |
-| 运行时 Bug | 10 ✅ 已修复 |
-| UI 功能 Bug | 6 ✅ 已修复 |
-| 功能缺口（已实现） | 12 ✅ |
+### P0：先对齐 Nova 的核心卖点
 
----
+1. 明确兼容目标：决定当前脚本语言是“Godot 方言”还是“NovaScript 兼容实现”。如果要以 `Nova/` 为开发目标，应补齐常用 NovaScript 语义：`l_` 局部 label、`v_` / `gv_` 变量、`is_save_point()`、`only_included_scenario_names`、`branch.image` 的 tuple 格式、`cond` function/string、文本插值、block attribute。
+2. 重做存档核心：引入 checkpoint、node record、reached dialogue、reached end、bookmark metadata、全局存档、存档截图。
+3. 实现章节选择：支持多 start node、locked/unlocked/debug start、按 reached history 解锁章节。
+4. 把回顾跳转改成 checkpoint restore + replay，而不是直接定位 entry。
 
-## 八、实施记录
+### P1：补齐运行时深度
 
-### Phase 1-12（原始计划）
+1. 动画系统扩展为 per-dialogue / holding / UI / text 分组，支持 pause/resume/stop、并行动画、命名 holding animation、更多 property 类型和 easing。
+2. VFX/shader 系统扩展为数据驱动 registry，支持多 shader 参数、后处理层、shader transition、render target，并规划 shaderproto 到 Godot shader 的生成路线。
+3. 预加载系统支持剧本静态扫描，至少覆盖 show、audio、prefab、timeline、choice image。
+4. 实现 minigame interrupt/fence 协议，支持小游戏结束后恢复视觉小说状态。
+5. 完整迁移输入映射 UI 与移动端/指针输入处理。
 
-| Phase | 内容 | 提交 | 日期 |
-|-------|------|------|------|
-| Phase 1 | P0 Bug 修复（5 项，功能阻断级） | b367a4a | 2026-06-22 |
-| Phase 2 | P1 数据正确性修复（4 项） | 9558c32 | 2026-06-22 |
-| Phase 3 | 清理孤立文件和死代码（5 项） | aa318c9 | 2026-06-22 |
-| Phase 4 | 存档恢复覆盖补全（4 项） | 79186ba | 2026-06-22 |
-| Phase 5 | P2 代码质量改进（8 项） | cc1b754 | 2026-06-22 |
-| Phase 6 | 设置扩展 + 存档 UX | c37fa10 | 2026-06-22 |
-| Phase 7 | 音频独立总线 + BGM 交叉淡入 + SE 抢占 | 637492e | 2026-06-22 |
-| Phase 8 | 分支图片 + 条件分支测试 + 回顾跳转 | 72b1349 | 2026-06-22 |
-| Phase 9 | 画廊动态解锁 CG/BGM | e0ebbd8 | 2026-06-22 |
-| Phase 10 | ChoiceList 限高 + Toast 自适应 + 鼠标菜单快存快读 | 5b74b61 | 2026-06-22 |
-| Phase 11 | 图完整性（循环检测 + CHAPTER + is_end） | 81b5660 | 2026-06-22 |
-| Phase 12 | 运行时安全性（超时 + 缓存 + 持久化） | 2329b17 | 2026-06-22 |
-| 后续 | 严格模式错误清理 | ed924a1 | 2026-06-22 |
+### P2：产品化与工具链
 
-### Phase R1-R9（架构审阅重构，2026-06-23）
-
-> 基于全面代码审阅，分 9 个阶段实施架构改进。
-
-| Phase | 内容 | 状态 |
-|-------|------|------|
-| R1 | 死代码清理与 Bug 修复 | 待实施 |
-| R2 | 全局 Theme 资源 | 待实施 |
-| R3 | 存档槽位行场景提取 | 待实施 |
-| R4 | 动态 UI 迁移到场景文件 | 待实施 |
-| R5 | 菜单视图场景继承 | 待实施 |
-| R6 | @export 可配置参数 | 待实施 |
-| R7 | GameState 模型层解耦 | 待实施 |
-| R8 | GameViewController 拆分 | 待实施 |
-| R9 | 代码质量提升（class_name、typed arrays、LRU） | 部分完成 |
-
-### 2026-06-23 运行时与 UI 修复
-
-- **运行时错误修复**：`is_visible()` 重命名、`disconnect_all()` 移除、Lambda 捕获修复、Typed array 类型修复
-- **UI 功能修复**：SaveLoadPanel 连接修复、Backlog 回顾过滤与 hover 效果、ChoiceList 显示错位修复
-- **场景继承修复**：base_menu_view.tscn 添加 BtnBack 节点
+1. 补 HelpView、Notification、Alert、首次提示、标题 BGM、UI sound、视图切换输入阻挡。
+2. 扩充示例剧本和测试剧本，至少覆盖 Nova 的 `test_branch`、`test_minigame`、`test_transition`、`test_upgrade`、`test_variables`、`test_video`。
+3. 建立 Godot 版剧本 lint/visualize/stat 工具，优先迁移 `Tools/Scenarios` 的高价值脚本。
+4. 建立立绘导入和裁剪工具，补齐 standing asset 工作流。
+5. 扩充 CI：加入 Godot headless 脚本解析测试、场景加载测试、导出产物 smoke test。
 
 ---
 
-## 九、NovaScript 剧本语法参考
+## 七、当前项目保留价值
 
-### 文件结构
+当前 Uni-Story 并不是“偏离目标的无效重写”。它已经验证了几件有价值的事情：
 
-剧本文件放在 `resources/scenarios/` 目录下，扩展名为 `.txt`。一个剧本文件包含若干节点（label），每个节点包含若干对话条目。
+- 用 Godot 4.6 + GDScript 可以搭出 Nova 风格 VN 运行时。
+- `BaseBlock` 包装剧本块的方案足够轻量，适合 Godot 原生项目。
+- 子系统拆分清楚，Graphics、Audio、VFX、Prefab、Video、Timeline 等都已有最小可用实现。
+- UI 已经从纯原型推进到可导航的 GALGAME 主菜单、设置、存读档、鉴赏页面。
+- 当前代码规模较小，仍适合做一次面向 Nova 目标的架构校准。
 
-### 三种基本元素
+真正需要警惕的是：如果继续堆功能但不补 checkpoint / NovaScript 兼容 / 工具链，项目会变成“另一个轻量 VN runtime”，而不是 Nova 的 Godot 目标实现。
 
-1. **急切块（Eager Block）`@<| ... |>`**：在加载/解析阶段立即执行，用于定义流程图结构
-2. **惰性块（Lazy Block）`<| ... |>`**：在游戏运行时执行，绑定到紧随其后的对话条目上
-3. **对话文本行**：非空且不以 `@<|` 或 `<|` 开头的行
+---
 
-### 对话格式
+## 八、建议的近期里程碑
 
-角色名和台词之间用冒号分隔，按优先级依次尝试：
-- `：：`（全角双冒号，推荐）
-- `：`（全角单冒号）
-- `:`（半角冒号）
+| 里程碑 | 目标 | 完成判据 |
+|--------|------|----------|
+| M1 NovaScript 兼容基线 | 补齐局部 label、变量前缀、is_save_point、block stage、文本插值、branch 兼容 | 能跑通从 Nova 迁移来的 `test_branch.txt`、`test_variables.txt`、`test_empty_node.txt` |
+| M2 Checkpoint 存档骨架 | 引入 node record + checkpoint + reached dialogue | 能从任意已读对白回跳并正确重建视觉状态 |
+| M3 章节选择与解锁 | 实现 ChapterSelectView 和 start node 解锁 | 多章节脚本可按已读进度解锁 |
+| M4 动画/VFX parity 第一轮 | 扩展动画组和 shader registry | 能跑通 `test_anim_hold.txt`、`test_transition.txt` 的 Godot 等价测试 |
+| M5 工具链最小集 | 剧本 lint、branch 可视化、资源扫描 | CI 中可自动检查示例剧本 |
 
-### 急切块 API（图结构定义）
+---
 
-| 方法 | 说明 |
-|------|------|
-| `label(name, display_name)` | 创建新节点或切换到已有节点 |
-| `is_start()` | 标记为游戏起始点 |
-| `is_chapter()` | 标记为章节类型 |
-| `is_end()` | 标记为结局类型 |
-| `jump_to(dest)` | 设置跳转目标 |
-| `branch(branches)` | 设置分支选项 |
+## 九、结论
 
-分支选项字典：
-- `dest`：目标节点名（必填）
-- `text`：显示文本
-- `cond`：条件表达式（GDScript）
-- `image`：选项图片路径
-- `mode`：分支模式（0=normal, 1=jump, 2=show, 3=enable）
+当前工程已经完成了 Godot 版 Nova 风格运行时的“骨架和多数基础器官”，但 Nova 目标工程真正成熟的部分集中在三块：checkpoint 回跳体系、Lua NovaScript 语义、内容生产工具链。后续若要继续以 `Nova/` 为开发目标，应优先迁移这三块，而不是继续只补单个演出 API。
 
-### 惰性块 API（运行时演出）
+推荐下一阶段从 P0 开始：先把 NovaScript 兼容基线和 checkpoint 存档骨架做实，再继续扩展 UI、动画、VFX 与工具链。
 
-| 方法 | 说明 |
-|------|------|
-| `show(obj, image, coord, color)` | 显示对象 |
-| `hide(obj)` | 隐藏对象 |
-| `move(obj, coord)` | 移动/缩放/旋转对象 |
-| `tint(obj, color)` | 给对象着色 |
-| `show_char(name, layers, coord, color)` | 显示组合立绘 |
-| `set_layer(name, layer, key)` | 切换立绘图层 |
-| `hide_char(name)` | 隐藏角色立绘 |
-| `set_avatar(name)` | 显示头像 |
-| `clear_avatar()` | 清除头像 |
-| `set_box(pos)` | 设置对话框位置 |
-| `cam(coord, scale, angle)` | 控制相机 |
-| `trans(kind, duration)` | 播放转场效果 |
-| `vfx(effect, target, duration, params)` | 视觉特效 |
-| `clear_vfx(target, duration)` | 清除视觉特效 |
-| `post_fx(effect, duration, params)` | 全屏后处理 |
-| `clear_post_fx(duration)` | 清除后处理 |
-| `shake(intensity, duration)` | 屏幕震动 |
-| `load_prefab(name, path, coord, color, ui)` | 加载预制体 |
-| `show_prefab(name)` / `hide_prefab(name)` / `destroy_prefab(name)` | 显示/隐藏/销毁预制体 |
-| `play_bgm(path, fade)` | 播放背景音乐 |
-| `stop_bgm(fade)` | 停止背景音乐 |
-| `play_se(path, volume_db)` | 播放音效 |
-| `play_voice(path)` | 播放语音 |
-| `play_video(path, skippable)` | 播放视频 |
-| `set_var(name, value)` / `get_var(name, default)` | 变量读写 |
-| `jump_to(dest)` | 运行时跳转 |
-| `jump_if(cond, dest)` | 条件跳转 |
-| `wait(seconds)` | 暂停 |
-| `timeline()` | 创建时间轴编排器 |
-| `show_toast(message, duration)` | 显示提示消息 |
-| `show_confirm(title, message)` | 显示确认对话框 |
-| `preload_asset(path)` | 异步预加载资源 |
+---
 
-### 时间轴（Timeline）
+## 十、Phase 1 实施记录
 
-```gdscript
-var t = timeline()
-t.show_at(0.0, "bg", "backgrounds/sunset")
-t.cam_at(1.0, [2, 0], 0.5)
-t.trans_at(3.0, "fade", 0.5)
-t.play()
-```
+### 2026-06-24：架构骨架与解析测试入口
 
-### 动画链（Animation Chain）
+已完成：
 
-```gdscript
-o.anim\
-    .PropertyVector3(o.bg, "position", Vector3(100, 0, 0), 1.0)\
-    .PropertyColor(o.bg, "modulate", Color(1, 0.5, 0.5), 0.5)
-```
+- 新增 `EngineContext` typed facade 草案，保留现有 `_ctx` 兼容路径，为后续逐步减少弱类型访问做入口。
+- 新增 `RestorableRegistry`，用 duck typing 约定 `snapshot()` / `restore(data)`，并在 `NovaController` 中注册现有可恢复子系统。
+- 新增 `scripts/tests/parse_scenarios_test.gd`，可用 Godot headless 解析 `resources/scenarios/*.txt` 并构建流程图。
+- `GDRuntime` 增加 `had_error` / `last_error` / `clear_errors()`，`ScriptLoader` 在 eager block 编译失败时会把 `load_ok` 标为 false。
 
-### 完整示例
+验证：
 
-```
-@<|
-label("prologue", "序章")
-is_start()
-|>
-
-<|
-trans("fade", 0.5)
-show("bg", "backgrounds/train_station")
-play_bgm("music/bgm_opening.ogg", 1.0)
-|>
-（列车到站的广播声）
-
-<|
-show_char("protagonist", { body="casual", face="neutral" }, [400, 0])
-set_avatar("protagonist")
-|>
-主人公：：终于到了啊...
-
-@<| jump_to("chapter1") |>
-```
+- 通过：`Godot_v4.6.3-stable_win64_console.exe --headless --path <project> --script res://scripts/tests/parse_scenarios_test.gd`
+- 通过：`Godot_v4.6.3-stable_win64_console.exe --headless --path <project> --scene res://scene/game.tscn --quit-after 3`
+- 注意：WinGet 的 `godot.exe` 指向非 console 版，不会显示脚本输出；验证需使用 `Godot_v4.6.3-stable_win64_console.exe`。
+- 残留风险：主场景 headless 强制退出时有 CanvasItem/ObjectDB/resource leaked 警告，暂未确认是否为强制退出导致。

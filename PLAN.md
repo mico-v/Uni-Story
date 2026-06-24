@@ -1,280 +1,349 @@
-# Uni-Story 开发计划
+# Uni-Story 成熟化开发计划
 
-> 当前分支：dev | 引擎：Godot 4.6 | 子系统：25
-
----
-
-**按照PLAN开发，项目进度记录进review.md，随时根据进度同步文档，推进开发，优化策略**
-
-## 一、已完成功能
-
-### 核心引擎
-- NovaScript 解析器（eager/lazy/text 块 + 属性语法）
-- GDRuntime（运行时 GDScript 编译执行 + 缓存）
-- FlowChartGraph（流程图 + 分支 + 跳转 + 条件求值）
-- GameState（状态机 + snapshot/restore + lazy block replay）
-- SaveSystem（6 槽 + 自动存档 + JSON 持久化）
-- Variables（变量存取 + 条件跳转 jump_if）
-- I18n（zh/en 双语 + locale 回退 + 剧本路径本地化）
-- Backlog（200 条滚动历史）
-- ReadTracker（已读记录持久化 + Skip 模式集成 + CG/音乐画廊解锁追踪）
-- ObjectManager（对象/常量注册 + 冻结语义）
-- ShortcutManager（快捷键自定义 + ConfigFile 持久化）
-- HotReload（文件轮询 + debounce + 自动重新解析）
-- PreloadSystem（ResourceLoader 异步后台加载）
-- ViewManager（视图注册/切换/过渡动画）
-
-### 运行时子系统
-- Graphics（show/hide/move/tint + 名字解析）
-- AudioSystem（独立 BGM/SE/Voice 总线 + 交叉淡入淡出 + SE 抢占策略）
-- CameraSystem（逻辑 2D 相机：移动/缩放/旋转）
-- AnimationSystem + AnimationChain（o.anim 链式 Tween）
-- TransitionSystem（fade/flash/fade_out/fade_in）
-- DialogueBoxSystem（7 种锚点预设 + 透明度控制）
-- VFXSystem（对象 shader + 震屏 + 全屏后处理 + shader 转场）
-- SpriteComposer + CompositeSprite（多图层立绘）
-- AvatarSystem（对话框内肖像）
-- PrefabLoader（.tscn 运行时加载 + ObjectManager 注册 + snapshot）
-- VideoSystem（全屏播放 + 跳过）
-- Timeline（轨道式调度器）
-- DialogSystem（Toast + Confirm）
-
-### UI 层
-- NovaController（瘦协调器 ~480 行 + 画廊解锁管理 + 4 项 gameplay 设置分发）
-- GameViewController（对话/打字机/选项/自动/快进/存读档面板/回顾跳转/鼠标菜单快存快读 ~1060 行）
-- TitleViewController（GALGAME 左侧列表菜单）
-- SettingsViewController（文字速度/音量/全屏/语言/字体/快捷键 + gameplay 设置 + snapshot/apply_i18n）
-- SaveLoadController（独立存读档视图 + 侧栏）
-- CgGalleryController（缩略图网格 + 全屏预览 + 动态解锁）
-- MusicGalleryController（曲目列表 + 三种播放模式 + BGM 信号集成）
-- ChoiceListController（分支选项渲染 + 图片缩略图 + 最大高度约束）
-
-### CI/CD
-- GitHub Actions workflow（tag 触发，Win/Linux/Android 并行编译 + Release）
-- Export presets（Windows x86_64 / Linux x86_64 / Android arm64）
+> 当前目标：使用 Godot 4.6 + GDScript，学习 Nova 的架构设计，逐步建设成熟、可维护、可扩展的视觉小说游戏引擎。  
+> 参考工程：`Nova/` Unity + C# + Lua(ToLua#)  
+> 当前工程：Godot + GDScript-first，不引入 Unity/C# 依赖，不把 Lua VM 作为默认运行时。  
+> 计划日期：2026-06-24
 
 ---
 
-## 二、Bug 修复（优先级从高到低）
+## 一、项目定位
 
-### P0 — 功能阻断（Phase 1 ✅）
+Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GDScript 生态中吸收 Nova 的成熟架构：
 
-- [x] **B1 F1 设置快捷键失效**：`ui_settings` 处理只关闭面板不打开设置。改为：关闭面板 + emit `settings_requested`
-- [x] **B3 `_ui_parent()` 逻辑反转**：PrefabLoader 的 UI 挂载方法找到 GameView 时返回 null，UI 预制体无法加载
-- [x] **B4 VFXSystem API 过期**：`get_shader_uniform_list(false)` 在 Godot 4.6 可能报错，改为无参数调用
-- [x] **B5 游戏内读档残留**：`_on_slot_pressed` 的 load 路径调 `load_game()` 前需先 `reset_world()`
-- [x] **B2 F5 快捷键冲突**：`ui_save` 和 `debug_reload` 共用 F5，重新分配键位
+- 学习 Nova 的流程图、检查点存档、回跳、章节解锁、资源预加载、动画分组、UI 视图管理和工具链设计。
+- 保持 Godot 原生开发体验：GDScript、`.tscn` 场景、`Resource`、`ConfigFile`、`ResourceLoader`、Godot export pipeline。
+- 建立可做真实作品的视觉小说引擎，而不是只跑 demo 的运行时原型。
+- 文档与进度同步：`PLAN.md` 写路线和验收标准，`review.md` 写对比审查、阶段复盘和风险记录。
 
-### P1 — 数据正确性（Phase 2 ✅）
+架构方向：
 
-- [x] **B6 GDRuntime 哈希碰撞**：`source.hash()` 改 `source.sha256_text()` 或全字符串缓存
-- [x] **B9 尾部 lazy 块丢失**：`script_loader.gd` 的 `load_all()` 末尾补调 `_flush_pending_lazy_as_silent()`
-- [x] **B7 确认对话框未 i18n**：`dialog_system.gd` OK/Cancel 按钮接入 `_t("alert.confirm")` / `_t("alert.cancel")`
-- [x] **B12 CompositeSprite 层悬空引用**：`clear_layers()` 改为同步 `remove_child` + `free`，或等一帧后再清空 `_layers`
-
-### P2 — 代码质量（Phase 5 ✅）
-
-- [x] **B8 MusicGallery BGM 发现脆弱**：改为 AudioSystem 暴露 `get_bgm_player()` 方法
-- [x] **B10 AnimationChain 信号语法**：`emit_signal("finished")` 改为 `finished.emit()`
-- [x] **B11 Graphics snapshot 冗余**：移除 `texture_path` 捕获（restore 不使用）或在 restore 中恢复纹理
-- [x] **B13 SaveSystem 死代码**：删除 `data.has("version")` 永远为 true 的检查
-- [x] **B14 Variables 类型偏移**：`add_var` 保持原类型（整数加整数仍为整数）
-- [x] **B15 TransitionSystem "flash" 重复**：删除与 "fade" 相同的实现，或让 flash 有不同的视觉行为
-- [x] **B16 Voice restore 缺 seek**：AudioSystem voice restore 加上 `play(pos)` 与 BGM 对齐
+| 层级 | 目标职责 | Godot 实现方向 |
+|------|----------|----------------|
+| 组合根 | 统一装配子系统、场景、配置 | `NovaController.gd` 作为 Composition Root，逐步减少弱类型 `_ctx` 访问 |
+| 脚本前端 | 解析 NovaScript 风格剧本 | 保持 GDScript runtime，补 NovaScript 兼容语义 |
+| 流程核心 | 节点、分支、章节、结局、回跳 | `FlowChartGraph` + `GameState` + 新 `CheckpointManager` |
+| 表现运行时 | 图像、立绘、动画、音频、镜头、VFX、视频、Prefab | 现有 runtime 子系统扩展为可存档、可暂停、可恢复 |
+| UI 产品层 | 标题、章节、游戏、设置、存读档、回顾、鉴赏、帮助、通知、输入映射 | `.tscn` 场景 + 控制器，避免大型动态 UI 堆代码 |
+| 工具链 | 剧本 lint、分支可视化、资源扫描、立绘工具、shader 生成、导出测试 | Godot/ Python 工具并行，优先自动化剧本与资源检查 |
 
 ---
 
-## 三、架构改进
+## 二、当前基线
 
-### 3.1 存档恢复覆盖（Phase 4 ✅）
+当前项目已经具备一套可运行的 GDScript 视觉小说框架：
 
-- [x] **VFXSystem snapshot/restore**：捕获活跃的 shader 参数和 uniform 值，restore 时重新应用
-- [x] **DialogueBoxSystem snapshot/restore**：保存当前预设名（bottom/center/etc.），restore 时重新定位
-- [x] **SpriteComposer snapshot/restore**：捕获每个角色名的图层状态，restore 时重建
-- [x] **Backlog 持久化**：存入存档 JSON，读档后回顾面板保留历史
+- NovaScript 风格 eager/lazy/text 块解析。
+- GDScript 动态编译运行时 `GDRuntime`。
+- 流程图、分支、跳转、条件分支、命名结局。
+- 变量、I18n、ReadTracker、Backlog、HotReload、PreloadSystem。
+- 图片、立绘合成、头像、音频、镜头、动画链、转场、VFX、Prefab、视频、Timeline。
+- 标题、游戏、设置、独立存读档、CG 鉴赏、音乐鉴赏、Toast/Confirm、右键菜单。
+- JSON 存档、自动存档、动态 CG/BGM 解锁。
+- Godot export presets 和 GitHub Actions 发布基础。
 
-### 3.2 图完整性（Phase 11 ✅ — `81b5660`）
+主要短板：
 
-- [x] **循环检测**：`FlowChartGraph.sanity_check()` 加 DFS 检测 A→B→A 路径，报告为 error
-- [x] **CHAPTER 类型行为**：让 CHAPTER 节点触发章节标题 UI 或自动推进（不等待点击）
-- [x] **`is_end(name)` 命名结局**：存储结局名称，供画廊解锁和成就系统查询
-
-### 3.3 运行时安全性（Phase 12 ✅ — `2329b17`）
-
-- [x] **GDRuntime 超时机制**：async 操作加安全 timeout（默认 30s），超时 push_error 并继续
-- [x] **条件编译缓存**：`_eval_condition` 按条件字符串 hash 缓存编译结果
-- [x] **ReadTracker 自动持久化**：`mark_read()` 加 debounce（2s），自动写磁盘
-- [x] **PreloadSystem 取消机制**：加 `cancel_preload(path)` 方法
-
-### 3.4 音频系统增强（Phase 7 ✅）
-
-- [x] **独立音频总线**：创建 BGM/SE/Voice 三个 AudioBus，分别路由
-- [x] **BGM 交叉淡入淡出**：fade 改为同时淡出旧 + 淡入新，消除静默间隙
-- [x] **SE 池抢占策略**：改为抢占播放时间最长或优先级最低的 SE 播放器
+- 存档/回跳仍是 snapshot + replay 的简化模型，缺 Nova 的 checkpoint/node record/reached data/bookmark 体系。
+- NovaScript 只是“风格相似”，尚未完整兼容 Nova 的 Lua 语义。
+- UI 缺章节选择、Help、Notification、完整 Alert、输入映射、存档截图。
+- 动画、VFX、预加载、工具链距离 Nova 成熟度还有明显差距。
+- 子系统通过 `_ctx: Node` 互相访问，类型边界和职责边界需要继续收敛。
 
 ---
 
-## 四、功能补完（场景系统已支持但 UI 未暴露）
+## 三、核心原则
 
-### 4.1 设置界面扩展（Phase 6 ✅）
-
-- [x] **对话框透明度滑块**：i18n 键 `config.item.dialogueopacity` 已有，实现 DialogueBoxSystem.modulate 绑定
-- [x] **点击停止动画开关**：`config.item.clickstopanimation` — 点击时如果动画还在播放则先完成动画再推进
-- [x] **点击停止语音开关**：`config.item.clickstopvoice` — 点击时停止当前语音
-- [x] **快进未读开关**：`config.item.fastforwardunread` — 控制 Skip 模式是否跳过未读文本
-
-### 4.2 存档体验（Phase 6 ✅）
-
-- [x] **存档覆盖确认**：使用 i18n 键 `bookmark.overwrite.confirm`
-- [x] **读档确认**：使用 i18n 键 `bookmark.load.confirm`
-- [x] **存档删除功能**：使用 i18n 键 `bookmark.delete.confirm`
-
-### 4.3 分支与选项（Phase 8 ✅）
-
-- [x] **分支图片**：ChoiceListController 渲染选项的 `image` 字段为缩略图
-- [x] **条件分支验证**：在 `test_all.txt` 中补充条件分支测试用例
-- [x] **回顾跳转**：点击回顾条目跳回对应位置（使用 `log.moveback.confirm`）
-
-### 4.4 画廊与解锁（Phase 9 ✅）
-
-- [x] **CG 动态解锁**：基于 ReadTracker 或自定义事件触发解锁
-- [x] **音乐动态解锁**：播放过一次的 BGM 自动解锁
+1. **GDScript-first**：脚本块继续编译为 GDScript；兼容 NovaScript 时优先做语义映射和转换层，而不是默认嵌 Lua。
+2. **存档能力优先于表现堆叠**：成熟 VN 引擎的核心是可回跳、可恢复、可升级，不是只增加更多演出 API。
+3. **场景与控制器分离**：UI 结构进 `.tscn`，逻辑进 `scripts/ui/*`，避免大型控制器继续膨胀。
+4. **可验证推进**：每个阶段必须有验收剧本、自动检查或明确手动测试清单。
+5. **兼容与原生平衡**：Nova 作为设计目标，Godot 作为实现约束；遇到冲突时优先保留 Godot 可维护性。
+6. **文档同步**：完成阶段后更新 `PLAN.md` 的状态，并把审查结论、偏差和风险写入 `review.md`。
 
 ---
 
-## 五、UI/UX 改进
+## 四、阶段路线图
 
-- [ ] **重新设计对话框和按钮元素UI**：按钮改为无边框，字体底色带渐变背景。对话框也是需要符合现代galgame的渐变色框。主题颜色采用亮色系，淡粉色白色淡蓝色等色系。（对话框 StyleBoxFlat 覆盖 + 亮色主题已实现 `5ab07da`，精修需美术资源）
+### Phase 0：计划锁定与基线整理
 
-- [x] **标题界面 ContentArea**：右侧放置 Logo 图片（SVG 生成 `5ab07da`，替换为正式美术资源可后续更新）
-- [x] **ChoiceList 最大尺寸**：约束最大高度，超出时 ScrollContainer（Phase 10 ✅）
-- [x] **Toast 视口自适应**：位置从绝对像素改为视口百分比（Phase 10 ✅）
-- [x] **主主题补全**：ScrollContainer/GridContainer 样式、CJK 字体集成（`5ab07da`）
-- [x] **ContinueIcon**：从 Unicode "▼" 改为 TextureRect + 代码生成三角纹理（`5ab07da`）
-- [x] **鼠标菜单补充**：添加快速存档 / 快速读档条目（Phase 10 ✅）
-- [x] **右键菜单设置快捷键**：F1 设置快捷键连接到 `settings_requested`（Phase 1 ✅）
+目标：把工程方向从“功能补丁列表”调整为“GDScript 成熟引擎路线图”。
+
+任务：
+
+- [x] 对比 `Nova/` 与当前工程，形成 `review.md` 差异报告。
+- [x] 重写 `PLAN.md`，确立 GDScript-first 的成熟化路线。
+- [ ] 为每个后续 Phase 建立 issue/commit 粒度清单。
+- [ ] 统一术语：node、entry、checkpoint、bookmark、reached、chapter、branch mode、runtime stage。
+
+验收：
+
+- `PLAN.md` 能指导后续逐步开发。
+- `review.md` 能解释为什么优先做 checkpoint、脚本兼容和工具链。
+
+### Phase 1：架构边界与工程骨架
+
+目标：先让现有 GDScript 架构更像一个可扩展引擎，而不是 demo 控制器集合。
+
+任务：
+
+- [x] 新增 headless 剧本解析 smoke test：`scripts/tests/parse_scenarios_test.gd`。
+- [x] 新增 `EngineContext` typed facade 草案，作为后续减少 `_ctx` 弱类型访问的入口。
+- [x] 新增 `RestorableRegistry`，定义 `snapshot()` / `restore(data)` 的 duck-typed checkpoint 约定。
+- [ ] 给核心子系统补 `class_name`、明确类型、返回值和错误策略。
+- [ ] 设计 `EngineContext` 或 typed facade，减少任意 `_ctx.xxx` 弱类型访问。
+- [ ] 把可配置路径、槽位数量、预加载容量、自动存档策略迁移为 `@export` 或 `Resource` 配置。
+- [ ] 梳理 `NovaController.gd`：只保留装配、导航、全局信号路由；业务逻辑下沉到 coordinator/service。
+- [ ] 建立统一日志/错误分级：parse error、runtime warning、save corruption、asset missing。
+- [ ] 扩展最小测试入口：跑一段无 UI 的 GameState。
+
+验收：
+
+- Godot 打开主场景无脚本错误。
+- 能用命令或工具脚本解析所有 `resources/scenarios/*.txt`。
+- `NovaController.gd` 的职责说明写清楚，新增逻辑优先进入子系统。
+
+### Phase 2：NovaScript 兼容基线
+
+目标：在 GDScript runtime 上补 NovaScript 常用语义，让目标 Nova 剧本可以逐步迁移。
+
+任务：
+
+- [ ] 支持 `l_` 局部 label：按文件名生成稳定命名空间。
+- [ ] 支持 `is_save_point()`，并先接入普通 checkpoint 标记。
+- [ ] 支持 `is_debug()`、locked/unlocked/debug start 的完整分类。
+- [ ] 支持 block attribute：如 `[stage = before_checkpoint]`、branch 默认属性。
+- [ ] 支持 lazy block stage：default、before_checkpoint、after_dialogue。
+- [ ] 支持文本插值：`{{var_name}}` 映射到变量系统。
+- [ ] 支持 `v_` / `gv_` 变量兼容层：局部变量进入当前存档，全局变量进入 global save。
+- [ ] 支持 Nova branch image tuple：`image = {"name", {x, y, scale}}` 映射为 Godot 可渲染数据。
+- [ ] 支持条件表达式兼容：字符串条件继续编译为 GDScript；函数式条件先定义兼容限制。
+- [ ] 迁移 Nova 测试剧本最小集：`test_branch.txt`、`test_variables.txt`、`test_empty_node.txt`。
+
+验收：
+
+- 以上三个迁移测试剧本可以被解析并完成基本播放。
+- 兼容语法和不兼容语法在 `docs/NovaScript.md` 中明确列出。
+- 解析错误能定位到文件、行号和块类型。
+
+### Phase 3：Checkpoint / Bookmark 存档核心
+
+目标：迁移 Nova 最关键的成熟能力：任意已读对白回跳、稳定恢复、全局进度和存档升级基础。
+
+任务：
+
+- [ ] 新增 `CheckpointManager.gd`，管理 node record、checkpoint、reached dialogue、reached end。
+- [ ] 设计 `NodeRecord` 数据结构：name、parent、child/sibling 或等价历史关系、begin/end dialogue、variables hash。
+- [ ] 设计 `GameStateCheckpoint`：当前 entry、变量快照、各 restorable 子系统状态、checkpoint restraint。
+- [ ] 把 `SaveSystem` 拆分为 bookmark slot 管理；底层恢复交给 `CheckpointManager`。
+- [ ] 保存 reached dialogue，用于回顾、已读、章节解锁、skip unread。
+- [ ] 实现 bookmark metadata：创建时间、章节名、对白索引、截图路径、global save id。
+- [ ] 实现存档截图：在游戏视图生成 thumbnail，存入 user data。
+- [ ] 实现从最近 checkpoint restore + replay 到目标 entry。
+- [ ] 为脚本升级预留 node text hash 和 save version 字段。
+
+验收：
+
+- 从回顾点击任意已读对白，可恢复到正确视觉状态。
+- 手动存档/读档/自动存档都走 bookmark。
+- 删除、覆盖、损坏存档都有明确 UI 提示。
+- `test_all.txt` 增加回跳和读档自检段。
+
+### Phase 4：章节选择、全局进度与标题体验
+
+目标：补齐 Nova 标题层产品体验，让多章节作品能自然启动、继续、选择章节。
+
+任务：
+
+- [ ] 新建 `scene/view/chapter_select_view.tscn` 和 `ChapterSelectViewController.gd`。
+- [ ] 按 start node 类型显示章节：normal、unlocked、debug。
+- [ ] 用 reached dialogue 解锁章节。
+- [ ] 标题菜单改为：开始/章节选择/继续/读取/设置/CG/音乐/帮助/退出。
+- [ ] 新增 HelpView，承载项目说明、操作说明和首次提示。
+- [ ] 新增首次提示策略：首次进入游戏、首次解锁章节、首次使用回顾跳转。
+- [ ] 标题 BGM、UI 音效、视图切换音效接入 AudioSystem。
+
+验收：
+
+- 多 start node 剧本可进入章节选择。
+- 只有一个 unlocked start 时可直接开始。
+- Debug start 只在调试开关开启时显示。
+- 标题、章节、游戏、设置、鉴赏之间导航无残留状态。
+
+### Phase 5：ViewManager 与 UI 产品层成熟化
+
+目标：让 UI 层达到可做作品的稳定度。
+
+任务：
+
+- [ ] `ViewManager` 增加状态：Title/UI/Game/InTransition/Alert。
+- [ ] 切出 GameView 时暂停 per-dialogue/holding 动画和相关音频，切回时恢复。
+- [ ] 增加 transition input blocker，防止过渡中重复点击。
+- [ ] 新增 NotificationView 和 AlertView，Toast/Confirm 迁移到统一通知体系。
+- [ ] 输入映射 UI：按键录制、恢复默认、冲突提示、保存到 ConfigFile。
+- [ ] 存读档 UI 显示截图、章节名、时间、当前位置。
+- [ ] 回顾 UI 支持语音重播、跳转确认、筛选未来文本。
+- [ ] UI 主题资源拆分：默认主题、作品主题、调试主题。
+
+验收：
+
+- 游戏中打开/关闭所有 UI 不会破坏自动播放、快进、语音和动画状态。
+- 所有弹窗可键盘/手柄/鼠标关闭。
+- 存档列表可承载至少 100 个槽位而不卡顿或布局错乱。
+
+### Phase 6：动画系统升级
+
+目标：向 NovaAnimation 学习，形成 Godot 原生的动画编排系统。
+
+任务：
+
+- [ ] 区分动画域：per_dialogue、holding、ui、text。
+- [ ] `AnimationChain` 支持 then/and 语义，而不是只靠链式 Tween。
+- [ ] 支持 pause/resume/stop，ViewManager 可统一控制。
+- [ ] 支持命名 holding animation group。
+- [ ] 增加常用 property：position、scale、rotation、modulate、volume、shader float、dialogue text reveal。
+- [ ] 增加 easing parser，兼容常见 Nova slope/easing 写法。
+- [ ] Lazy block stage 与动画等待策略打通：是否阻塞对白推进可配置。
+
+验收：
+
+- Godot 版 `test_anim_hold.txt` 可覆盖 holding animation。
+- 切到菜单再切回，holding animation 和 BGM 状态符合预期。
+- 点击停止动画、快进、读档不会留下悬空 Tween。
+
+### Phase 7：VFX / Shader / Transition 系统
+
+目标：把当前固定几个 shader 的原型扩展为作品级效果系统。
+
+任务：
+
+- [ ] 建立 shader registry 资源文件，记录 effect name、shader path、默认参数、可动画参数。
+- [ ] 支持对象 VFX、后处理 VFX、转场 VFX 三类。
+- [ ] 支持多参数动画：float/color/vector/texture。
+- [ ] 支持 shader layer 或等价 Godot material stack 策略。
+- [ ] 支持 render target / screen capture，用于复杂转场。
+- [ ] 迁移 Nova 常用效果子集：fade、wipe、blur、mono、glitch、shake、ripple、rain。
+- [ ] 设计 Godot 版 shaderproto 或简化生成器，避免手写大量重复 shader。
+
+验收：
+
+- Godot 版 `test_transition.txt` 覆盖普通转场、shader 转场、对象 VFX、后处理。
+- VFX 可存档恢复。
+- 缺 shader 或参数错误时只报明确 warning，不崩溃。
+
+### Phase 8：资源加载、预加载与内容生产工具
+
+目标：让内容规模变大后仍能稳定开发。
+
+任务：
+
+- [ ] 静态扫描剧本，自动发现 show/audio/prefab/video/timeline/choice image 资源。
+- [ ] `PreloadSystem` 支持优先级、取消、LRU、进度、资源类型。
+- [ ] 缺失资源报告生成到 `review.md` 或独立 report。
+- [ ] 迁移 Nova `Tools/Scenarios` 高价值工具：lint、show_branches、visualize、stat_dialogue_len、list_bg/list_bgm。
+- [ ] 设计 Godot 版立绘导入约定：角色/图层/表情/口型/头像路径规则。
+- [ ] 迁移或重写 PSD/图层/standing 工具链。
+- [ ] 生成 localized resource path / charset 辅助文件。
+
+验收：
+
+- CI 能检查剧本引用资源是否存在。
+- 能输出流程图或分支图。
+- 能统计对白长度、角色台词量、使用过的背景/BGM/立绘。
+
+### Phase 9：小游戏、中断与扩展接口
+
+目标：支持 Nova 式“VN + gameplay”混合项目。
+
+任务：
+
+- [ ] 实现 interrupt/fence 协议：开始中断、等待外部信号、结束中断。
+- [ ] `PrefabLoader` 扩展为 gameplay prefab manager，区分 UI prefab / world prefab / persistent prefab。
+- [ ] 中断期间暂停自动/快进/点击推进。
+- [ ] 小游戏结束后根据变量变化确保 checkpoint。
+- [ ] 提供扩展脚本接口：自定义系统可注册为 restorable、preloadable、script API provider。
+- [ ] 增加示例小游戏场景和测试剧本。
+
+验收：
+
+- Godot 版 `test_minigame.txt` 可以跑通。
+- 小游戏中保存/读档/回跳有明确策略，不出现半恢复状态。
+- 外部系统注册错误能被检测出来。
+
+### Phase 10：平台、质量与发布
+
+目标：形成可发布、可维护、可回归测试的引擎工程。
+
+任务：
+
+- [ ] Headless 测试：parser、flow graph、save/restore、checkpoint replay、resource scan。
+- [ ] 场景 smoke test：主场景加载、标题导航、开始游戏、存读档、设置、鉴赏。
+- [ ] 导出 smoke test：Windows/Linux/Android 产物基础检查。
+- [ ] 性能基线：脚本解析耗时、资源预加载耗时、存档耗时、回跳耗时。
+- [ ] 错误恢复：损坏存档、缺资源、脚本语法错误、循环图、未知跳转。
+- [ ] 文档整理：快速开始、NovaScript 兼容表、资源规范、扩展系统、发布流程。
+- [ ] 示例作品完善：至少一个 3 章节、含分支/结局/CG/BGM/回跳/小游戏的样例。
+
+验收：
+
+- 每次合并前能跑最小自动验证。
+- Release 包可以给非开发者运行。
+- README/SETUP/docs 能支持新作者建立第一个 VN 项目。
 
 ---
 
-## 六、清理（Phase 3 ✅）
+## 五、近期执行顺序
 
-- [x] 删除 `scripts/ui/chapter_select_view_controller.gd.uid`（孤立文件）
-- [x] 删除 `scene/ui/dialogue_entry.tscn`（未引用场景）
-- [x] 删除 NovaController 中 `REVIEW_REGRESSION_FILES` / `REVIEW_SANITY_FILES` 常量（对应文件不存在）
-- [x] 清理 `debug_unlock` (KEY_U) 输入动作或实现其功能
-- [x] 清理 `game_state.node_changed` / `game_state.game_started` 未消费信号（连接消费者或删除）
+第一轮不要同时开太多战线，按下面顺序推进：
 
----
+1. Phase 1：架构边界与测试入口。
+2. Phase 2：NovaScript 兼容基线。
+3. Phase 3：Checkpoint / Bookmark 存档核心。
+4. Phase 4：章节选择与标题体验。
+5. Phase 6：动画系统升级。
+6. Phase 7：VFX / Shader / Transition 系统。
+7. Phase 8：工具链和资源扫描。
 
-## 七、实施顺序（全部完成）
-
-1. ~~**P0 Bug 修复**（5 项，功能阻断级）~~ ✅ Phase 1 — `b367a4a`
-2. ~~**P1 数据正确性修复**（4 项）~~ ✅ Phase 2 — `9558c32`
-3. ~~**清理孤立文件和死代码**（5 项）~~ ✅ Phase 3 — `aa318c9`
-4. ~~**存档恢复覆盖补全**（4 项）~~ ✅ Phase 4 — `79186ba`
-5. ~~**P2 代码质量改进**（8 项）~~ ✅ Phase 5 — `cc1b754`
-6. ~~**设置界面扩展 + 存档体验**（7 项）~~ ✅ Phase 6 — `c37fa10`
-7. ~~**音频系统增强**（3 项）~~ ✅ Phase 7 — `637492e`
-8. ~~**分支图片 + 条件分支验证**（3 项）~~ ✅ Phase 8 — `72b1349`
-9. ~~**画廊动态解锁**（2 项）~~ ✅ Phase 9 — `e0ebbd8`
-10. ~~**UI/UX 改进**（7 项）~~ ✅ Phase 10 — `5b74b61`
-11. ~~**图完整性**（3 项）~~ ✅ Phase 11 — `81b5660`
-12. ~~**运行时安全性**（4 项）~~ ✅ Phase 12 — `2329b17`
-
-### 剩余未完成
-
-- **五、对话框/按钮 UI 精修**（1 项）：需要正式美术资源替换程序化生成的 StyleBoxFlat
+建议每个 Phase 拆成 2-5 个小提交，每个提交都能运行主场景或对应测试脚本。
 
 ---
 
-## 八、架构审阅重构计划（基于 CODE_REVIEW.md）
+## 六、阶段状态表
 
-> 基于 2026-06-23 的全面代码审阅，分 9 个阶段逐步实施。
-> 每阶段独立提交并经 Godot MCP 编译验证（rescan→wait→clear→run_scene→wait→get_errors→stop_scene）。
-> 进度记录在 review.md 的"八、实施记录"章节。
-
-### Phase R1: 死代码清理与 Bug 修复
-- [ ] 删除 NovaController._register_objects() 空方法及调用
-- [ ] 删除 hot_reload.gd 中 _refresh_chapters() 死代码调用
-- [ ] 删除 prefab_loader.gd 中 get_game_vc() 死代码 fallback
-- [ ] 修复 gd_runtime.gd run_block_async() 超时处理（移除死分支，重置 _running_async，停止 timer）
-- [ ] 连接 Variables.changed 信号到 _cond_cache 清空
-- [ ] 添加存档版本号校验
-- **Commit**: `fix: remove dead code, fix GDRuntime timeout, add cond_cache invalidation and save version check`
-
-### Phase R2: 全局 Theme 资源
-- [ ] 创建 resources/themes/default_theme.tres（暗色 GALGAME 风格）
-- [ ] 应用到 game.tscn 根节点
-- **Commit**: `feat: add global dark GALGAME theme resource`
-
-### Phase R3: 存档槽位行场景提取
-- [ ] 创建 scene/ui/slot_row.tscn
-- [ ] 统一 _open_save_panel 和 _refresh_save_slots 逻辑
-- **Commit**: `refactor: extract save slot row to scene, eliminate duplication`
-
-### Phase R4: 动态 UI 迁移到场景文件
-- [ ] 创建 context_menu.tscn, toast.tscn, cg_preview_overlay.tscn
-- [ ] 迁移对应控制器代码
-- **Commit**: `refactor: migrate dynamic UI (context menu, toast, CG preview) to scene files`
-
-### Phase R5: 菜单视图场景继承
-- [ ] 创建 base_menu_view.tscn
-- [ ] 5 个菜单视图继承重构
-- **Commit**: `refactor: use scene inheritance for menu views, eliminate sidebar duplication`
-
-### Phase R6: @export 可配置参数
-- [ ] NovaController, SaveSystem, GameViewController, AudioSystem 等添加 @export
-- **Commit**: `feat: add @export parameters for designer-configurable values`
-
-### Phase R7: GameState 模型层解耦
-- [ ] snapshot/restore 编排移至 NovaController
-- [ ] GameState 只管自身状态
-- **Commit**: `refactor: decouple GameState from presentation layer, move snapshot/restore orchestration to NovaController`
-
-### Phase R8: GameViewController 拆分
-- [ ] 提取 SaveLoadPanelController, BacklogPanelController, ContextMenuController
-- **Commit**: `refactor: split GameViewController into SaveLoadPanel, BacklogPanel, and ContextMenu controllers`
-
-### Phase R9: 代码质量提升
-- [x] class_name NovaController ✅
-- [x] 类型化数组（Array[String], Array[Dictionary]）✅
-- [ ] @onready 统一
-- [x] PreloadSystem LRU ✅
-- [ ] 解析器修复
-- **Commit**: `refactor: code quality improvements (class_name, typed arrays, @onready, LRU, parser fix)`
+| Phase | 名称 | 状态 | 优先级 |
+|-------|------|------|--------|
+| 0 | 计划锁定与基线整理 | 进行中 | P0 |
+| 1 | 架构边界与工程骨架 | 进行中 | P0 |
+| 2 | NovaScript 兼容基线 | 待开始 | P0 |
+| 3 | Checkpoint / Bookmark 存档核心 | 待开始 | P0 |
+| 4 | 章节选择、全局进度与标题体验 | 待开始 | P0 |
+| 5 | ViewManager 与 UI 产品层成熟化 | 待开始 | P1 |
+| 6 | 动画系统升级 | 待开始 | P1 |
+| 7 | VFX / Shader / Transition 系统 | 待开始 | P1 |
+| 8 | 资源加载、预加载与内容生产工具 | 待开始 | P1 |
+| 9 | 小游戏、中断与扩展接口 | 待开始 | P2 |
+| 10 | 平台、质量与发布 | 待开始 | P2 |
 
 ---
 
-## 九、2026-06-23 运行时与 UI 修复记录
+## 七、文档同步规则
 
-### 运行时错误修复
+- `PLAN.md`：只记录路线、任务、状态、验收标准。
+- `review.md`：记录 Nova 对比、阶段审查、风险和复盘。
+- `docs/NovaScript.md`：记录脚本语法、兼容表和迁移说明。
+- `README.md`：只放用户视角的快速开始和能力摘要。
+- 每完成一个 Phase：更新状态表，补充验收结果，把实际偏差写入 `review.md`。
 
-| 问题 | 文件 | 修复 |
-|------|------|------|
-| `is_visible()` 覆盖 CanvasItem 原生方法 | save_load_panel_controller.gd, backlog_panel_controller.gd | 重命名为 `panel_is_visible()` |
-| `close` 参数遮蔽 `close()` 方法 | save_load_panel_controller.gd, backlog_panel_controller.gd | 重命名为 `close_btn` |
-| `disconnect_all()` 不存在 | gd_runtime.gd | 删除该调用 |
-| Lambda 捕获按值捕获，无法修改外层变量 | gd_runtime.gd | 用 Dictionary 包装可变状态 |
-| `BtnBack` 节点在继承场景中丢失 | scene/ui/base_menu_view.tscn | 添加到 base scene |
-| Typed array 返回类型不匹配 | gallery_config_loader.gd | 改为 `Array[Dictionary]` |
-| `Array` 构造函数签名不匹配 | composite_sprite.gd | 使用 typed array 常量声明 |
-| `Backlog.restore()` 类型不匹配 | backlog.gd | 迭代并类型检查条目 |
-| BacklogPanelController `get_tree()` 为 null | backlog_panel_controller.gd | 使用 `_ctx.get_tree()` |
-| generate_theme.gd 混合缩进 | generate_theme.gd | 移除多余空格 |
+---
 
-### UI 功能修复
+## 八、下一步具体任务
 
-| 问题 | 文件 | 修复 |
-|------|------|------|
-| `_close_save_panel()` 未声明 | game_view_controller.gd | 改为 `_save_load_controller.close()` |
-| `SKIP_DELAY` 未声明 | game_view_controller.gd | 改为 `skip_delay` |
-| `_save_load_controller.slot_pressed` 未连接 | game_view_controller.gd | 添加连接 |
-| Backlog 回顾显示未来文本 | backlog_panel_controller.gd | 按当前进度过滤，不显示当前位置之后的条目 |
-| Backlog 条目无 hover 效果 | backlog_panel_controller.gd | 添加 `modulate` 颜色变化（淡黄色） |
-| Backlog 跳转后选单显示错位 | choice_list_controller.gd, game_view_controller.gd | `clear()` 重置布局约束，`reset_world()` 使用 `_choice_list_controller.clear()` |
+Phase 1 建议从以下任务开始：
 
-### 相关文件变更
+1. 扩展 headless 测试：从“只解析流程图”推进到“无 UI 推进若干对白 entry”。
+2. 梳理 `NovaController.gd` 目前职责，拆出 gallery/save/settings/navigation 的 coordinator 方案。
+3. 开始把新代码的上下文访问改用 `EngineContext`，旧系统暂不强迁移。
+4. 把 `RestorableRegistry` 接入下一版 Save/Checkpoint 设计草案。
+5. 清理主场景 headless 退出时的渲染资源泄漏警告，确认是否只是强制退出导致。
 
-- `scripts/ui/choice_list_controller.gd`：添加 `size_flags`、改进 `clear()`
-- `scripts/ui/game_view_controller.gd`：`reset_world()` 中使用 `_choice_list_controller.clear()`
-- `scripts/ui/backlog_panel_controller.gd`：添加过滤逻辑和 hover 效果
+完成 Phase 1 后，再进入 NovaScript 兼容层和 Checkpoint 核心，不建议先继续扩展单个 UI 或演出 API。

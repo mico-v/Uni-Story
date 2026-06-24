@@ -37,6 +37,8 @@ var shortcut_manager: ShortcutManager
 var video_system: VideoSystem
 var dialog_system: DialogSystem
 var preload_system: PreloadSystem
+var engine_context: EngineContext
+var restorables: RestorableRegistry
 
 # ── View management ─────────────────────────────────────────────────
 var view_manager: ViewManager
@@ -87,6 +89,8 @@ func _ready() -> void:
 # ── Subsystem creation ──────────────────────────────────────────────
 
 func _init_subsystems() -> void:
+	engine_context = EngineContext.new(self)
+	restorables = RestorableRegistry.new()
 	object_manager = ObjectManager.new()
 	runtime = GDRuntime.new(self)
 	script_loader = ScriptLoader.new(self)
@@ -111,6 +115,21 @@ func _init_subsystems() -> void:
 	video_system = VideoSystem.new(self)
 	dialog_system = DialogSystem.new(self)
 	preload_system = PreloadSystem.new(self)
+	_register_restorables()
+
+
+func _register_restorables() -> void:
+	restorables.register("game_state", game_state)
+	restorables.register("graphics", graphics)
+	restorables.register("audio", audio)
+	restorables.register("camera", camera)
+	restorables.register("animation", animation)
+	restorables.register("dialogue_box", dialogue_box)
+	restorables.register("vfx", vfx)
+	restorables.register("composer", composer)
+	restorables.register("prefab_loader", prefab_loader)
+	restorables.register("read_tracker", read_tracker)
+	restorables.register("backlog", backlog)
 
 
 # ── Locale ───────────────────────────────────────────────────────────

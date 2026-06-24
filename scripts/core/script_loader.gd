@@ -50,7 +50,10 @@ func _parse_file(source: String) -> void:
 			"eager":
 				_block_attrs = block.get("attrs", {})
 				_flush_pending_lazy_as_silent()
+				_runtime.clear_errors()
 				_runtime.run_block(block["content"])
+				if _runtime.had_error:
+					load_ok = false
 				_block_attrs = {}
 			"lazy":
 				_block_attrs = {}

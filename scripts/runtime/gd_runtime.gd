@@ -15,6 +15,8 @@ const ASYNC_TIMEOUT := 30.0
 var _ctx: Node
 var _cache: Dictionary = {}  # source string -> GDScript
 var _running_async := false
+var had_error := false
+var last_error: String = ""
 
 
 func _init(ctx: Node) -> void:
@@ -25,6 +27,11 @@ func _init(ctx: Node) -> void:
 ## of scenario blocks whose source has changed.
 func clear_cache() -> void:
 	_cache.clear()
+
+
+func clear_errors() -> void:
+	had_error = false
+	last_error = ""
 
 
 ## Compile a block of statements into an instantiable GDScript. Returns null on
@@ -39,7 +46,9 @@ func compile_block(source: String) -> GDScript:
 	script.source_code = wrapped
 	var err := script.reload()
 	if err != OK:
-		push_error("GDRuntime: failed to compile block (err %d):\n%s" % [err, wrapped])
+		had_error = true
+		last_error = "GDRuntime: failed to compile block (err %d):\n%s" % [err, wrapped]
+		push_error(last_error)
 		return null
 
 	_cache[key] = script
@@ -80,7 +89,9 @@ func run_block_async(source: String):
 		timer.timeout.connect(func() -> void:
 			if not state["completed"]:
 				state["timed_out"] = true
-				push_error("GDRuntime: async block timed out after %ds:\n%s" % [ASYNC_TIMEOUT, source])
+				had_error = true
+				last_error = "GDRuntime: async block timed out after %ds:\n%s" % [ASYNC_TIMEOUT, source]
+				push_error(last_error)
 		)
 		await _await_possible_async_result(result)
 		if not state["timed_out"]:
