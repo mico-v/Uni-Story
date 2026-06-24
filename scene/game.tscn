@@ -7,7 +7,7 @@
 [ext_resource type="Script" uid="uid://cyslqjc711hg5" path="res://scripts/NovaController.gd" id="NovaScript"]
 [ext_resource type="PackedScene" path="res://scene/view/save_load_view.tscn" id="SaveLoadRes"]
 [ext_resource type="PackedScene" path="res://scene/view/settings_view.tscn" id="SettingsViewRes"]
-[ext_resource type="PackedScene" uid="uid://cqdghibhuyigy" path="res://scene/view/title_view.tscn" id="TitleViewRes"]
+[ext_resource type="PackedScene" path="res://scene/view/title_view.tscn" id="TitleViewRes"]
 [ext_resource type="Theme" path="res://resources/themes/default_theme.tres" id="DefaultTheme"]
 
 [node name="GameRoot" type="Node" unique_id=1070618249]

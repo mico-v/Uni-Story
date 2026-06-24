@@ -88,6 +88,8 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 任务：
 
 - [x] 新增 headless 剧本解析 smoke test：`scripts/tests/parse_scenarios_test.gd`。
+- [x] 新增 headless GameState 推进 smoke test：`scripts/tests/game_state_smoke_test.gd`，覆盖对白、lazy block、变量跳转、条件分支和命名结局。
+- [x] 新增主场景生命周期 smoke test：`scripts/tests/main_scene_smoke_test.gd`，显式加载、校验并释放 `scene/game.tscn`。
 - [x] 新增 `EngineContext` typed facade 草案，作为后续减少 `_ctx` 弱类型访问的入口。
 - [x] 新增 `RestorableRegistry`，定义 `snapshot()` / `restore(data)` 的 duck-typed checkpoint 约定。
 - [ ] 给核心子系统补 `class_name`、明确类型、返回值和错误策略。
@@ -95,12 +97,14 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 - [ ] 把可配置路径、槽位数量、预加载容量、自动存档策略迁移为 `@export` 或 `Resource` 配置。
 - [ ] 梳理 `NovaController.gd`：只保留装配、导航、全局信号路由；业务逻辑下沉到 coordinator/service。
 - [ ] 建立统一日志/错误分级：parse error、runtime warning、save corruption、asset missing。
-- [ ] 扩展最小测试入口：跑一段无 UI 的 GameState。
+- [x] 扩展最小测试入口：跑一段无 UI 的 GameState。
 
 验收：
 
 - Godot 打开主场景无脚本错误。
 - 能用命令或工具脚本解析所有 `resources/scenarios/*.txt`。
+- 能在 headless 下推进最小 GameState 剧本并覆盖分支/结局。
+- 能在 headless 下加载并释放主场景，不留下 UID 或 ObjectDB/CanvasItem 泄漏警告。
 - `NovaController.gd` 的职责说明写清楚，新增逻辑优先进入子系统。
 
 ### Phase 2：NovaScript 兼容基线
@@ -340,10 +344,10 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 
 Phase 1 建议从以下任务开始：
 
-1. 扩展 headless 测试：从“只解析流程图”推进到“无 UI 推进若干对白 entry”。
-2. 梳理 `NovaController.gd` 目前职责，拆出 gallery/save/settings/navigation 的 coordinator 方案。
-3. 开始把新代码的上下文访问改用 `EngineContext`，旧系统暂不强迁移。
-4. 把 `RestorableRegistry` 接入下一版 Save/Checkpoint 设计草案。
-5. 清理主场景 headless 退出时的渲染资源泄漏警告，确认是否只是强制退出导致。
+1. [x] 扩展 headless 测试：从“只解析流程图”推进到“无 UI 推进若干对白 entry”。
+2. [x] 清理主场景 headless 退出时的 UID 与渲染资源泄漏警告，确认真实残留并修复。
+3. [ ] 梳理 `NovaController.gd` 目前职责，拆出 gallery/save/settings/navigation 的 coordinator 方案。
+4. [ ] 开始把新代码的上下文访问改用 `EngineContext`，旧系统暂不强迁移。
+5. [ ] 把 `RestorableRegistry` 接入下一版 Save/Checkpoint 设计草案。
 
 完成 Phase 1 后，再进入 NovaScript 兼容层和 Checkpoint 核心，不建议先继续扩展单个 UI 或演出 API。

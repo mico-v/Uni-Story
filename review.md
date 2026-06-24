@@ -304,3 +304,26 @@ Nova 的目标工程包含大量非运行时代码：
 - 通过：`Godot_v4.6.3-stable_win64_console.exe --headless --path <project> --scene res://scene/game.tscn --quit-after 3`
 - 注意：WinGet 的 `godot.exe` 指向非 console 版，不会显示脚本输出；验证需使用 `Godot_v4.6.3-stable_win64_console.exe`。
 - 残留风险：主场景 headless 强制退出时有 CanvasItem/ObjectDB/resource leaked 警告，暂未确认是否为强制退出导致。
+
+### 2026-06-24：GameState 推进测试与主场景生命周期清理
+
+已完成：
+
+- 新增 `scripts/tests/game_state_smoke_test.gd`，使用内嵌临时剧本在 headless 下驱动 `ScriptLoader` + `GameState`，覆盖 lazy block、`set_var/add_var`、`jump_if`、条件分支、禁用分支、`choose_branch()` 和命名 `is_end()`。
+- 新增 `scripts/tests/main_scene_smoke_test.gd`，显式实例化 `scene/game.tscn`，校验 `NovaController`、脚本图、`GameState` 和 `ViewManager` 初始状态，再主动释放场景。
+- `NovaController.gd` 增加 `_exit_tree()` 清理：停止 `HotReload`、关闭 `VideoSystem`、落盘 `ReadTracker`。
+- 修复 `scene/game.tscn` 对 `scene/view/title_view.tscn` 的失效 UID 引用；`title_view.tscn` 补资源 UID。
+- 将 `SaveLoadPanelController` 与 `BacklogPanelController` 从 `Control` 改为 `RefCounted`。二者实际是逻辑封装对象，原本用 `.new()` 创建但不加入场景树，会导致 headless 退出时泄漏两个 `Control`。
+
+验证：
+
+- 通过：`Godot_v4.6.3-stable_win64_console.exe --headless --path <project> --script res://scripts/tests/parse_scenarios_test.gd`
+- 通过：`Godot_v4.6.3-stable_win64_console.exe --headless --path <project> --script res://scripts/tests/game_state_smoke_test.gd`
+- 通过：`Godot_v4.6.3-stable_win64_console.exe --headless --path <project> --script res://scripts/tests/main_scene_smoke_test.gd`
+- 通过：`Godot_v4.6.3-stable_win64_console.exe --headless --path <project> --scene res://scene/game.tscn --quit-after 3`
+
+结果：
+
+- `parse_scenarios_test` 解析 3 个 scenario、33 个节点。
+- `game_state_smoke_test` 推进 5 条对白、2 个分支选项。
+- 主场景 headless 加载和 `--quit-after` 对照均不再出现失效 UID、CanvasItem/ObjectDB/resource leaked 警告。

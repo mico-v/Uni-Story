@@ -86,6 +86,15 @@ func _ready() -> void:
 	hot_reload.start(scenario_files)
 
 
+func _exit_tree() -> void:
+	if hot_reload:
+		hot_reload.stop()
+	if video_system:
+		video_system.stop()
+	if read_tracker:
+		read_tracker.save_to_disk()
+
+
 # ── Subsystem creation ──────────────────────────────────────────────
 
 func _init_subsystems() -> void:
