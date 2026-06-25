@@ -81,6 +81,13 @@ func is_voice_playing() -> bool:
 
 func stop_voice() -> void:
 	_voice_player.stop()
+	_voice_player.stream = null
+
+
+func stop_se() -> void:
+	for p in _se_players:
+		p.stop()
+		p.stream = null
 
 
 func _load_stream(path: String) -> AudioStream:
@@ -181,9 +188,25 @@ func restore(state: Dictionary) -> void:
 func stop_all() -> void:
 	_bgm_a.stop()
 	_bgm_b.stop()
+	_bgm_a.stream = null
+	_bgm_b.stream = null
 	_voice_player.stop()
+	_voice_player.stream = null
 	for p in _se_players:
 		p.stop()
+		p.stream = null
+
+
+func dispose() -> void:
+	stop_all()
+	for p in [_bgm_a, _bgm_b, _voice_player]:
+		if p and is_instance_valid(p):
+			p.queue_free()
+	for p in _se_players:
+		if p and is_instance_valid(p):
+			p.queue_free()
+	_se_players.clear()
+	_se_start_times.clear()
 
 
 ## Public accessor for the BGM player, used by MusicGalleryController.
@@ -199,6 +222,7 @@ func stop_bgm(fade: float = 0.0):
 		t.tween_property(_bgm_active, "volume_db", -80.0, fade)
 		await t.finished
 	_bgm_active.stop()
+	_bgm_active.stream = null
 	return
 
 

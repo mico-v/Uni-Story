@@ -1,4 +1,4 @@
-class_name BacklogPanelController extends Control
+class_name BacklogPanelController extends RefCounted
 
 ## Encapsulates backlog panel UI logic extracted from GameViewController.
 

@@ -4,13 +4,54 @@ class_name NovaController extends Node
 ## Creates subsystems, initializes ViewManager, and routes signals between
 ## view controllers.  All game UI logic lives in GameViewController.
 
+const GalleryCoordinatorScript := preload("res://scripts/core/gallery_coordinator.gd")
+const SettingsCoordinatorScript := preload("res://scripts/core/settings_coordinator.gd")
+const EngineLogScript := preload("res://scripts/core/engine_log.gd")
+
 @export var scenario_files: Array[String] = [
-	"res://resources/scenarios/main.txt",
-	"res://resources/scenarios/plan_demo.txt",
-	"res://resources/scenarios/test_all.txt",
+	"res://resources/scenarios/ch1.txt",
+	"res://resources/scenarios/ch2.txt",
+	"res://resources/scenarios/ch3.txt",
+	"res://resources/scenarios/ch4.txt",
+	"res://resources/scenarios/test_anim_hold.txt",
+	"res://resources/scenarios/test_avatar.txt",
+	"res://resources/scenarios/test_box.txt",
+	"res://resources/scenarios/test_box_anim.txt",
+	"res://resources/scenarios/test_branch.txt",
+	"res://resources/scenarios/test_branch_image.txt",
+	"res://resources/scenarios/test_dialogue_length.txt",
+	"res://resources/scenarios/test_empty_node.txt",
+	"res://resources/scenarios/test_fade.txt",
+	"res://resources/scenarios/test_global_variable.txt",
+	"res://resources/scenarios/test_immediate_step.txt",
+	"res://resources/scenarios/test_input.txt",
+	"res://resources/scenarios/test_many_chara.txt",
+	"res://resources/scenarios/test_minigame.txt",
+	"res://resources/scenarios/test_transition.txt",
+	"res://resources/scenarios/test_upgrade.txt",
+	"res://resources/scenarios/test_variables.txt",
+	"res://resources/scenarios/test_video.txt",
+	"res://resources/scenarios/tut01.txt",
+	"res://resources/scenarios/tut02.txt",
+	"res://resources/scenarios/tut03.txt",
+	"res://resources/scenarios/tut04.txt",
+	"res://resources/scenarios/tut05.txt",
+	"res://resources/scenarios/tut06.txt",
 ]
 
 @export var resource_root: String = "res://resources/"
+@export_group("Save")
+@export var save_dir: String = "user://saves/"
+@export_range(1, 100, 1) var save_slot_count: int = 6
+@export var auto_save_slot: int = 99
+@export var auto_save_enabled: bool = true
+@export var settings_path: String = "user://config/settings.cfg"
+@export_group("Preload")
+@export_range(1, 1024, 1) var preload_cache_size: int = 128
+@export_group("Gallery")
+@export var cg_gallery_config: String = "res://resources/gallery/cg_gallery.txt"
+@export var music_gallery_config: String = "res://resources/gallery/music_gallery.txt"
+@export_group("")
 
 # ── Subsystems (public, BaseBlock reaches them as nova.<name>) ───────
 var object_manager: ObjectManager
@@ -37,6 +78,10 @@ var shortcut_manager: ShortcutManager
 var video_system: VideoSystem
 var dialog_system: DialogSystem
 var preload_system: PreloadSystem
+var engine_context: EngineContext
+var restorables: RestorableRegistry
+var gallery_coordinator: RefCounted
+var settings_coordinator: RefCounted
 
 # ── View management ─────────────────────────────────────────────────
 var view_manager: ViewManager
@@ -64,15 +109,16 @@ func _ready() -> void:
 	_bind_view_controllers()
 	_init_view_manager()
 	_setup_game_view()
+	_setup_settings()
 	_connect_model_signals()
-	_load_gallery_configs()
+	_setup_gallery()
 	_apply_i18n()
 	_load_settings()
 
 	sf = _localized_scenario_files(sf)
 	script_loader.load_all(sf)
 	if not script_loader.load_ok:
-		push_error("NovaController: script load failed")
+		EngineLogScript.error(EngineLogScript.Category.PARSE, "NovaController", "script load failed")
 		return
 
 	game_state.setup(script_loader.graph)
@@ -84,9 +130,26 @@ func _ready() -> void:
 	hot_reload.start(scenario_files)
 
 
+func _exit_tree() -> void:
+	if hot_reload:
+		hot_reload.stop()
+	if audio:
+		audio.dispose()
+	if vfx:
+		vfx.clear_all()
+	if composer:
+		composer.clear_all()
+	if video_system:
+		video_system.stop()
+	if read_tracker:
+		read_tracker.save_to_disk()
+
+
 # ── Subsystem creation ──────────────────────────────────────────────
 
 func _init_subsystems() -> void:
+	engine_context = EngineContext.new(self)
+	restorables = RestorableRegistry.new()
 	object_manager = ObjectManager.new()
 	runtime = GDRuntime.new(self)
 	script_loader = ScriptLoader.new(self)
@@ -94,6 +157,7 @@ func _init_subsystems() -> void:
 	variables = Variables.new()
 	i18n = I18n.new()
 	save_system = SaveSystem.new(self)
+	save_system.configure(save_dir, save_slot_count, auto_save_slot, auto_save_enabled)
 	backlog = Backlog.new()
 	graphics = Graphics.new(self)
 	animation = AnimationSystem.new(self)
@@ -111,6 +175,24 @@ func _init_subsystems() -> void:
 	video_system = VideoSystem.new(self)
 	dialog_system = DialogSystem.new(self)
 	preload_system = PreloadSystem.new(self)
+	preload_system.configure(preload_cache_size)
+	gallery_coordinator = GalleryCoordinatorScript.new(self)
+	settings_coordinator = SettingsCoordinatorScript.new(self)
+	_register_restorables()
+
+
+func _register_restorables() -> void:
+	restorables.register("game_state", game_state)
+	restorables.register("graphics", graphics)
+	restorables.register("audio", audio)
+	restorables.register("camera", camera)
+	restorables.register("animation", animation)
+	restorables.register("dialogue_box", dialogue_box)
+	restorables.register("vfx", vfx)
+	restorables.register("composer", composer)
+	restorables.register("prefab_loader", prefab_loader)
+	restorables.register("read_tracker", read_tracker)
+	restorables.register("backlog", backlog)
 
 
 # ── Locale ───────────────────────────────────────────────────────────
@@ -193,6 +275,7 @@ func _setup_game_view() -> void:
 		object_manager.bind_object("bg", _game_vc.get_bg())
 	if _game_vc.get_fg():
 		object_manager.bind_object("fg", _game_vc.get_fg())
+		object_manager.bind_object("cg", _game_vc.get_fg())
 	if _game_vc.get_overlay():
 		object_manager.bind_object("transition_overlay", _game_vc.get_overlay())
 	if _game_vc.get_dbox():
@@ -274,7 +357,7 @@ func _on_title_new_game() -> void:
 	elif script_loader.graph.unlocked_start_nodes.size() > 0:
 		first_node = script_loader.graph.unlocked_start_nodes[0]
 	if first_node == &"":
-		push_error("NovaController: no start node found")
+		EngineLogScript.error(EngineLogScript.Category.RUNTIME, "NovaController", "no start node found")
 		return
 	view_manager.switch_to("game")
 	if _game_vc:
@@ -310,6 +393,10 @@ func _on_game_title_requested() -> void:
 		_title_vc.set_continue_enabled(save_system.has_auto_save())
 
 
+func cleanup_display() -> void:
+	if _game_vc:
+		_game_vc.cleanup_display()
+
 func _on_save_load_completed() -> void:
 	if _game_vc:
 		_game_vc.reset_world()
@@ -324,79 +411,17 @@ func _on_quit() -> void:
 	get_tree().quit()
 
 
-# ── Gallery configuration ─────────────────────────────────────────────
-
-@export var cg_gallery_config: String = "res://resources/gallery/cg_gallery.txt"
-@export var music_gallery_config: String = "res://resources/gallery/music_gallery.txt"
-
-var _cg_entries: Array[Dictionary] = []
-var _music_entries: Array[Dictionary] = []
-
-func _load_gallery_configs() -> void:
-	if FileAccess.file_exists(cg_gallery_config):
-		_cg_entries = GalleryConfigLoader.load_cg(cg_gallery_config)
-		_apply_gallery_unlocks("cg")
-		if _cg_vc:
-			_cg_vc.set_gallery(_cg_entries)
-	if FileAccess.file_exists(music_gallery_config):
-		_music_entries = GalleryConfigLoader.load_music(music_gallery_config)
-		_apply_gallery_unlocks("music")
-		if _music_vc:
-			_music_vc.set_tracks(_music_entries)
-	# Hook auto-unlock signals.
-	if audio and not audio.bgm_started.is_connected(_on_bgm_started):
-		audio.bgm_started.connect(_on_bgm_started)
-	if read_tracker and not read_tracker.gallery_unlocked.is_connected(_on_gallery_unlocked):
-		read_tracker.gallery_unlocked.connect(_on_gallery_unlocked)
-
-
-func _apply_gallery_unlocks(entry_type: String) -> void:
-	if read_tracker == null:
+func _setup_gallery() -> void:
+	if gallery_coordinator == null:
 		return
-	var entries: Array = _cg_entries if entry_type == "cg" else _music_entries
-	for entry in entries:
-		if entry is Dictionary:
-			var entry_name := str(entry.get("name", ""))
-			if entry_type == "cg" and read_tracker.is_cg_unlocked(entry_name):
-				entry["unlocked"] = true
-			elif entry_type == "music" and read_tracker.is_music_unlocked(entry_name):
-				entry["unlocked"] = true
-
-
-func _on_bgm_started(path: String) -> void:
-	if read_tracker == null:
-		return
-	for entry in _music_entries:
-		if entry is Dictionary:
-			var entry_path := str(entry.get("path", ""))
-			if entry_path == path or entry_path.get_file() == path.get_file():
-				read_tracker.mark_music(str(entry.get("name", "")))
-				return
-
-
-func _on_gallery_unlocked(entry_type: String, entry_name: String) -> void:
-	if entry_type == "cg" and _cg_vc:
-		for entry in _cg_entries:
-			if entry is Dictionary and str(entry.get("name", "")) == entry_name:
-				entry["unlocked"] = true
-		_cg_vc.set_gallery(_cg_entries)
-	elif entry_type == "music" and _music_vc:
-		for entry in _music_entries:
-			if entry is Dictionary and str(entry.get("name", "")) == entry_name:
-				entry["unlocked"] = true
-		_music_vc.set_tracks(_music_entries)
+	gallery_coordinator.setup(_cg_vc, _music_vc, cg_gallery_config, music_gallery_config)
+	gallery_coordinator.load_configs()
 
 
 ## Called by the scenario engine when a CG is displayed in-game.
 func unlock_cg_by_path(tex_path: String) -> void:
-	if read_tracker == null:
-		return
-	for entry in _cg_entries:
-		if entry is Dictionary:
-			var entry_path := str(entry.get("texture_path", ""))
-			if entry_path == tex_path or entry_path.get_file() == tex_path.get_file():
-				read_tracker.mark_cg(str(entry.get("name", "")))
-				return
+	if gallery_coordinator:
+		gallery_coordinator.unlock_cg_by_path(tex_path)
 
 
 # ── Keyboard shortcuts (non-game views + debug) ──────────────────────
@@ -435,82 +460,19 @@ func _unhandled_input(event: InputEvent) -> void:
 
 # ── Settings handler ────────────────────────────────────────────────
 
-@export var settings_path: String = "user://config/settings.cfg"
+func _setup_settings() -> void:
+	if settings_coordinator == null:
+		return
+	settings_coordinator.setup(_settings_vc, _game_vc, settings_path, Callable(self, "_apply_i18n"))
 
 func _on_setting_changed(key: String, value: Variant) -> void:
-	match key:
-		"text_speed":
-			if _game_vc:
-				_game_vc.type_cps = clampf(float(value) * 2.0, 1.0, 200.0)
-		"auto_speed":
-			if _game_vc:
-				_game_vc.auto_delay = clampf(float(101 - value) * 0.002, 0.02, 0.2)
-		"vol_global":
-			if audio:
-				audio.set_master_volume(float(value) / 100.0)
-		"vol_bgm":
-			if audio:
-				audio.set_bgm_volume(float(value) / 100.0)
-		"vol_se":
-			if audio:
-				audio.set_se_volume(float(value) / 100.0)
-		"vol_voice":
-			if audio:
-				audio.set_voice_volume(float(value) / 100.0)
-		"font_size":
-			if _game_vc:
-				var dbox := _game_vc.get_dbox()
-				if dbox:
-					var story = dbox.get_node_or_null("Story")
-					if story is RichTextLabel:
-						story.add_theme_font_size_override("normal_font_size", int(value))
-		"language":
-			if str(value) != i18n.locale:
-				i18n.locale = str(value)
-				_apply_i18n()
-		"fullscreen":
-			if bool(value):
-				DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
-			else:
-				DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
-		"dialogue_opacity":
-			if dialogue_box:
-				dialogue_box.set_opacity(float(value) / 100.0)
-		"click_stop_anim":
-			if _game_vc:
-				_game_vc.click_stop_anim = bool(value)
-		"click_stop_voice":
-			if _game_vc:
-				_game_vc.click_stop_voice = bool(value)
-		"skip_unread":
-			if _game_vc:
-				_game_vc.skip_unread = bool(value)
-	_save_settings()
-
-
-func _save_settings() -> void:
-	if _settings_vc == null:
-		return
-	DirAccess.make_dir_recursive_absolute("user://config")
-	var cfg := ConfigFile.new()
-	var data := _settings_vc.snapshot()
-	for k in data:
-		cfg.set_value("settings", k, data[k])
-	cfg.save(settings_path)
+	if settings_coordinator:
+		settings_coordinator.apply_setting(key, value)
 
 
 func _load_settings() -> void:
-	var cfg := ConfigFile.new()
-	if cfg.load(settings_path) != OK:
-		return
-	var data: Dictionary = {}
-	for k in cfg.get_section_keys("settings"):
-		data[k] = cfg.get_value("settings", k)
-	if _settings_vc:
-		_settings_vc.apply_settings(data)
-	# Apply each setting to subsystems.
-	for k in data:
-		_on_setting_changed(str(k), data[k])
+	if settings_coordinator:
+		settings_coordinator.load_settings()
 
 
 # ── I18n helper ─────────────────────────────────────────────────────

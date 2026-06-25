@@ -49,12 +49,11 @@ grow_horizontal = 2
 
 [node name="DialogueBox" parent="Hud" unique_id=89621010 instance=ExtResource("DialogueBoxRes")]
 layout_mode = 1
-anchors_preset = 12
 anchor_left = 0.0
-anchor_top = 1.0
+anchor_top = 0.569
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -310.0
+offset_top = 0.32000732
 grow_horizontal = 2
 grow_vertical = 0
 

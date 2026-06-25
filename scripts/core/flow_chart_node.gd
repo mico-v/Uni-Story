@@ -13,6 +13,7 @@ var type: int = Type.NORMAL
 var is_start: bool = false
 var is_unlocked_start: bool = false
 var is_debug: bool = false
+var is_save_point: bool = false
 
 ## Array[DialogueEntry]
 var entries: Array = []

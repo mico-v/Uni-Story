@@ -1,4 +1,4 @@
-class_name SaveLoadPanelController extends Control
+class_name SaveLoadPanelController extends RefCounted
 
 ## Encapsulates save/load panel UI logic extracted from GameViewController.
 
@@ -58,7 +58,7 @@ func _refresh() -> void:
 	if _save_slots == null or _ctx == null or _ctx.save_system == null:
 		return
 	_clear_children(_save_slots)
-	for slot in _ctx.save_system.SLOT_COUNT:
+	for slot in _ctx.save_system.slot_count:
 		_build_slot_row(slot, _save_mode)
 
 

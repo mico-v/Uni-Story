@@ -26,32 +26,140 @@ func show(obj: Variant, image_path: String, coord = null, color = null) -> void:
 	var node := _resolve(obj)
 	if node == null:
 		return
+	var image_name := _resolve_image_name(str(obj), image_path)
+	if image_name.find("+") != -1:
+		_show_composite(node, image_name, coord, color)
+		return
 
 	var root: String = _ctx.object_manager.constants.get("resource_root", "res://resources/")
 	var folder := ""
 	if node.has_meta("folder"):
 		folder = str(node.get_meta("folder")) + "/"
-	var path := root + folder + image_path + ".png"
+	var path := root + folder + image_name + ".png"
 
 	var tex := _load_texture(path)
+	if tex == null:
+		return
 	if tex != null and node is TextureRect:
 		(node as TextureRect).texture = tex
 	elif tex != null and node is Sprite2D:
+		_hide_composite_layers(node as Sprite2D)
 		(node as Sprite2D).texture = tex
 
 	if coord != null:
 		move(node, coord)
 	if color != null:
 		tint(node, color)
+	else:
+		node.modulate = Color.WHITE
 	node.visible = true
 	# Auto-unlock CG gallery entry if this image matches a gallery CG.
 	if _ctx.has_method("unlock_cg_by_path"):
 		_ctx.unlock_cg_by_path(path)
 
 
+func _resolve_image_name(obj_name: String, image_path: String) -> String:
+	if obj_name == "cg":
+		var pose := image_path.strip_edges()
+		if pose.begins_with("cg/"):
+			pose = pose.substr(3)
+		match pose:
+			"rain":
+				return _prefix_composite_parts("cg", "rain_back")
+			"rain_final":
+				return _prefix_composite_parts("cg", "rain_back+rain_text")
+			_:
+				return _prefix_composite_parts("cg", pose)
+	return image_path.strip_edges()
+
+
+func _prefix_composite_parts(folder: String, image_name: String) -> String:
+	var out: Array[String] = []
+	for raw_part in image_name.split("+", false):
+		var part := str(raw_part).strip_edges()
+		if part.is_empty():
+			continue
+		if part.begins_with("res://") or part.find("/") != -1:
+			out.append(part)
+		else:
+			out.append("%s/%s" % [folder, part])
+	var joined := ""
+	for part in out:
+		if not joined.is_empty():
+			joined += "+"
+		joined += part
+	return joined
+
+
+func _show_composite(node: CanvasItem, image_name: String, coord = null, color = null) -> void:
+	if node is Sprite2D:
+		var spr := node as Sprite2D
+		var parts: PackedStringArray = image_name.split("+", false)
+		if parts.is_empty():
+			return
+		var root: String = _ctx.object_manager.constants.get("resource_root", "res://resources/")
+		var folder := ""
+		if node.has_meta("folder"):
+			folder = str(node.get_meta("folder")) + "/"
+		var base_path := root + folder + str(parts[0]) + ".png"
+		var base_tex := _load_texture(base_path)
+		if base_tex:
+			spr.texture = base_tex
+		else:
+			return
+		var base_size: Vector2 = base_tex.get_size()
+		var overlay_origin: Vector2 = base_size * 0.5
+		if spr.centered:
+			overlay_origin = Vector2.ZERO
+		var used_overlay_count: int = maxi(0, parts.size() - 1)
+		for i in range(1, parts.size()):
+			var overlay_path := root + folder + str(parts[i]) + ".png"
+			var overlay_tex := _load_texture(overlay_path)
+			var overlay := _ensure_composite_layer(spr, i - 1)
+			overlay.texture = overlay_tex
+			overlay.position = overlay_origin
+			overlay.visible = overlay_tex != null
+		_hide_composite_layers(spr, used_overlay_count)
+		if coord != null:
+			move(node, coord)
+		if color != null:
+			tint(node, color)
+		else:
+			node.modulate = Color.WHITE
+		node.visible = true
+		if _ctx.has_method("unlock_cg_by_path"):
+			_ctx.unlock_cg_by_path(base_path)
+
+
+func _ensure_composite_layer(parent: Sprite2D, layer_index: int) -> Sprite2D:
+	var child_name := "CompositeLayer%d" % layer_index
+	var existing := parent.get_node_or_null(child_name)
+	if existing is Sprite2D:
+		return existing as Sprite2D
+	var layer := Sprite2D.new()
+	layer.name = child_name
+	layer.centered = true
+	layer.z_index = layer_index + 1
+	layer.set_meta("graphics_composite_layer", layer_index)
+	parent.add_child(layer)
+	return layer
+
+
+func _hide_composite_layers(parent: Sprite2D, used_count: int = 0) -> void:
+	for child in parent.get_children():
+		if child is Sprite2D and child.has_meta("graphics_composite_layer"):
+			var layer_index := int(child.get_meta("graphics_composite_layer"))
+			if layer_index >= used_count:
+				var layer := child as Sprite2D
+				layer.texture = null
+				layer.visible = false
+
+
 func hide(obj: Variant) -> void:
 	var node := _resolve(obj)
 	if node:
+		if node is Sprite2D:
+			_hide_composite_layers(node as Sprite2D)
 		node.visible = false
 
 

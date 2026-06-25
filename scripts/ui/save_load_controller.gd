@@ -56,7 +56,7 @@ func _refresh() -> void:
 			mode_label.text = _t("ingame.save.button", "存档")
 		else:
 			mode_label.text = _t("ingame.load.button", "读档")
-	for slot in _ctx.save_system.SLOT_COUNT:
+	for slot in _ctx.save_system.slot_count:
 		var label_text := _t("ui.save.slot_format", "存档位 %d：%s") % [slot + 1, _ctx.save_system.slot_label(slot)]
 		var b := _make_button(label_text)
 		b.custom_minimum_size = Vector2(0, 52)

@@ -2,9 +2,18 @@
 
 NovaScript 是 Uni-Story 视觉小说框架的剧本领域语言。剧本文件（`.txt`）由 `NovaParser` 分词、`ScriptLoader` 构建流程图、`GDRuntime` 在运行时编译执行。
 
+Phase 2 开始，Uni-Story 增加了 Nova 上游常用语法的兼容翻译层。它会把一部分 Lua 风格 NovaScript 转换到 GDScript runtime 上执行，因此工程仍然是 GDScript-first；当前没有内嵌完整 Lua VM，也不承诺所有 Nova Lua API 等价。
+
 ## 文件结构
 
-剧本文件放在 `resources/scenarios/` 目录下，扩展名为 `.txt`。一个剧本文件包含若干 **节点**（label），每个节点包含若干 **对话条目**（text line + 可选的 lazy block）。
+当前默认剧本使用 Nova 上游内容，放在 `resources/scenarios/` 目录下，扩展名为 `.txt`。从 Nova 上游导入的参考脚本和素材直接放在 `resources/` 根目录下：
+
+- `resources/scenarios/`：Nova 原始中文剧本，也是 `NovaController` 默认加载的剧本目录。
+- `resources/Lua/`：Nova 原始 Lua 脚本，仅作为迁移参考，不作为运行时 Lua VM 直接执行。
+- `resources/Backgrounds/`、`resources/BGM/`、`resources/Standings/` 等：从 Nova `Assets/Resources` 增量导入的图片、音频、视频和 JSON 资源。
+- 同目录下的旧 demo 剧本（如 `main.txt`、`plan_demo.txt`、`test_all.txt`）保留，但不在默认加载清单中。
+
+一个剧本文件包含若干 **节点**（label），每个节点包含若干 **对话条目**（text line + 可选的 lazy block）。
 
 ```
 @<|
@@ -91,21 +100,24 @@ trans("fade", 0.4)
 
 ## 对话格式
 
-角色名和台词之间用冒号分隔，按优先级依次尝试：
+角色名和台词之间使用双冒号分隔：
 
 | 分隔符 | 说明 | 示例 |
 |--------|------|------|
 | `：：` | 全角双冒号（推荐） | `仁菜：：你好啊` |
-| `：` | 全角单冒号 | `仁菜：你好啊` |
-| `:` | 半角冒号 | `Alice: Hello` |
+| `::` | 半角双冒号 | `Alice::Hello` |
 
-如果行中没有冒号，则整行作为旁白文本（speaker 为空）。
+单个 `：` 或 `:` 不再被当作角色分隔符，因为 Nova 原始剧本中经常把普通冒号写在旁白里。如果行中没有双冒号，则整行作为旁白文本（speaker 为空）。
 
 ---
 
 ## 块属性（Block Attributes）
 
-可以在块开头添加属性前缀 `@[key=value; ...]`：
+可以在块开头添加属性前缀：
+
+- `@[key=value; ...]@<| ... |>`：带属性的 eager block。
+- `@[key=value; ...]<| ... |>`：带属性的 lazy block。
+- `[key = value]<| ... |>`：兼容 Nova 上游写法，常用于 lazy block stage。
 
 ```
 @[mode=jump; cond="has_var('flag')"]@<|
@@ -119,7 +131,61 @@ branch([
 属性规则：
 - 用分号分隔的键值对
 - 值可以用双引号、单引号包裹，或不加引号
-- 属性会作为默认值传递给 `branch()` 的选项
+- `mode`、`cond`、`image` 会作为默认值传递给 `branch()` 的选项
+- lazy block 的 `stage` 支持 `default`、`before_checkpoint`、`after_dialogue`
+
+Stage 示例：
+
+```
+[stage = before_checkpoint]<|
+v_seen = true
+|>
+<|
+show("bg", "backgrounds/room")
+|>
+[stage = after_dialogue]<|
+gv_last_line = "room_intro"
+|>
+角色：：这句话会先执行 before_checkpoint 和 default，显示后再执行 after_dialogue。
+```
+
+---
+
+## Nova 上游兼容基线
+
+兼容层位于 `scripts/core/nova_script_compat.gd`。加载剧本时，`ScriptLoader` 会按文件名建立命名空间，并把 Nova 常用 Lua 风格写法转换为当前 GDScript block。
+
+已支持的 Phase 2 子集：
+
+- `label 'name'`、`jump_to 'name'`、`is_end 'name'` 简写。
+- `l_` 开头的局部 label，按文件名转换为 `file:label`，避免不同剧本文件互相冲突。
+- `is_save_point()` 节点标记。
+- `is_start()`、`is_unlocked_start()`、`is_chapter()`、`is_debug()` 的基础分类。
+- `branch { ... }` 转为 `branch([ ... ])`。
+- branch `cond = 'v_flag < 2'` 字符串条件。
+- branch `cond = function() return v_flag > 1 end` 的简单 return 表达式条件。
+- `image = {'red_pill', {-500, 0, 0.5}}` 转为数组形式，保留图片名和坐标 tuple。
+- Lua 风格 `if ... then` / `elseif ... then` / `else` / `end` 的简单控制流。
+- Lua 风格对象方法调用，如 `anim:move(...)`、`anim:trans_fade(...)`，会翻译为 GDScript 方法调用并交给兼容代理处理。
+- 简单 Lua callback `function(...) ... end` 会被抽取为顺序执行的 GDScript 语句，用于兼容 Nova 常见转场包装块。
+- Lua table `{ ... }` 会按上下文转换为 GDScript Array/Dictionary。
+- `nil` 转为 `null`。
+- `v_` 变量、`gv_` 全局变量、普通临时变量赋值和读取。
+- 文本插值 `{{var_name}}`，可读取 `v_`、`gv_` 和当前 block 临时变量。
+- 上游 `[stage = before_checkpoint]<| ... |>` / `[stage = after_dialogue]<| ... |>` lazy action。
+- 常用播放 API 兼容：`play()`、`sound()`、`auto_voice_on/off()`、`set_auto_voice_delay()`、`box_hide_show()` 等。
+- 常用 Nova 常量兼容：`pos_c/pos_l/pos_r/pos_cl/pos_cr`、`bg/fg/cg/bgm/bgs/voice`。
+- Nova 示例角色名兼容：`ergong`、`gaotian`、`qianye`、`xiben` 可映射到 `resources/Standings/` 下的组合立绘。
+
+当前限制：
+
+- 不执行完整 Lua；`pairs`、`ipairs`、协程、元表、require、任意 Lua 标准库都不属于 Phase 2 范围。
+- 只翻译常见 Nova 剧本形态；复杂多行表达式和动态拼接可能需要手动迁移为 GDScript 写法。
+- Nova Lua runtime API 尚未完整对齐，`__Nova` 仅有少量兼容替换。
+- `anim` / `anim_hold` 当前是“能播放、不崩溃”的兼容代理，不等价于完整 NovaAnimation；复杂并行组、暂停恢复、shader/VFX 参数动画在 Phase 6/7 完善。
+- `auto_voice_*` 当前是 API 兼容入口，真实自动语音队列、角色语音编号调度和恢复策略仍待后续实现。
+- `is_save_point()` 目前只写入流程图节点标记，完整 checkpoint/bookmark 恢复体系在 Phase 3 实现。
+- 章节选择、debug start 展示策略和解锁 UI 在 Phase 4 完成。
 
 ---
 
@@ -134,6 +200,14 @@ branch([
 ```
 @<| label("opening", "序章") |>
 ```
+
+兼容 Nova 简写：
+
+```
+@<| label 'opening' |>
+```
+
+如果 label 以 `l_` 开头，会被视为当前文件内的局部 label。例如 `resources/scenarios/test_branch.txt` 里的 `l_a` 会解析为 `test_branch:a`。
 
 ### `is_start()`
 
@@ -154,9 +228,20 @@ is_start()
 
 标记当前节点为章节类型。
 
-### `is_end()`
+### `is_save_point()`
+
+标记当前节点为存档检查点。Phase 2 先写入 `FlowChartNode.is_save_point`，Phase 3 会接入完整 checkpoint/bookmark 恢复体系。
+
+### `is_end(end_name = null)`
 
 标记当前节点为结局类型。到达该节点末尾时游戏结束。
+
+可以传入结局名：
+
+```
+@<| is_end("good_end") |>
+@<| is_end 'good_end' |>
+```
 
 ### `is_debug()`
 
@@ -184,6 +269,20 @@ branch([
 |>
 ```
 
+兼容 Nova 上游的 table 风格：
+
+```
+@<|
+branch {
+    { dest = 'l_a', text = '选择 A' },
+    { dest = 'l_b', text = '选择 B', cond = 'v_flag < 2' },
+    { dest = 'l_c', text = '选择 C', cond = function()
+        return v_flag > 1
+    end },
+}
+|>
+```
+
 选项字典的键：
 
 | 键 | 类型 | 说明 |
@@ -192,7 +291,9 @@ branch([
 | `text` | String | 显示文本 |
 | `mode` | int/String | 分支模式（见下方） |
 | `cond` | String | 条件表达式（GDScript） |
-| `image` | String | 选项图片路径 |
+| `image` | String/Array | 选项图片路径，或 Nova tuple `[name, [x, y, scale]]` |
+
+Nova 上游写法 `image = {'red_pill', {-500, 0, 0.5}}` 会保留为数组数据，供 UI 分支视图后续渲染。
 
 **分支模式：**
 
@@ -300,12 +401,13 @@ tint("fg", [1, 1, 1])        # 复原
 
 ### 对话框
 
-#### `set_box(pos_name = "bottom")`
+#### `set_box(pos_name = "bottom", alignment = null, clear = false)`
 
 设置对话框位置/样式。可选值：`"bottom"`、`"center"`、`"top"`、`"hide"`、`"full"`、`"left"`、`"right"`。
 
 ```
 <| set_box("center") |>
+<| set_box("center", "center") |>
 <| set_box("hide") |>
 <| set_box() |>
 ```
@@ -412,6 +514,18 @@ play_se("se/door.ogg")
 |>
 ```
 
+#### Nova 兼容音频 API
+
+`play(kind, name, volume = null)` 会把 Nova 的 `bgm`、`bgs`、`voice` 等类型映射到当前 Godot 音频系统；`sound(name, volume = null)` 是 `play_se()` 的兼容入口。
+
+```
+<|
+play(bgm, "prelude")
+play(bgs, "rain")
+sound("flap", 0.5)
+|>
+```
+
 ### 变量
 
 #### `set_var(name, value)` / `get_var(name, default = null)` / `has_var(name)` / `add_var(name, delta)`
@@ -426,6 +540,40 @@ add_var("affection", 1)
 
 # 条件判断用 jump_if
 <| jump_if(get_var("affection") > 5, "good_end") |>
+```
+
+#### Nova 变量兼容：`v_` / `gv_` / 临时变量
+
+Phase 2 支持 Nova 上游常见的变量前缀：
+
+```
+<|
+v_name = "啊啊啊"
+v_count = 3
+gv_route_unlocked = true
+temp_value = 4.56
+|>
+
+旁白：：变量可以显示在文本中：{{v_name}} {{v_count}} {{temp_value}}
+```
+
+规则：
+
+- `v_` 开头的变量写入当前 playthrough 变量表，会进入普通存档快照。
+- `gv_` 开头的变量写入全局变量表，保存到 `user://global_variables.json`。
+- 普通赋值如 `temp_value = 4.56` 写入临时变量表，可用于当前运行期间的表达式和文本插值。
+- 表达式里的 `v_foo` / `gv_bar` 会自动翻译为变量读取。
+- 文本和 speaker 支持 `{{name}}` 插值，查找顺序为 `gv_`、`v_`、临时变量、普通变量。
+
+示例：
+
+```
+<|
+v_flag = 1
+gv_seen_intro = true
+name = "仁菜"
+|>
+{{name}}：：flag={{v_flag}} global={{gv_seen_intro}}
 ```
 
 ### 流程控制（惰性块中）
@@ -515,6 +663,24 @@ o.anim\
 ```
 
 反斜杠 `\` 用于 GDScript 行续接。`o.anim` 的方法返回 AnimationChain，GDRuntime 会自动 await 其完成。
+
+### Nova `anim` / `anim_hold` 兼容代理
+
+Phase 2 已提供轻量兼容代理，支持 Nova 原剧本中常见的链式写法，例如：
+
+```
+<|
+anim:trans_fade(cam, function()
+    show("bg", "room")
+    show("ergong", "normal", pos_c)
+end, 2)
+anim:volume(bgs, 0.2, 3)
+anim:move("ergong", pos_l)
+anim:fade_out(bgm, 2)
+|>
+```
+
+兼容代理会优先把简单动作映射到当前运行时，无法完整表达的 NovaAnimation 行为会退化为 no-op 或基础等待。它用于保障 Nova 原剧本可基础播放；成熟动画系统仍按 PLAN 的 Phase 6 继续建设。
 
 ---
 

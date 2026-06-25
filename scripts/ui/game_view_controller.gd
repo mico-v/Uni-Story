@@ -128,6 +128,7 @@ func _bind_nodes() -> void:
 		_backlog_scroll = _hud.get_node_or_null("BacklogPanel/BacklogPanelContainer/BacklogScroll") as ScrollContainer
 		_backlog_close_btn = _hud.get_node_or_null("BacklogPanel/BacklogPanelContainer/CloseButton") as Button
 	_post_fx_rect = get_node_or_null("PostFXRect") as ColorRect
+	_apply_canvas_layers()
 
 	_save_load_controller.bind_nodes(_save_panel, _save_panel_title, _save_slots, _save_close_btn)
 	_backlog_controller.bind_nodes(_backlog_panel, _backlog_list, _backlog_scroll, _backlog_close_btn)
@@ -171,6 +172,15 @@ func _bind_nodes() -> void:
 		_backlog_btn.visible = false
 	if _backlog_scroll:
 		_backlog_scroll.mouse_filter = Control.MOUSE_FILTER_STOP
+
+
+func _apply_canvas_layers() -> void:
+	if _world:
+		_world.z_index = 0
+	if _post_fx_rect:
+		_post_fx_rect.z_index = 10
+	if _hud:
+		_hud.z_index = 20
 
 
 func _apply_ui_defaults() -> void:
@@ -367,11 +377,25 @@ func reset_world() -> void:
 	# Stop all audio (BGM, SE, voice).
 	if _ctx and _ctx.audio:
 		_ctx.audio.stop_all()
+	if _ctx and _ctx.vfx:
+		_ctx.vfx.clear_all()
 	_hide_mouse_menu()
 	if _bg:
 		_bg.visible = false
+		_bg.texture = null
+		_bg.position = Vector2.ZERO
+		_bg.scale = Vector2.ONE
+		_bg.rotation_degrees = 0.0
+		_bg.modulate = Color.WHITE
+		_clear_composite_layers(_bg)
 	if _fg:
 		_fg.visible = false
+		_fg.texture = null
+		_fg.position = Vector2.ZERO
+		_fg.scale = Vector2.ONE
+		_fg.rotation_degrees = 0.0
+		_fg.modulate = Color.WHITE
+		_clear_composite_layers(_fg)
 	if _world:
 		_world.visible = true
 		_world.position = Vector2.ZERO
@@ -408,6 +432,60 @@ func reset_world() -> void:
 	_story_label_clear()
 	_kill_typewriter()
 	_deactivate_modes()
+
+
+## Remove composite overlay Sprite2D children created by Graphics._show_composite().
+func _clear_composite_layers(parent: Sprite2D) -> void:
+	if parent == null:
+		return
+	for child in parent.get_children():
+		if child is Sprite2D and child.has_meta("graphics_composite_layer"):
+			child.texture = null
+			child.visible = false
+			child.queue_free()
+
+
+## Reset display state (bg/fg/characters/VFX) without touching UI buttons.
+## Called on chapter transitions to clear the previous scene.
+func cleanup_display() -> void:
+	if _ctx and _ctx.prefab_loader:
+		_ctx.prefab_loader.destroy_all()
+	if _ctx and _ctx.composer:
+		_ctx.composer.clear_all()
+	if _ctx and _ctx.video_system:
+		_ctx.video_system.stop()
+	if _ctx and _ctx.audio:
+		_ctx.audio.stop_all()
+	if _ctx and _ctx.vfx:
+		_ctx.vfx.clear_all()
+	if _bg:
+		_bg.visible = false
+		_bg.texture = null
+		_bg.position = Vector2.ZERO
+		_bg.scale = Vector2.ONE
+		_bg.rotation_degrees = 0.0
+		_bg.modulate = Color.WHITE
+		_clear_composite_layers(_bg)
+	if _fg:
+		_fg.visible = false
+		_fg.texture = null
+		_fg.position = Vector2.ZERO
+		_fg.scale = Vector2.ONE
+		_fg.rotation_degrees = 0.0
+		_fg.modulate = Color.WHITE
+		_clear_composite_layers(_fg)
+	if _world:
+		_world.visible = true
+		_world.position = Vector2.ZERO
+		_world.scale = Vector2.ONE
+		_world.rotation_degrees = 0.0
+	if _overlay:
+		_overlay.visible = false
+		var col := _overlay.color
+		col.a = 0.0
+		_overlay.color = col
+	if _post_fx_rect:
+		_post_fx_rect.visible = false
 
 
 func get_world() -> Node2D:
@@ -533,13 +611,7 @@ func on_game_ended() -> void:
 
 func on_chapter_started() -> void:
 	_continue_icon_visible(false)
-	_chapter_timer = get_tree().create_timer(2.0)
-	_chapter_timer.timeout.connect(func() -> void:
-		if _ctx.game_state.is_waiting_input:
-			_ctx.game_state.is_waiting_input = false
-			_ctx.game_state.continue_after_input()
-		_chapter_timer = null
-	)
+	_chapter_timer = null
 
 
 func on_ending_reached(ending_name: String) -> void:
