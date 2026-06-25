@@ -123,6 +123,13 @@ func show(obj: Variant, image_path: String = "", coord = null, color = null) -> 
 	# Nova Lua show() uses integer 0 to mean "default / no effect", not a color tint.
 	if color == 0:
 		color = null
+	# Nova color-name shorthand for display objects: 'black' on bg/fg means tint, not image.
+	if image_path == "black" and (obj_name == "bg" or obj_name == "fg"):
+		_ctx.graphics.tint(obj, Color.BLACK)
+		var node: CanvasItem = _ctx.graphics._resolve(obj)
+		if node:
+			node.visible = true
+		return
 	if obj_name == "cg":
 		_show_nova_cg(obj_name, image_path, coord, color)
 		return

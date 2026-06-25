@@ -445,6 +445,49 @@ func _clear_composite_layers(parent: Sprite2D) -> void:
 			child.queue_free()
 
 
+## Reset display state (bg/fg/characters/VFX) without touching UI buttons.
+## Called on chapter transitions to clear the previous scene.
+func cleanup_display() -> void:
+	if _ctx and _ctx.prefab_loader:
+		_ctx.prefab_loader.destroy_all()
+	if _ctx and _ctx.composer:
+		_ctx.composer.clear_all()
+	if _ctx and _ctx.video_system:
+		_ctx.video_system.stop()
+	if _ctx and _ctx.audio:
+		_ctx.audio.stop_all()
+	if _ctx and _ctx.vfx:
+		_ctx.vfx.clear_all()
+	if _bg:
+		_bg.visible = false
+		_bg.texture = null
+		_bg.position = Vector2.ZERO
+		_bg.scale = Vector2.ONE
+		_bg.rotation_degrees = 0.0
+		_bg.modulate = Color.WHITE
+		_clear_composite_layers(_bg)
+	if _fg:
+		_fg.visible = false
+		_fg.texture = null
+		_fg.position = Vector2.ZERO
+		_fg.scale = Vector2.ONE
+		_fg.rotation_degrees = 0.0
+		_fg.modulate = Color.WHITE
+		_clear_composite_layers(_fg)
+	if _world:
+		_world.visible = true
+		_world.position = Vector2.ZERO
+		_world.scale = Vector2.ONE
+		_world.rotation_degrees = 0.0
+	if _overlay:
+		_overlay.visible = false
+		var col := _overlay.color
+		col.a = 0.0
+		_overlay.color = col
+	if _post_fx_rect:
+		_post_fx_rect.visible = false
+
+
 func get_world() -> Node2D:
 	return _world
 
