@@ -86,7 +86,10 @@ func run_block_async(source: String):
 
 	if _is_awaitable(result):
 		var state := {"completed": false, "timed_out": false}
-		var timer := _ctx.get_tree().create_timer(ASYNC_TIMEOUT)
+		var timer := Timer.new()
+		timer.one_shot = true
+		timer.wait_time = ASYNC_TIMEOUT
+		_ctx.add_child(timer)
 		timer.timeout.connect(func() -> void:
 			if not state["completed"]:
 				state["timed_out"] = true
@@ -94,9 +97,13 @@ func run_block_async(source: String):
 				last_error = "GDRuntime: async block timed out after %ds:\n%s" % [ASYNC_TIMEOUT, source]
 				EngineLogScript.error(EngineLogScript.Category.RUNTIME, "GDRuntime", last_error)
 		)
+		timer.start()
 		await _await_possible_async_result(result)
 		if not state["timed_out"]:
 			state["completed"] = true
+		if is_instance_valid(timer):
+			timer.stop()
+			timer.queue_free()
 		_running_async = false
 	else:
 		_running_async = false

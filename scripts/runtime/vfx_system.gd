@@ -18,6 +18,8 @@ const OBJECT_EFFECTS := {
 const POST_EFFECTS := {
 	"chromatic": { "shader": "res://resources/shaders/chromatic_aberration.gdshader", "params": { "amount": 3.0 } },
 	"vignette":  { "shader": "res://resources/shaders/vignette.gdshader",             "params": { "intensity": 0.5 } },
+	"grayscale": { "shader": "res://resources/shaders/grayscale.gdshader",             "params": { "amount": 1.0 } },
+	"blur":      { "shader": "res://resources/shaders/blur.gdshader",                  "params": { "amount": 5.0 } },
 }
 
 # ── Internal state ──────────────────────────────────────────────────
@@ -42,6 +44,8 @@ func set_post_fx_rect(node: ColorRect) -> void:
 # ── Resolve target ──────────────────────────────────────────────────
 
 func _resolve(target: Variant) -> CanvasItem:
+	if _is_camera_target(target):
+		return _post_fx_rect
 	if target is CanvasItem:
 		return target
 	if target is String or target is StringName:
@@ -62,6 +66,11 @@ func _load_shader(path: String) -> Shader:
 	push_warning("VFXSystem: failed to load shader '%s'" % path)
 	return null
 
+
+func _is_camera_target(target: Variant) -> bool:
+	var name := str(target)
+	return name == "cam" or name == "cam2" or name == "cam_mask"
+
 # ── Material helpers ────────────────────────────────────────────────
 
 func _make_material(effect_info: Dictionary) -> ShaderMaterial:
@@ -81,6 +90,13 @@ func _make_material(effect_info: Dictionary) -> ShaderMaterial:
 ## its current value to *target_value* (or the effect's default) over *duration*
 ## seconds.  Returns the Tween so the caller can `await` it.
 func play(effect_name: String, target: Variant, duration: float = 0.5, params: Dictionary = {}) -> Tween:
+	effect_name = _normalize_effect_name(effect_name)
+	if _is_camera_target(target):
+		if effect_name.is_empty():
+			return clear_post(duration)
+		return post(effect_name, duration, params)
+	if effect_name.is_empty():
+		return clear(target, duration)
 	var node := _resolve(target)
 	if node == null:
 		push_warning("VFXSystem.play: cannot resolve target '%s'" % str(target))
@@ -212,6 +228,9 @@ func shake(intensity: float = 10.0, duration: float = 0.5) -> void:
 
 ## Apply a named post-processing effect to the full-screen overlay.
 func post(effect_name: String, duration: float = 0.5, params: Dictionary = {}) -> Tween:
+	effect_name = _normalize_effect_name(effect_name)
+	if effect_name.is_empty():
+		return clear_post(duration)
 	if _post_fx_rect == null:
 		push_warning("VFXSystem.post: no post-process rect available")
 		return _null_tween()
@@ -284,6 +303,23 @@ func clear_post(duration: float = 0.3) -> Tween:
 	)
 	return t
 
+
+func clear_all() -> void:
+	if _shake_tween and _shake_tween.is_valid():
+		_shake_tween.kill()
+	_shake_tween = null
+	for id in _active_materials.keys():
+		var node := instance_from_id(int(id))
+		if node is CanvasItem:
+			(node as CanvasItem).material = null
+	_active_materials.clear()
+	_active_effects.clear()
+	if _post_fx_rect:
+		_post_fx_rect.material = null
+		_post_fx_rect.visible = false
+	_post_fx_name = ""
+	_post_fx_params = {}
+
 # ── Shader transitions (called by TransitionSystem) ─────────────────
 
 ## Play a shader-based transition on the TransitionOverlay.
@@ -326,6 +362,20 @@ func _null_tween() -> Tween:
 	var t := _ctx.get_tree().create_tween()
 	t.tween_interval(0.0)
 	return t
+
+
+func _normalize_effect_name(effect_name: String) -> String:
+	match effect_name.to_lower():
+		"mono", "colorless", "gray", "grey":
+			return "grayscale"
+		"radial_blur":
+			return "blur"
+		"lens_blur":
+			return "blur"
+		"color":
+			return ""
+		_:
+			return effect_name
 
 
 # ── Name resolution helper ────────────────────────────────────────────

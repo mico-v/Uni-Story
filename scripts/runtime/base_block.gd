@@ -41,19 +41,19 @@ var anim_hold:
 	get: return NovaAnimationCompatScript.new(_ctx)
 
 var pos_c: Array:
-	get: return [0, 0, 0.5]
+	get: return _nova_pos(0.50)
 
 var pos_l: Array:
-	get: return [-260, 0, 0.5]
+	get: return _nova_pos(0.36)
 
 var pos_r: Array:
-	get: return [260, 0, 0.5]
+	get: return _nova_pos(0.64)
 
 var pos_cl: Array:
-	get: return [-130, 0, 0.5]
+	get: return _nova_pos(0.43)
 
 var pos_cr: Array:
-	get: return [130, 0, 0.5]
+	get: return _nova_pos(0.57)
 
 var color_sunset: Array:
 	get: return [1.0, 0.78, 0.55, 1.0]
@@ -133,6 +133,12 @@ func hide(obj: Variant) -> void:
 	_ctx.graphics.hide(obj)
 
 func move(obj: Variant, coord: Variant, scale = null, angle = null) -> void:
+	if _is_nova_character(str(obj)):
+		_ctx.composer.move_char(str(obj), coord, scale, angle)
+		return
+	if _is_camera_target(obj):
+		_ctx.camera.move_camera(coord, scale, angle)
+		return
 	_ctx.graphics.move(obj, coord, scale, angle)
 
 func tint(obj: Variant, color: Variant) -> void:
@@ -177,8 +183,17 @@ func trans(kind: String = "fade", duration: float = 0.5):
 
 # --- VFX / shader API --------------------------------------------------------
 
-func vfx(effect_name: String, target: Variant, duration: float = 0.5, params: Dictionary = {}):
-	return _ctx.vfx.play(effect_name, target, duration, params)
+func vfx(arg1: Variant = null, arg2: Variant = null, arg3: Variant = null, arg4: Variant = null, arg5: Variant = null):
+	if _is_nova_camera_target(arg1):
+		return _nova_camera_vfx(arg2, arg3, arg4, arg5)
+	var effect_name := str(arg1)
+	var target: Variant = arg2
+	var duration := _to_float(arg3, 0.5)
+	var params: Dictionary = arg4 if arg4 is Dictionary else {}
+	var effect_key := _nova_effect_alias(effect_name)
+	if effect_key.is_empty():
+		return _ctx.vfx.clear(target, duration)
+	return _ctx.vfx.play(effect_key, target, duration, params)
 
 func clear_vfx(target: Variant, duration: float = 0.3):
 	return _ctx.vfx.clear(target, duration)
@@ -491,6 +506,79 @@ func _nova_image_path(obj_name: String, image_path: String) -> String:
 			return image_path
 
 
+func _nova_pos(x_ratio: float) -> Array:
+	var size := _viewport_size()
+	return [size.x * x_ratio, size.y * 0.55, _nova_character_scale()]
+
+
+func _viewport_size() -> Vector2:
+	if _ctx and _ctx.has_method("get_viewport"):
+		var vp := _ctx.get_viewport()
+		if vp:
+			return vp.get_visible_rect().size
+	return Vector2(1280, 720)
+
+
+func _nova_character_scale() -> float:
+	var h := _viewport_size().y
+	return clampf(h / 2450.0, 0.28, 0.45)
+
+
+func _is_camera_target(obj: Variant) -> bool:
+	var name := str(obj)
+	return name == "cam" or name == "cam2" or name == "cam_mask"
+
+
+func _is_nova_camera_target(obj: Variant) -> bool:
+	return _is_camera_target(obj)
+
+
+func _nova_effect_alias(effect_name: String) -> String:
+	match effect_name.to_lower():
+		"mono", "colorless":
+			return "grayscale"
+		"gray", "grey":
+			return "grayscale"
+		"blur":
+			return "blur"
+		"lens_blur", "radial_blur":
+			return "blur"
+		"vignette":
+			return "vignette"
+		_:
+			return effect_name
+
+
+func _nova_camera_vfx(effect_spec: Variant, range_spec: Variant, duration_spec: Variant, params_spec: Variant) -> Tween:
+	if _ctx == null or _ctx.vfx == null:
+		return null
+	if effect_spec == null:
+		return _ctx.vfx.clear_post(_to_float(duration_spec, 0.0))
+	if effect_spec is Array:
+		var arr := effect_spec as Array
+		if arr.is_empty():
+			return _ctx.vfx.clear_post(_to_float(duration_spec, 0.0))
+		if arr[0] == null:
+			var clear_duration := _to_float(duration_spec, 0.0)
+			if clear_duration <= 0.0 and arr.size() > 1:
+				clear_duration = _to_float(arr[1], 0.0)
+			return _ctx.vfx.clear_post(clear_duration)
+		var effect := _nova_effect_alias(str(arr[0]))
+		if effect.is_empty():
+			return _ctx.vfx.clear_post(_to_float(duration_spec, 0.0))
+		var effect_params: Dictionary = params_spec if params_spec is Dictionary else {}
+		if effect_params.is_empty() and range_spec is Dictionary:
+			effect_params = range_spec
+		return _ctx.vfx.post(effect, _to_float(duration_spec, 0.5), effect_params)
+	var effect_name := _nova_effect_alias(str(effect_spec))
+	if effect_name.is_empty():
+		return _ctx.vfx.clear_post(_to_float(duration_spec, 0.0))
+	var params: Dictionary = params_spec if params_spec is Dictionary else {}
+	if params.is_empty() and range_spec is Dictionary:
+		params = range_spec
+	return _ctx.vfx.post(effect_name, _to_float(duration_spec, 0.5), params)
+
+
 func _audio_path(folder: String, path: String) -> String:
 	if path.find("/") != -1 or path.get_extension() != "":
 		return path
@@ -506,11 +594,19 @@ func _linear_volume_to_db(volume: Variant) -> float:
 	return 0.0
 
 
+func _to_float(value: Variant, fallback: float) -> float:
+	if value is int or value is float:
+		return float(value)
+	return fallback
+
+
 func _is_nova_character(obj_name: String) -> bool:
 	return _nova_character_dir(obj_name) != ""
 
 
 func _show_nova_character(char_name: String, pose: String, coord: Variant, color: Variant) -> void:
+	if coord == null:
+		coord = _nova_pos(0.50)
 	_ctx.composer.show_char(char_name, _nova_pose_layers(pose), coord, color)
 
 

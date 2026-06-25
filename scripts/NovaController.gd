@@ -133,6 +133,12 @@ func _ready() -> void:
 func _exit_tree() -> void:
 	if hot_reload:
 		hot_reload.stop()
+	if audio:
+		audio.dispose()
+	if vfx:
+		vfx.clear_all()
+	if composer:
+		composer.clear_all()
 	if video_system:
 		video_system.stop()
 	if read_tracker:
@@ -269,6 +275,7 @@ func _setup_game_view() -> void:
 		object_manager.bind_object("bg", _game_vc.get_bg())
 	if _game_vc.get_fg():
 		object_manager.bind_object("fg", _game_vc.get_fg())
+		object_manager.bind_object("cg", _game_vc.get_fg())
 	if _game_vc.get_overlay():
 		object_manager.bind_object("transition_overlay", _game_vc.get_overlay())
 	if _game_vc.get_dbox():

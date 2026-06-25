@@ -367,6 +367,8 @@ func reset_world() -> void:
 	# Stop all audio (BGM, SE, voice).
 	if _ctx and _ctx.audio:
 		_ctx.audio.stop_all()
+	if _ctx and _ctx.vfx:
+		_ctx.vfx.clear_all()
 	_hide_mouse_menu()
 	if _bg:
 		_bg.visible = false
@@ -533,13 +535,7 @@ func on_game_ended() -> void:
 
 func on_chapter_started() -> void:
 	_continue_icon_visible(false)
-	_chapter_timer = get_tree().create_timer(2.0)
-	_chapter_timer.timeout.connect(func() -> void:
-		if _ctx.game_state.is_waiting_input:
-			_ctx.game_state.is_waiting_input = false
-			_ctx.game_state.continue_after_input()
-		_chapter_timer = null
-	)
+	_chapter_timer = null
 
 
 func on_ending_reached(ending_name: String) -> void:

@@ -45,6 +45,10 @@ func _nova_standing_dir(char_name: String) -> String:
 			return ""
 
 
+func is_nova_character(char_name: String) -> bool:
+	return not _nova_standing_dir(char_name).is_empty()
+
+
 func _load_layer_texture(char_name: String, layer: String, key: Variant) -> Texture2D:
 	var file := layer
 	if key != null and str(key) != "":
@@ -98,6 +102,16 @@ func show_char(char_name: String, layers: Variant = {}, coord = null, color = nu
 	if color != null:
 		_ctx.graphics.tint(cs, color)
 	cs.visible = true
+
+
+func move_char(char_name: String, coord: Variant, scale = null, angle = null) -> void:
+	var cs := _get_or_create(char_name)
+	_ctx.graphics.move(cs, coord, scale, angle)
+
+
+func tint_char(char_name: String, color: Variant) -> void:
+	var cs := _get_or_create(char_name)
+	_ctx.graphics.tint(cs, color)
 
 
 ## Swap a single layer (e.g. expression / mouth) on an existing character.
