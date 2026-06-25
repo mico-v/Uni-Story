@@ -18,6 +18,8 @@ func _ensure_layer(layer_name: String) -> Sprite2D:
 	var spr := Sprite2D.new()
 	spr.name = "Layer_" + layer_name
 	spr.centered = true
+	spr.z_as_relative = true
+	spr.z_index = 0
 	add_child(spr)
 	_layers[layer_name] = spr
 	_reorder()
@@ -25,27 +27,94 @@ func _ensure_layer(layer_name: String) -> Sprite2D:
 
 
 func _reorder() -> void:
-	# Apply z ordering by the configured layer order; unknown layers go on top.
+	# Keep layer ordering local to this character. Using child z_index here can
+	# make a character draw above the HUD; tree order is enough inside one sprite.
+	var ordered_names: Array[String] = []
 	for layer_name in _layers:
-		var idx := _order.find(layer_name)
-		if idx == -1:
-			idx = _order.size()
-		(_layers[layer_name] as Sprite2D).z_index = idx
+		ordered_names.append(str(layer_name))
+	ordered_names.sort_custom(func(a: String, b: String) -> bool:
+		var a_idx := _layer_order_index(a)
+		var b_idx := _layer_order_index(b)
+		if a_idx == b_idx:
+			return a < b
+		return a_idx < b_idx
+	)
+	for i in range(ordered_names.size()):
+		var spr: Sprite2D = _layers[ordered_names[i]]
+		spr.z_index = 0
+		move_child(spr, i)
+
+
+func _layer_order_index(layer_name: String) -> int:
+	var exact_idx := _order.find(layer_name)
+	if exact_idx != -1:
+		return exact_idx
+	for i in range(_order.size()):
+		var group_name := _order[i]
+		if not group_name.is_empty() and layer_name.begins_with(group_name + "_"):
+			return i
+	return _order.size()
+
+
+func set_layer_order(layer_order: Array[String]) -> void:
+	_order = layer_order.duplicate() if not layer_order.is_empty() else DEFAULT_LAYER_ORDER.duplicate()
+	_reorder()
+
+
+func hide_layers_except(layer_names: Array[String]) -> void:
+	for layer_name in _layers:
+		if not layer_names.has(layer_name):
+			var spr: Sprite2D = _layers[layer_name]
+			spr.texture = null
+			spr.visible = false
+
+
+func hide_layer_group(group_name: String) -> void:
+	for layer_name in _layers:
+		if layer_name == group_name or str(layer_name).begins_with(group_name + "_"):
+			var spr: Sprite2D = _layers[layer_name]
+			spr.texture = null
+			spr.visible = false
 
 
 ## Set (or replace) a layer's texture. Pass null to clear that layer.
-func set_layer(layer_name: String, texture: Texture2D) -> void:
+func set_layer(layer_name: String, texture: Texture2D, offset: Vector2 = Vector2.ZERO, layer_scale: Vector2 = Vector2.ONE) -> void:
 	if texture == null:
 		if _layers.has(layer_name):
-			_layers[layer_name].visible = false
+			var existing: Sprite2D = _layers[layer_name]
+			existing.texture = null
+			existing.visible = false
 		return
 	var spr := _ensure_layer(layer_name)
 	spr.texture = texture
+	spr.position = offset
+	spr.scale = layer_scale
 	spr.visible = true
 
 
 func has_layer(layer_name: String) -> bool:
 	return _layers.has(layer_name)
+
+
+func has_visible_layer(layer_name: String) -> bool:
+	if not _layers.has(layer_name):
+		return false
+	var spr: Sprite2D = _layers[layer_name]
+	return spr.visible and spr.texture != null
+
+
+func visible_layer_count() -> int:
+	var count := 0
+	for layer_name in _layers:
+		if has_visible_layer(layer_name):
+			count += 1
+	return count
+
+
+func layer_position(layer_name: String) -> Vector2:
+	if not _layers.has(layer_name):
+		return Vector2.ZERO
+	return (_layers[layer_name] as Sprite2D).position
 
 
 func clear_layers() -> void:

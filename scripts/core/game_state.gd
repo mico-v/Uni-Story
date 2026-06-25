@@ -345,6 +345,9 @@ func _goto(name: StringName) -> bool:
 		return false
 	current_node = _graph.get_node_named(name)
 	current_index = -1
+	# Reset display state when jumping to a new story node.
+	if _ctx and _ctx.has_method("reset_world"):
+		_ctx.reset_world()
 	return true
 
 

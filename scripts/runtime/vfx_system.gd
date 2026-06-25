@@ -16,10 +16,10 @@ const OBJECT_EFFECTS := {
 }
 
 const POST_EFFECTS := {
-	"chromatic": { "shader": "res://resources/shaders/chromatic_aberration.gdshader", "params": { "amount": 3.0 } },
-	"vignette":  { "shader": "res://resources/shaders/vignette.gdshader",             "params": { "intensity": 0.5 } },
-	"grayscale": { "shader": "res://resources/shaders/grayscale.gdshader",             "params": { "amount": 1.0 } },
-	"blur":      { "shader": "res://resources/shaders/blur.gdshader",                  "params": { "amount": 5.0 } },
+	"chromatic": { "shader": "res://resources/shaders/chromatic_aberration_post.gdshader", "params": { "amount": 3.0 } },
+	"vignette":  { "shader": "res://resources/shaders/vignette_post.gdshader",             "params": { "intensity": 0.5 } },
+	"grayscale": { "shader": "res://resources/shaders/grayscale_post.gdshader",             "params": { "amount": 1.0 } },
+	"blur":      { "shader": "res://resources/shaders/blur_post.gdshader",                  "params": { "amount": 5.0 } },
 }
 
 # ── Internal state ──────────────────────────────────────────────────

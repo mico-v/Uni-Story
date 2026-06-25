@@ -48,6 +48,20 @@ func _run() -> void:
 
 	_expect(nova.object_manager.objects.has("cg"), "cg display target should be registered")
 	_expect(nova.object_manager.objects.has("ergong"), "Nova standing character should be registered")
+	var ergong: Variant = nova.object_manager.objects.get("ergong")
+	_expect(ergong is CompositeSprite, "Nova standing character should use CompositeSprite")
+	if ergong is CompositeSprite:
+		var standing := ergong as CompositeSprite
+		_expect(standing.visible_layer_count() >= 5, "Nova standing should compose body, mouth, eye, eyebrow, and hair layers")
+		_expect(standing.has_visible_layer("body"), "Nova standing should include body layer")
+		_expect(standing.has_visible_layer("hair"), "Nova standing should include hair layer")
+		_expect(standing.has_visible_layer("eye_normal"), "Nova standing should include eye expression layer")
+		_expect(standing.layer_position("eye_normal") != Vector2.ZERO, "Nova standing expression layers should use crop offsets")
+	var game_view: Node = scene.get_node_or_null("GameView")
+	if game_view:
+		var world := game_view.get_node_or_null("World") as Node2D
+		var hud := game_view.get_node_or_null("Hud") as Control
+		_expect(world != null and hud != null and hud.z_index > world.z_index, "HUD should render above standing sprites")
 	_finish_scene(scene)
 
 

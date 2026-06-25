@@ -120,6 +120,12 @@ func is_end(end_name = null) -> void:
 
 func show(obj: Variant, image_path: String = "", coord = null, color = null) -> void:
 	var obj_name := str(obj)
+	# Nova Lua show() uses integer 0 to mean "default / no effect", not a color tint.
+	if color == 0:
+		color = null
+	if obj_name == "cg":
+		_show_nova_cg(obj_name, image_path, coord, color)
+		return
 	if _is_nova_character(obj_name):
 		_show_nova_character(obj_name, image_path, coord, color)
 		return
@@ -607,17 +613,34 @@ func _is_nova_character(obj_name: String) -> bool:
 func _show_nova_character(char_name: String, pose: String, coord: Variant, color: Variant) -> void:
 	if coord == null:
 		coord = _nova_pos(0.50)
-	_ctx.composer.show_char(char_name, _nova_pose_layers(pose), coord, color)
+	# Nova Lua show() uses 0 to mean "default / no effect", not a color.
+	if color == 0:
+		color = null
+	_ctx.composer.show_char(char_name, pose, coord, color)
+
+
+func _show_nova_cg(obj_name: String, pose: String, coord: Variant, color: Variant) -> void:
+# Nova Lua show() uses 0 to mean "default / no effect", not a color.
+	if color == 0:
+		color = null
+	var resolved_pose := _nova_cg_pose(obj_name, pose)
+	_ctx.graphics.show(obj_name, resolved_pose, coord, color)
 
 
 func _nova_pose_layers(pose: String) -> Dictionary:
+	return {"pose": pose}
+
+
+func _nova_cg_pose(obj_name: String, pose: String) -> String:
+	if pose.find("/") != -1:
+		return pose
 	match pose:
-		"cry":
-			return {"body": "", "eye": "cry", "eyebrow": "down", "mouth": "close", "hair": ""}
-		"smile":
-			return {"body": "", "eye": "smile", "eyebrow": "happy", "mouth": "smile", "hair": ""}
+		"rain":
+			return "rain_back"
+		"rain_final":
+			return "rain_back+rain_text"
 		_:
-			return {"body": "", "eye": "normal", "eyebrow": "normal", "mouth": "close", "hair": ""}
+			return pose
 
 
 func _nova_character_dir(char_name: String) -> String:

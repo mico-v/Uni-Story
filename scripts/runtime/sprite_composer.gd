@@ -10,9 +10,21 @@ class_name SpriteComposer extends RefCounted
 
 const CHAR_ROOT := "characters/"
 const NOVA_STANDING_ROOT := "Standings/"
+const NOVA_PIXELS_PER_UNIT := 100.0
+const NOVA_LAYER_ORDER: Array[String] = ["body", "blush", "mouth", "eye", "eyebrow", "hair", "sweat", "effect"]
+const NOVA_DEFAULT_POSES: Dictionary = {
+	"ergong": {"normal": "body+mouth_smile+eye_normal+eyebrow_normal+hair"},
+	"gaotian": {
+		"normal": "body+mouth_smile+eye_normal+eyebrow_normal+hair",
+		"cry": "body+mouth_smile+eye_cry+eyebrow_normal+hair",
+	},
+	"qianye": {"normal": "body+mouth_close+eye_normal+eyebrow_normal+hair"},
+	"xiben": {"normal": "body+mouth_close+eye_normal+eyebrow_normal+hair"},
+}
 
 var _ctx: Node
 var _chars: Dictionary = {}  # name -> CompositeSprite
+var _nova_asset_offsets: Dictionary = {}  # "char/layer" -> Vector2
 
 
 func _init(ctx: Node) -> void:
@@ -65,6 +77,111 @@ func _load_layer_texture(char_name: String, layer: String, key: Variant) -> Text
 	return null
 
 
+
+func _layer_offset(char_name: String, layer: String) -> Vector2:
+	if not is_nova_character(char_name):
+		return Vector2.ZERO
+	var key := "%s/%s" % [char_name.to_lower(), layer]
+	if _nova_asset_offsets.has(key):
+		return _nova_asset_offsets[key]
+	var offset := _load_nova_layer_offset(char_name, layer)
+	_nova_asset_offsets[key] = offset
+	return offset
+
+
+func _load_nova_layer_offset(char_name: String, layer: String) -> Vector2:
+	var paths: Array[String] = []
+	var root: String = _ctx.object_manager.constants.get("resource_root", "res://resources/")
+	paths.append(root + NOVA_STANDING_ROOT + _nova_standing_dir(char_name) + "/" + layer + ".asset")
+	paths.append("res://Nova/Assets/Resources/Standings/%s/%s.asset" % [_nova_standing_dir(char_name), layer])
+	for path in paths:
+		var offset: Variant = _parse_asset_offset(path)
+		if offset is Vector2:
+			return offset
+	return Vector2.ZERO
+
+
+func _parse_asset_offset(path: String) -> Variant:
+	if path.is_empty():
+		return null
+	var abs_path := ProjectSettings.globalize_path(path)
+	if not FileAccess.file_exists(abs_path):
+		return null
+	var text := FileAccess.get_file_as_string(abs_path)
+	if text.is_empty():
+		return null
+	var rx := RegEx.new()
+	if rx.compile(r"offset:\s*\{x:\s*([-0-9.]+),\s*y:\s*([-0-9.]+),\s*z:\s*([-0-9.]+)\}") != OK:
+		return null
+	var match := rx.search(text)
+	if match == null:
+		return null
+	return Vector2(float(match.get_string(1)) * NOVA_PIXELS_PER_UNIT, -float(match.get_string(2)) * NOVA_PIXELS_PER_UNIT)
+
+
+func _resolve_nova_pose_layers(char_name: String, pose: String) -> Array[String]:
+	if pose.is_empty():
+		return []
+	if pose.find("+") != -1:
+		return _normalize_nova_layers(pose.split("+", false))
+	var poses: Dictionary = NOVA_DEFAULT_POSES.get(char_name.to_lower(), {})
+	if poses.has(pose):
+		return _normalize_nova_layers(str(poses[pose]).split("+", false))
+	return _normalize_nova_layers([pose])
+
+
+func _normalize_nova_layers(raw_layers: Array) -> Array[String]:
+	var layers: Array[String] = []
+	for item in raw_layers:
+		var layer := str(item).strip_edges()
+		if layer.is_empty():
+			continue
+		layers.append(layer)
+	layers.sort_custom(func(a: String, b: String) -> bool:
+		return _nova_layer_order_index(a) < _nova_layer_order_index(b)
+	)
+	return layers
+
+
+func _nova_layer_order_index(layer_name: String) -> int:
+	var idx := NOVA_LAYER_ORDER.find(layer_name)
+	if idx != -1:
+		return idx
+	if layer_name.begins_with("body"):
+		return 0
+	if layer_name.begins_with("blush"):
+		return 1
+	if layer_name.begins_with("mouth"):
+		return 2
+	if layer_name.begins_with("eyebrow"):
+		return 4
+	if layer_name.begins_with("eye"):
+		return 3
+	if layer_name.begins_with("hair"):
+		return 5
+	if layer_name.begins_with("sweat"):
+		return 6
+	return 100
+
+
+func _nova_layer_group(layer_name: String) -> String:
+	if layer_name.begins_with("eyebrow"):
+		return "eyebrow"
+	if layer_name.begins_with("eye"):
+		return "eye"
+	if layer_name.begins_with("mouth"):
+		return "mouth"
+	if layer_name.begins_with("hair"):
+		return "hair"
+	if layer_name.begins_with("body"):
+		return "body"
+	if layer_name.begins_with("blush"):
+		return "blush"
+	if layer_name.begins_with("sweat"):
+		return "sweat"
+	return layer_name
+
+
 func _get_or_create(char_name: String) -> CompositeSprite:
 	if _chars.has(char_name):
 		return _chars[char_name]
@@ -83,19 +200,42 @@ func _get_or_create(char_name: String) -> CompositeSprite:
 ##         or a String treated as { body=<that key> }.
 func show_char(char_name: String, layers: Variant = {}, coord = null, color = null) -> void:
 	var cs := _get_or_create(char_name)
+	if is_nova_character(char_name):
+		cs.set_layer_order(NOVA_LAYER_ORDER)
 
 	var layer_map: Dictionary = {}
-	if layers is Dictionary:
-		layer_map = layers
-	elif layers is String:
-		layer_map = {"body": layers}
+	if is_nova_character(char_name):
+		var pose_layers: Array[String] = []
+		if layers is Dictionary:
+			for layer in layers:
+				var layer_name := str(layer)
+				if str(layers[layer]) == "":
+					pose_layers.append(layer_name)
+				else:
+					pose_layers.append(layer_name + "_" + str(layers[layer]))
+		elif layers is String:
+			pose_layers = _resolve_nova_pose_layers(char_name, layers)
+		elif layers is Array:
+			for item in layers:
+				pose_layers.append(str(item))
+		else:
+			pose_layers = _resolve_nova_pose_layers(char_name, "normal")
+		var normalized_layers := _normalize_nova_layers(pose_layers)
+		cs.hide_layers_except(normalized_layers)
+		for layer_name in normalized_layers:
+			var tex := _load_layer_texture(char_name, layer_name, null)
+			cs.set_layer(layer_name, tex, _layer_offset(char_name, layer_name))
+	else:
+		if layers is Dictionary:
+			layer_map = layers
+		elif layers is String:
+			layer_map = {"body": layers}
 
-	if layer_map.is_empty():
-		layer_map = {"body": ""}
-
-	for layer in layer_map:
-		var tex := _load_layer_texture(char_name, str(layer), layer_map[layer])
-		cs.set_layer(str(layer), tex)
+		if layer_map.is_empty():
+			layer_map = {"body": ""}
+		for layer in layer_map:
+			var tex := _load_layer_texture(char_name, str(layer), layer_map[layer])
+			cs.set_layer(str(layer), tex)
 
 	if coord != null:
 		_ctx.graphics.move(cs, coord)
@@ -118,7 +258,12 @@ func tint_char(char_name: String, color: Variant) -> void:
 func set_layer(char_name: String, layer: String, key: Variant = "") -> void:
 	var cs := _get_or_create(char_name)
 	var tex := _load_layer_texture(char_name, layer, key)
-	cs.set_layer(layer, tex)
+	var layer_name := layer if key == null or str(key).is_empty() else layer + "_" + str(key)
+	var target_layer := layer_name if is_nova_character(char_name) else layer
+	if is_nova_character(char_name):
+		cs.hide_layer_group(_nova_layer_group(target_layer))
+	var offset := _layer_offset(char_name, target_layer)
+	cs.set_layer(target_layer, tex, offset)
 
 
 func hide_char(char_name: String) -> void:
@@ -159,5 +304,5 @@ func restore(data: Dictionary) -> void:
 		for layer in layer_map:
 			var tex_path: String = str(layer_map[layer])
 			if ResourceLoader.exists(tex_path):
-				cs.set_layer(layer, load(tex_path))
+				cs.set_layer(layer, load(tex_path), _layer_offset(char_name, str(layer)))
 		cs.visible = true

@@ -393,6 +393,11 @@ func _on_game_title_requested() -> void:
 		_title_vc.set_continue_enabled(save_system.has_auto_save())
 
 
+func reset_world() -> void:
+	if _game_vc:
+		_game_vc.reset_world()
+
+
 func _on_save_load_completed() -> void:
 	if _game_vc:
 		_game_vc.reset_world()

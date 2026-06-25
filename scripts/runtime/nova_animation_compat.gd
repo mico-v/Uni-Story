@@ -181,6 +181,10 @@ func _show_target(obj: Variant, image_path: String = "", coord: Variant = null) 
 			coord = _nova_pos(0.50)
 		_ctx.composer.show_char(name, _nova_pose_layers(image_path), coord)
 		return
+	# Nova color-name shorthand: e.g. trans_fade(bg, 'black') means "tint to black".
+	if _is_nova_color_name(image_path):
+		_tint_target(obj, _nova_color_value(image_path))
+		return
 	if _ctx.has_method("show"):
 		_ctx.show(obj, image_path, coord)
 	elif _ctx.graphics:
@@ -199,6 +203,21 @@ func _hide_target(obj: Variant) -> void:
 		_ctx.graphics.hide(obj)
 
 
+
+func _is_nova_color_name(name: String) -> bool:
+	match name.to_lower():
+		"black":
+			return true
+		_:
+			return false
+
+
+func _nova_color_value(name: String) -> Color:
+	match name.to_lower():
+		"black":
+			return Color.BLACK
+		_:
+			return Color.WHITE
 func _play_vfx(target: Variant, effect: Variant, range_or_duration: Variant = null, duration: Variant = 0.5, params: Variant = {}) -> void:
 	if _ctx == null or _ctx.vfx == null:
 		return
