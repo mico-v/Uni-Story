@@ -45,7 +45,7 @@ func apply_i18n(i18n: I18n) -> void:
 	if controls_title:
 		controls_title.text = i18n.t("help.section.controls", "基本操作")
 	if controls_text:
-		controls_text.text = i18n.t("help.text.controls", "左键或空格推进文本，右键打开游戏菜单，Esc 返回当前界面的上一级。")
+		controls_text.text = i18n.t("help.text.controls", "左键或空格推进文本；手机上轻触推进、长按打开游戏菜单；Esc 返回当前界面的上一级。")
 	if save_title:
 		save_title.text = i18n.t("help.section.save", "存档与回顾")
 	if save_text:

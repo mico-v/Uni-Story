@@ -93,7 +93,7 @@
   "ingame.fastforward.button": "快进",
   "ingame.first.auto": "自动模式默认速度\n具有最佳演出效果",
   "ingame.first.hint.mouse": "右键打开菜单",
-  "ingame.first.hint.touch": "滑动打开菜单",
+  "ingame.first.hint.touch": "长按打开菜单",
   "ingame.input.close": "关闭",
   "ingame.input.hint": "请在输入完成后点击关闭。",
   "ingame.input.text": "请输入...",

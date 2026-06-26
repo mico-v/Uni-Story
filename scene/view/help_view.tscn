@@ -35,7 +35,7 @@ text = "基本操作"
 
 [node name="ControlsText" type="Label" parent="HBox/Content/Scroll/HelpList" index="3"]
 layout_mode = 2
-text = "左键或空格推进文本，右键打开游戏菜单，Esc 返回当前界面的上一级。"
+text = "左键或空格推进文本；手机上轻触推进、长按打开游戏菜单；Esc 返回当前界面的上一级。"
 autowrap_mode = 3
 
 [node name="SaveTitle" type="Label" parent="HBox/Content/Scroll/HelpList" index="4"]
@@ -51,4 +51,3 @@ autowrap_mode = 3
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 text = "关闭"
-

@@ -65,6 +65,14 @@ var _backlog_controller: BacklogPanelController = BacklogPanelController.new()
 # ── Mouse menu (right-click context menu) ────────────────────────────
 var _mouse_menu: PanelContainer
 var _mouse_menu_items: VBoxContainer
+@export var touch_menu_hold_seconds: float = 0.55
+@export var touch_menu_deadzone: float = 18.0
+var _touch_menu_active := false
+var _touch_menu_opened := false
+var _touch_menu_moved := false
+var _touch_menu_can_advance := false
+var _touch_menu_token := 0
+var _touch_menu_origin := Vector2.ZERO
 
 # ── Typewriter state ─────────────────────────────────────────────────
 var _type_tween: Tween = null
@@ -798,9 +806,14 @@ func _finish_typewriter() -> void:
 # ── Next / Choice ────────────────────────────────────────────────────
 
 func _on_dbox_click(event: InputEvent) -> void:
+	if _handle_touch_menu_event(event, _dbox, true):
+		return
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
-		if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT and not mb.is_echo():
+		if mb.pressed and mb.button_index == MOUSE_BUTTON_RIGHT:
+			_toggle_mouse_menu_at(_event_global_position(_dbox, mb.position))
+			accept_event()
+		elif mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT and not mb.is_echo():
 			_on_next()
 			accept_event()
 
@@ -977,17 +990,128 @@ func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
 		if mb.pressed and mb.button_index == MOUSE_BUTTON_RIGHT:
-			if _mouse_menu and _mouse_menu.visible:
-				_hide_mouse_menu()
-			else:
-				_show_mouse_menu(mb.position)
+			_toggle_mouse_menu_at(_event_global_position(self, mb.position))
 			accept_event()
-		elif mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT and not mb.is_echo():
+			return
+	if _handle_touch_menu_event(event, self, _dbox == null or not _dbox.visible):
+		return
+	if event is InputEventMouseButton:
+		var mb := event as InputEventMouseButton
+		if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT and not mb.is_echo():
 			if _mouse_menu and _mouse_menu.visible:
 				_hide_mouse_menu()
 			elif _dbox == null or not _dbox.visible:
 				_on_next()
 				accept_event()
+
+
+func _handle_touch_menu_event(event: InputEvent, source: Control, can_advance: bool) -> bool:
+	if source == null:
+		return false
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		var global_pos := _event_global_position(source, touch.position)
+		if touch.pressed:
+			if _mouse_menu and _mouse_menu.visible:
+				_begin_consumed_touch_sequence()
+				_hide_mouse_menu()
+			else:
+				_begin_touch_menu(global_pos, can_advance)
+			source.accept_event()
+			return true
+		if _finish_touch_menu() and _touch_menu_can_advance:
+			_on_next()
+		source.accept_event()
+		return true
+	if event is InputEventScreenDrag:
+		var drag := event as InputEventScreenDrag
+		_update_touch_menu(_event_global_position(source, drag.position))
+		if _touch_menu_moved:
+			source.accept_event()
+		return _touch_menu_active
+	if _uses_display_safe_area() and event is InputEventMouseButton:
+		var mb := event as InputEventMouseButton
+		if mb.button_index != MOUSE_BUTTON_LEFT:
+			return false
+		var global_pos := _event_global_position(source, mb.position)
+		if mb.pressed:
+			if _mouse_menu and _mouse_menu.visible:
+				_begin_consumed_touch_sequence()
+				_hide_mouse_menu()
+			else:
+				_begin_touch_menu(global_pos, can_advance)
+			source.accept_event()
+			return true
+		if _finish_touch_menu() and _touch_menu_can_advance:
+			_on_next()
+		source.accept_event()
+		return true
+	if _uses_display_safe_area() and event is InputEventMouseMotion:
+		var motion := event as InputEventMouseMotion
+		if (motion.button_mask & MOUSE_BUTTON_MASK_LEFT) == 0:
+			return false
+		_update_touch_menu(_event_global_position(source, motion.position))
+		if _touch_menu_moved:
+			source.accept_event()
+		return _touch_menu_active
+	return false
+
+
+func _begin_touch_menu(global_pos: Vector2, can_advance: bool) -> void:
+	_touch_menu_token += 1
+	_touch_menu_active = true
+	_touch_menu_opened = false
+	_touch_menu_moved = false
+	_touch_menu_can_advance = can_advance
+	_touch_menu_origin = global_pos
+	var token := _touch_menu_token
+	get_tree().create_timer(touch_menu_hold_seconds).timeout.connect(_on_touch_menu_timeout.bind(token))
+
+
+func _begin_consumed_touch_sequence() -> void:
+	_touch_menu_token += 1
+	_touch_menu_active = true
+	_touch_menu_opened = true
+	_touch_menu_moved = false
+	_touch_menu_can_advance = false
+
+
+func _update_touch_menu(global_pos: Vector2) -> void:
+	if not _touch_menu_active or _touch_menu_opened:
+		return
+	if _touch_menu_origin.distance_to(global_pos) > touch_menu_deadzone:
+		_touch_menu_moved = true
+		_touch_menu_token += 1
+
+
+func _finish_touch_menu() -> bool:
+	var should_advance := _touch_menu_active and not _touch_menu_opened and not _touch_menu_moved
+	_touch_menu_token += 1
+	_touch_menu_active = false
+	_touch_menu_opened = false
+	_touch_menu_moved = false
+	return should_advance
+
+
+func _on_touch_menu_timeout(token: int) -> void:
+	if token != _touch_menu_token or not _touch_menu_active or _touch_menu_moved:
+		return
+	_touch_menu_opened = true
+	_touch_menu_can_advance = false
+	_show_mouse_menu(_touch_menu_origin)
+
+
+func _toggle_mouse_menu_at(global_pos: Vector2) -> void:
+	if _mouse_menu and _mouse_menu.visible:
+		_hide_mouse_menu()
+	else:
+		_show_mouse_menu(global_pos)
+
+
+func _event_global_position(source: Control, local_pos: Vector2) -> Vector2:
+	if source == null:
+		return local_pos
+	return source.get_global_transform_with_canvas() * local_pos
 
 
 func _show_mouse_menu(at_pos: Vector2) -> void:
@@ -1012,13 +1136,19 @@ func _show_mouse_menu(at_pos: Vector2) -> void:
 		b.pressed.connect(item[1])
 		_mouse_menu_items.add_child(b)
 	# Clamp to viewport.
-	var vp_size := get_viewport().get_visible_rect().size
-	var menu_size := Vector2(180, items.size() * 36.0)
+	var parent_control := _mouse_menu.get_parent() as Control
 	var pos := at_pos
+	var vp_size := get_viewport().get_visible_rect().size
+	if parent_control:
+		pos = parent_control.get_global_transform_with_canvas().affine_inverse() * at_pos
+		vp_size = parent_control.size
+	var menu_size := Vector2(180, items.size() * 36.0)
 	if pos.x + menu_size.x > vp_size.x:
 		pos.x = vp_size.x - menu_size.x
 	if pos.y + menu_size.y > vp_size.y:
 		pos.y = vp_size.y - menu_size.y
+	pos.x = maxf(pos.x, 0.0)
+	pos.y = maxf(pos.y, 0.0)
 	_mouse_menu.position = pos
 	_mouse_menu.visible = true
 

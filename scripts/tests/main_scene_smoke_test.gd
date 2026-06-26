@@ -50,6 +50,9 @@ func _run() -> void:
 		_expect(nova.save_system != null and nova.save_system.slot_count == nova.save_slot_count, "SaveSystem should receive exported slot count")
 		_expect(nova.preload_system != null and nova.preload_system.max_cache_size == nova.preload_cache_size, "PreloadSystem should receive exported cache size")
 		_expect(nova.gallery_coordinator != null, "GalleryCoordinator should be initialized")
+		_expect(nova.mobile_ui_support is MobileUiSupport, "MobileUiSupport should be initialized")
+		var settings_scroll := nova.get_node_or_null("SettingsView/HBox/Content/Scroll") as ScrollContainer
+		_expect(settings_scroll != null and bool(settings_scroll.get_meta(MobileUiSupport.META_SCROLL_CONFIGURED, false)), "Settings scroll should be configured for mobile drag")
 		var ui_font_path := str(ProjectSettings.get_setting("gui/theme/custom_font", ""))
 		_expect(ui_font_path == "res://resources/fonts/NotoSansSC-Regular.ttf", "Project UI font should use bundled Noto Sans SC")
 		_expect(load(ui_font_path) is FontFile, "Project UI font should load as FontFile")

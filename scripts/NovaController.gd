@@ -8,6 +8,7 @@ const GalleryCoordinatorScript := preload("res://scripts/core/gallery_coordinato
 const SettingsCoordinatorScript := preload("res://scripts/core/settings_coordinator.gd")
 const CheckpointManagerScript := preload("res://scripts/core/checkpoint_manager.gd")
 const EngineLogScript := preload("res://scripts/core/engine_log.gd")
+const MobileUiSupportScript := preload("res://scripts/ui/mobile_ui_support.gd")
 
 @export var scenario_files: Array[String] = [
 	"res://resources/scenarios/ch1.txt",
@@ -90,6 +91,7 @@ var restorables: RestorableRegistry
 var checkpoint_manager: RefCounted
 var gallery_coordinator: RefCounted
 var settings_coordinator: RefCounted
+var mobile_ui_support: MobileUiSupport
 
 # ── View management ─────────────────────────────────────────────────
 var view_manager: ViewManager
@@ -125,6 +127,7 @@ func _ready() -> void:
 	_setup_gallery()
 	_apply_i18n()
 	_load_settings()
+	_setup_mobile_ui_support()
 
 	sf = _localized_scenario_files(sf)
 	script_loader.load_all(sf)
@@ -494,6 +497,14 @@ func _setup_gallery() -> void:
 		return
 	gallery_coordinator.setup(_cg_vc, _music_vc, cg_gallery_config, music_gallery_config)
 	gallery_coordinator.load_configs()
+
+
+func _setup_mobile_ui_support() -> void:
+	if mobile_ui_support == null:
+		mobile_ui_support = MobileUiSupportScript.new()
+		mobile_ui_support.name = "MobileUiSupport"
+		add_child(mobile_ui_support)
+	mobile_ui_support.setup(self)
 
 
 ## Called by the scenario engine when a CG is displayed in-game.

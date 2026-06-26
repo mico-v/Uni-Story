@@ -61,7 +61,7 @@ func open() -> void:
 			else:
 				lbl.text = "[b]%s[/b]：%s" % [speaker, text]
 			if node_name != "" and entry_idx >= 0:
-				lbl.mouse_filter = Control.MOUSE_FILTER_STOP
+				lbl.mouse_filter = Control.MOUSE_FILTER_PASS
 				lbl.gui_input.connect(_on_backlog_entry_click.bind(i, lbl))
 				# Hover effects
 				lbl.mouse_entered.connect(func() -> void: _on_entry_hover(lbl, true))
@@ -109,9 +109,19 @@ func _backlog_panel_title_node() -> Label:
 func _on_backlog_entry_click(event: InputEvent, entry_index: int, _lbl: RichTextLabel) -> void:
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
-		if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT and not mb.is_echo():
-			if _ctx.backlog:
-				_ctx.backlog.request_jump(entry_index)
+		if not mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT and not mb.is_echo():
+			_request_jump_if_not_scrolling(entry_index)
+	elif event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if not touch.pressed:
+			_request_jump_if_not_scrolling(entry_index)
+
+
+func _request_jump_if_not_scrolling(entry_index: int) -> void:
+	if _backlog_scroll and MobileUiSupport.should_suppress_tap(_backlog_scroll):
+		return
+	if _ctx.backlog:
+		_ctx.backlog.request_jump(entry_index)
 
 
 func _clear_children(node: Node) -> void:

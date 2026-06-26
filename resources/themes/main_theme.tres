@@ -1,6 +1,6 @@
-[gd_resource type="Theme" load_steps=19 format=3 uid="uid://dcsv32sc5cj7x"]
+[gd_resource type="Theme" format=3 uid="uid://dcsv32sc5cj7x"]
 
-[ext_resource type="FontFile" path="res://resources/fonts/NotoSansSC-Regular.ttf" id="1_noto"]
+[ext_resource type="FontFile" uid="uid://d2vo4pkh6yd03" path="res://resources/fonts/NotoSansSC-Regular.ttf" id="1_noto"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_disabled"]
 content_margin_left = 12.0
