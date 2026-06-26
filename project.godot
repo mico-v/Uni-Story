@@ -27,7 +27,7 @@ window/stretch/aspect="expand"
 [gui]
 
 theme/custom="res://resources/themes/main_theme.tres"
-theme/custom_font="res://resources/fonts/NotoSerifCJK.ttc"
+theme/custom_font="res://resources/fonts/NotoSansSC-Regular.ttf"
 
 [input]
 

@@ -16,10 +16,6 @@ export.cfg
 # IdeaJ
 .idea/*
 
-
-# Large font files (download separately)
-resources/fonts/NotoSerifCJK.ttc
-
 #release
 release/
 

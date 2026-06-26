@@ -50,6 +50,11 @@ func _run() -> void:
 		_expect(nova.save_system != null and nova.save_system.slot_count == nova.save_slot_count, "SaveSystem should receive exported slot count")
 		_expect(nova.preload_system != null and nova.preload_system.max_cache_size == nova.preload_cache_size, "PreloadSystem should receive exported cache size")
 		_expect(nova.gallery_coordinator != null, "GalleryCoordinator should be initialized")
+		var ui_font_path := str(ProjectSettings.get_setting("gui/theme/custom_font", ""))
+		_expect(ui_font_path == "res://resources/fonts/NotoSansSC-Regular.ttf", "Project UI font should use bundled Noto Sans SC")
+		_expect(load(ui_font_path) is FontFile, "Project UI font should load as FontFile")
+		var default_theme := load("res://resources/themes/default_theme.tres")
+		_expect(default_theme is Theme and (default_theme as Theme).get("default_font") is FontFile, "Main scene theme should bind bundled UI font")
 		var game_view := nova.get_node_or_null("GameView") as Control
 		_expect(game_view != null, "GameView should be present")
 		if game_view:
