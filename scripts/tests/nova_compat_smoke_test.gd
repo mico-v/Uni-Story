@@ -66,6 +66,7 @@ is_debug()
 is_save_point()
 |>
 [stage = before_checkpoint]<|
+show(bg, 'room', {1, 1}, {1, 0.5, 0})
 v_stage_before = 'before'
 gv_stage_global = 'global'
 |>

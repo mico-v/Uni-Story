@@ -46,6 +46,19 @@ func is_dialogue_reached(node_name: StringName, entry_index: int) -> bool:
 	return _reached_dialogues.has(_dialogue_key(node_name, entry_index))
 
 
+func is_reached_any_history(node_name: StringName, entry_index: int = 0) -> bool:
+	var node_key := str(node_name)
+	for key in _reached_dialogues.keys():
+		var parsed := _parse_dialogue_key(str(key))
+		if parsed.is_empty():
+			continue
+		if str(parsed.get("node", "")) != node_key:
+			continue
+		if int(parsed.get("index", -1)) >= entry_index:
+			return true
+	return false
+
+
 func is_end_reached(end_name: String) -> bool:
 	return _reached_endings.has(end_name)
 
@@ -89,6 +102,7 @@ func create_bookmark(slot: int = -1) -> Dictionary:
 	var state: Dictionary = checkpoint.get("state", {}) if checkpoint.get("state", {}) is Dictionary else {}
 	var node_name := str(state.get("node", ""))
 	var index := int(state.get("index", -1))
+	var global_save_id := "%d-%d" % [Time.get_unix_time_from_system(), Time.get_ticks_msec()]
 	var metadata := {
 		"version": BOOKMARK_VERSION,
 		"slot": slot,
@@ -97,7 +111,7 @@ func create_bookmark(slot: int = -1) -> Dictionary:
 		"display_name": _display_name_for(node_name),
 		"entry_index": index,
 		"screenshot_path": "",
-		"global_save_id": "",
+		"global_save_id": global_save_id,
 	}
 	return {
 		"bookmark": metadata,
@@ -136,8 +150,7 @@ func restore_to_position(node_name: String, entry_index: int) -> bool:
 	if not is_dialogue_reached(StringName(node_name), entry_index):
 		EngineLogScript.warn(EngineLogScript.Category.RESTORE, "CheckpointManager", "position has not been reached: %s:%d" % [node_name, entry_index])
 		return false
-	var key := _dialogue_key(StringName(node_name), entry_index)
-	var checkpoint = _position_checkpoints.get(key, {})
+	var checkpoint = _nearest_position_checkpoint(node_name, entry_index)
 	if not (checkpoint is Dictionary) or checkpoint.is_empty():
 		checkpoint = latest_checkpoint()
 	var ok := restore_checkpoint(checkpoint)
@@ -147,7 +160,33 @@ func restore_to_position(node_name: String, entry_index: int) -> bool:
 		return false
 	if _ctx.game_state.current_node != null and str(_ctx.game_state.current_node.name) == node_name and _ctx.game_state.current_index == entry_index:
 		return true
+	if _ctx.game_state.has_method("replay_to_position"):
+		var replayed: bool = bool(_ctx.game_state.call("replay_to_position", node_name, entry_index))
+		if replayed:
+			return true
 	return _ctx.game_state.jump_to_position(node_name, entry_index)
+
+
+func _nearest_position_checkpoint(node_name: String, entry_index: int) -> Dictionary:
+	var exact_key := _dialogue_key(StringName(node_name), entry_index)
+	var exact = _position_checkpoints.get(exact_key, {})
+	if exact is Dictionary and not exact.is_empty():
+		return exact.duplicate(true)
+	var best_index := -1
+	var best_checkpoint: Dictionary = {}
+	for key in _position_checkpoints.keys():
+		var parsed := _parse_dialogue_key(str(key))
+		if parsed.is_empty():
+			continue
+		if str(parsed.get("node", "")) != node_name:
+			continue
+		var idx := int(parsed.get("index", -1))
+		if idx <= entry_index and idx > best_index:
+			var candidate = _position_checkpoints[key]
+			if candidate is Dictionary:
+				best_index = idx
+				best_checkpoint = candidate.duplicate(true)
+	return best_checkpoint
 
 
 func snapshot() -> Dictionary:
@@ -305,3 +344,13 @@ func _display_name_for(node_name: String) -> String:
 
 func _dialogue_key(node_name: StringName, entry_index: int) -> String:
 	return "%s:%d" % [str(node_name), entry_index]
+
+
+func _parse_dialogue_key(key: String) -> Dictionary:
+	var sep := key.rfind(":")
+	if sep <= 0 or sep >= key.length() - 1:
+		return {}
+	return {
+		"node": key.substr(0, sep),
+		"index": int(key.substr(sep + 1)),
+	}

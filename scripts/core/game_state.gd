@@ -90,6 +90,50 @@ func restore(data: Dictionary) -> bool:
 
 	var e = current_node.entries[target]
 	_mark_dialogue_reached()
+	is_waiting_input = true
+	dialogue_changed.emit(_format_text(e.speaker), _format_text(e.text))
+	dialogue_advanced.emit()
+	return true
+
+
+## Replay from the current restored position to a target entry in the same node.
+## This is used by checkpoint restore when the exact target line does not have
+## its own checkpoint but an earlier position checkpoint exists.
+func replay_to_position(node_name: String, entry_index: int) -> bool:
+	if not _graph.has_node_named(StringName(node_name)):
+		push_warning("GameState: unknown node for replay '%s'" % node_name)
+		return false
+	var target_node: FlowChartNode = _graph.get_node_named(StringName(node_name))
+	if target_node == null or target_node.entries.is_empty():
+		return false
+	if current_node == null or current_node.name != target_node.name:
+		return false
+	var target: int = clampi(entry_index, 0, target_node.entries.size() - 1)
+	if current_index > target:
+		return false
+
+	is_waiting_branch = false
+	is_waiting_input = false
+	is_ended = false
+	is_processing = false
+	current_end_name = ""
+	pending_jump = &""
+
+	var start_index: int = max(current_index + 1, 0)
+	for i in range(start_index, target + 1):
+		current_index = i
+		var entry = current_node.entries[i]
+		if entry.has_before_checkpoint():
+			_ctx.runtime.run_block(entry.before_checkpoint_source)
+		if entry.has_lazy():
+			_ctx.runtime.run_block(entry.lazy_source)
+		if entry.has_after_dialogue():
+			_ctx.runtime.run_block(entry.after_dialogue_source)
+		pending_jump = &""
+
+	var e = current_node.entries[target]
+	_mark_dialogue_reached()
+	is_waiting_input = true
 	dialogue_changed.emit(_format_text(e.speaker), _format_text(e.text))
 	dialogue_advanced.emit()
 	return true

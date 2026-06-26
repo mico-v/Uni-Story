@@ -420,3 +420,71 @@ Phase 2 结论：
 - NovaScript 兼容基线已经可作为后续迁移入口：全量导入的 Nova 原始 scenario 能解析，核心兼容语义有 smoke test 覆盖。
 - 该实现仍是 GDScript-first 翻译层，不是完整 Lua runtime。复杂 Lua API、工具链 lint、资源引用扫描、真实 checkpoint/bookmark 恢复仍需后续 Phase 完成。
 - 下一阶段应进入 Phase 3：把 `is_save_point()`、lazy stage 和变量快照接入 `CheckpointManager`、`NodeRecord`、reached dialogue/end 与 bookmark metadata。
+
+---
+
+## 十二、Phase 3 实施记录
+
+### 2026-06-26：Checkpoint / Bookmark 存档核心
+
+已完成：
+
+- 新增 `scripts/core/checkpoint_manager.gd`，管理 reached dialogue/end、node record、position checkpoint、checkpoint snapshot 和 bookmark envelope。
+- `GameState` 在对白到达时标记 reached dialogue，`CheckpointManager` 同步生成 position checkpoint，并记录 display name、变量 hash、脚本 hash 和 checkpoint restraint。
+- `SaveSystem` 写入新版 bookmark save：包含 `bookmark` metadata、`checkpoint` 数据、`format = bookmark` 和 `version = 2`；旧 snapshot save 仍保留读取兼容。
+- Bookmark metadata 记录 slot、创建时间、章节、display name、entry index、截图路径和 `global_save_id`。
+- `GameViewController` 支持从 viewport 捕获 320x180 缩略图，手动/自动/快速存档可写入 `user://saves/thumbnails/`。
+- 回顾跳转优先调用 `CheckpointManager.restore_to_position()`：先恢复最近 position checkpoint，再通过 `GameState.replay_to_position()` 重放中间 `before_checkpoint`、default lazy 和 `after_dialogue` 到目标 entry；无法 replay 时才使用直接跳转兜底。
+- 回顾面板打开时通过全局 toast 显示一次跳转提示，避免提示被局部游戏 UI 层遮挡。
+
+验证：
+
+- 通过：`checkpoint_manager_smoke_test.gd`，覆盖删除目标 position checkpoint 后，从更早 checkpoint 恢复并 replay 到目标 entry，确认 lazy 与 `after_dialogue` 状态被重建。
+- 通过：`save_system_smoke_test.gd`，覆盖 bookmark save、slot metadata、legacy 兼容路径和 secondary restorable 恢复。
+- 通过：`game_state_smoke_test.gd`，确认普通推进、变量跳转、分支和结局未回归。
+
+残留风险：
+
+- 删除、覆盖、损坏存档已有底层状态和日志，但仍未统一到 Nova 式 Alert/Notification UI，留到 Phase 5。
+- 脚本升级只预留了 version/hash 字段，尚未实现 Nova 的 diff/upgrader 体系。
+- 更复杂跨节点回跳、动画/音频完整恢复仍依赖后续 ViewManager、Animation、VFX phase 收敛。
+
+Phase 3 结论：
+
+- Checkpoint/bookmark 核心路径已经从普通 snapshot 存档推进到 Nova 式“最近 checkpoint + replay”模型。
+- 当前实现能支撑回顾跳转、章节解锁、bookmark metadata 和存档截图的基础产品体验；完整 UI 产品化和 save upgrade 留到后续阶段。
+
+---
+
+## 十三、Phase 4 实施记录
+
+### 2026-06-26：章节选择、全局进度与标题体验
+
+已完成：
+
+- 新增 `scene/view/chapter_select_view.tscn` 与 `scripts/ui/chapter_select_view_controller.gd`，按 normal、unlocked、debug start node 展示章节。
+- Chapter Select 使用 reached dialogue/history 解锁已到达章节；debug start 只在 debug build 或 `unlock_debug_nodes` 打开时显示。
+- `ScriptLoader.is_chapter()` 不再隐式标记 debug，避免普通章节被调试规则过滤。
+- 标题菜单补齐开始、章节选择、继续、读取、设置、CG、音乐、帮助、退出，并接入 `NovaController` 的统一导航。
+- 新增 `scene/view/help_view.tscn` 与 `scripts/ui/help_view_controller.gd`，用于 Help 和首次进入提示。
+- 标题层对齐 Nova 的首次提示策略：首次进入标题显示 Help，Help 返回后继续检查提示；多章节可选时显示章节选择提示；回顾面板首次打开显示跳转提示。
+- 标题 BGM 通过 `AudioSystem` 播放，进入游戏、继续、读档时淡出/停止。
+- Toast parent 改为 `GlobalUI`，标题、章节选择和游戏层提示都可见。
+- 主场景注册 `ChapterSelectView`、`HelpView` 和 `GlobalUI`，并扩展主场景 smoke test 覆盖视图存在性。
+
+验证：
+
+- 通过：`chapter_select_smoke_test.gd`，覆盖多 start node、unlocked/debug 筛选和 reached history 解锁。
+- 通过：`main_scene_smoke_test.gd`，确认主场景能注册 Help/ChapterSelect/GlobalUI 并完成 headless 生命周期。
+- 通过：`nova_compat_smoke_test.gd` 和 `parse_scenarios_test.gd`，确认 start/debug/chapter 解析兼容路径未回归。
+
+残留风险：
+
+- UI 音效、视图切换音效尚未接入，留到 Phase 5 随 ViewManager/Notification 统一处理。
+- 章节选择目前是可用的列表体验，未做复杂作品的封面、进度百分比和章节分组展示。
+- Help 内容是项目级基础说明，后续需要随输入映射、存读档 UI 和作品主题继续丰富。
+
+Phase 4 结论：
+
+- 标题层已经具备 Nova 原本产品体验的核心结构：Help、章节选择、继续、读取、设置、鉴赏、首次提示和标题 BGM。
+- Phase 4 可以按“核心完成，音效和通知产品化留到 Phase 5”收口。

@@ -47,6 +47,8 @@ const EngineLogScript := preload("res://scripts/core/engine_log.gd")
 @export var auto_save_slot: int = 99
 @export var auto_save_enabled: bool = true
 @export var settings_path: String = "user://config/settings.cfg"
+@export var hints_path: String = "user://config/hints.cfg"
+@export var title_bgm_path: String = "BGM/prelude.ogg"
 @export_group("Preload")
 @export_range(1, 1024, 1) var preload_cache_size: int = 128
 @export_group("Gallery")
@@ -95,6 +97,8 @@ var _settings_vc: SettingsViewController
 var _cg_vc: CgGalleryController
 var _music_vc: MusicGalleryController
 var _save_load_vc: SaveLoadController
+var _chapter_select_vc: Control
+var _help_vc: Control
 
 # ── Settings return tracking ──────────────────────────────────────────
 var _settings_return_to := "title"
@@ -125,8 +129,10 @@ func _ready() -> void:
 
 	game_state.setup(script_loader.graph)
 	view_manager.switch_to("title")
+	_play_title_bgm()
 	if _title_vc and save_system:
 		_title_vc.set_continue_enabled(save_system.has_auto_save())
+	_show_title_hints()
 
 	# Start file watching for hot reload (debug builds only).
 	hot_reload.start(scenario_files)
@@ -244,6 +250,13 @@ func _bind_view_controllers() -> void:
 		_save_load_vc = save_load_node as SaveLoadController
 		if _save_load_vc:
 			_save_load_vc.setup(self)
+	var chapter_node := get_node_or_null("ChapterSelectView")
+	if chapter_node is Control and chapter_node.has_method("setup"):
+		_chapter_select_vc = chapter_node as Control
+		_chapter_select_vc.call("setup", self)
+	var help_node := get_node_or_null("HelpView")
+	if help_node is Control:
+		_help_vc = help_node as Control
 
 
 # ── ViewManager initialization ──────────────────────────────────────
@@ -263,6 +276,10 @@ func _init_view_manager() -> void:
 		view_manager.register("music_gallery", _music_vc, T.SLIDE_LEFT)
 	if _save_load_vc:
 		view_manager.register("save_load", _save_load_vc, T.SLIDE_LEFT)
+	if _chapter_select_vc:
+		view_manager.register("chapter_select", _chapter_select_vc, T.SLIDE_LEFT)
+	if _help_vc:
+		view_manager.register("help", _help_vc, T.SLIDE_LEFT)
 
 
 # ── Signal wiring ───────────────────────────────────────────────────
@@ -313,6 +330,7 @@ func _connect_model_signals() -> void:
 	# TitleVC → navigation.
 	if _title_vc:
 		_title_vc.new_game_requested.connect(_on_title_new_game)
+		_title_vc.chapter_select_requested.connect(_on_title_chapter_select)
 		_title_vc.continue_requested.connect(_on_title_continue)
 		_title_vc.load_requested.connect(_on_title_load)
 		_title_vc.settings_requested.connect(func() -> void:
@@ -321,7 +339,18 @@ func _connect_model_signals() -> void:
 		)
 		_title_vc.gallery_requested.connect(func() -> void: view_manager.switch_to("cg_gallery"))
 		_title_vc.music_requested.connect(func() -> void: view_manager.switch_to("music_gallery"))
+		_title_vc.help_requested.connect(func() -> void: view_manager.switch_to("help"))
 		_title_vc.quit_requested.connect(_on_quit)
+	# ChapterSelectVC → navigation.
+	if _chapter_select_vc:
+		_chapter_select_vc.connect("chapter_selected", Callable(self, "_on_chapter_selected"))
+		_chapter_select_vc.connect("back_requested", func() -> void: view_manager.switch_to("title"))
+	# HelpVC → back.
+	if _help_vc:
+		_help_vc.connect("back_requested", func() -> void:
+			view_manager.switch_to("title")
+			_show_title_hints()
+		)
 	# SettingsVC → back.
 	if _settings_vc:
 		_settings_vc.back_requested.connect(func() -> void: view_manager.switch_to(_settings_return_to))
@@ -349,11 +378,20 @@ func _apply_i18n() -> void:
 		_music_vc.apply_i18n(i18n)
 	if _save_load_vc:
 		_save_load_vc.apply_i18n(i18n)
+	if _chapter_select_vc:
+		_chapter_select_vc.call("apply_i18n", i18n)
+	if _help_vc:
+		_help_vc.call("apply_i18n", i18n)
 
 
 # ── Navigation handlers ─────────────────────────────────────────────
 
 func _on_title_new_game() -> void:
+	if _chapter_select_vc:
+		if bool(_chapter_select_vc.call("show_or_start_first")):
+			return
+		view_manager.switch_to("chapter_select")
+		return
 	var first_node: StringName = &""
 	if script_loader.graph.start_nodes.size() > 0:
 		first_node = script_loader.graph.start_nodes[0]
@@ -362,9 +400,29 @@ func _on_title_new_game() -> void:
 	if first_node == &"":
 		EngineLogScript.error(EngineLogScript.Category.RUNTIME, "NovaController", "no start node found")
 		return
+	_start_chapter(first_node)
+
+
+func _on_title_chapter_select() -> void:
+	if _chapter_select_vc:
+		_chapter_select_vc.call("refresh")
+		view_manager.switch_to("chapter_select")
+		return
+	_on_title_new_game()
+
+
+func _on_chapter_selected(node_name: StringName) -> void:
+	_start_chapter(node_name)
+
+
+func _start_chapter(node_name: StringName) -> void:
+	if node_name == &"":
+		EngineLogScript.error(EngineLogScript.Category.RUNTIME, "NovaController", "empty start node")
+		return
+	_stop_title_bgm()
 	view_manager.switch_to("game")
 	if _game_vc:
-		_game_vc.enter_game(first_node)
+		_game_vc.enter_game(node_name)
 
 
 func _on_title_continue() -> void:
@@ -372,6 +430,7 @@ func _on_title_continue() -> void:
 		if _game_vc:
 			_game_vc.reset_world()
 		if save_system.load_auto_save():
+			_stop_title_bgm()
 			view_manager.switch_to("game")
 			if _game_vc:
 				_game_vc.load_game()
@@ -392,8 +451,10 @@ func _on_game_title_requested() -> void:
 	if _game_vc:
 		_game_vc.reset_world()
 	view_manager.switch_to("title")
+	_play_title_bgm()
 	if _title_vc and save_system:
 		_title_vc.set_continue_enabled(save_system.has_auto_save())
+	_show_title_hints()
 
 
 func cleanup_display() -> void:
@@ -404,8 +465,15 @@ func _on_save_load_completed() -> void:
 	if _game_vc:
 		_game_vc.reset_world()
 	view_manager.switch_to("game")
+	_stop_title_bgm()
 	if _game_vc:
 		_game_vc.load_game()
+
+
+func capture_save_thumbnail(path: String, width: int = 320, height: int = 180) -> bool:
+	if _game_vc == null:
+		return false
+	return _game_vc.capture_thumbnail(path, width, height)
 
 
 func _on_quit() -> void:
@@ -441,7 +509,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			match view:
 				"settings":
 					view_manager.switch_to(_settings_return_to)
-				"cg_gallery", "music_gallery", "save_load":
+				"cg_gallery", "music_gallery", "save_load", "chapter_select", "help":
 					view_manager.switch_to("title")
 				"title":
 					_on_quit()
@@ -476,6 +544,64 @@ func _on_setting_changed(key: String, value: Variant) -> void:
 func _load_settings() -> void:
 	if settings_coordinator:
 		settings_coordinator.load_settings()
+
+
+# ── Title product experience ────────────────────────────────────────
+
+func _play_title_bgm() -> void:
+	if audio == null:
+		return
+	var path := title_bgm_path.strip_edges()
+	if path.is_empty():
+		return
+	audio.play_bgm(path, 0.8)
+
+
+func _stop_title_bgm() -> void:
+	if audio == null:
+		return
+	audio.stop_bgm(0.5)
+
+
+func _show_title_hints() -> void:
+	if view_manager == null or view_manager.current() != "title":
+		return
+	if _help_vc != null and not _hint_seen("first_help"):
+		_set_hint_seen("first_help")
+		view_manager.switch_to("help")
+		return
+	if _chapter_select_vc == null or not _has_multiple_reached_chapters():
+		return
+	show_once_hint("chapter_select", "title.first.selectchapter", "现在可以选择章节", 2.5)
+
+
+func show_once_hint(key: String, text_key: String, fallback: String, duration: float = 2.5) -> void:
+	if dialog_system == null or _hint_seen(key):
+		return
+	_set_hint_seen(key)
+	dialog_system.show_toast(_t(text_key, fallback), duration)
+
+
+func _has_multiple_reached_chapters() -> bool:
+	if _chapter_select_vc == null:
+		return false
+	var unlocked = _chapter_select_vc.call("get_unlocked_nodes")
+	return unlocked is Array and unlocked.size() > 1
+
+
+func _hint_seen(key: String) -> bool:
+	var cfg := ConfigFile.new()
+	if cfg.load(hints_path) != OK:
+		return false
+	return bool(cfg.get_value("hints", key, false))
+
+
+func _set_hint_seen(key: String) -> void:
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(hints_path.get_base_dir()))
+	var cfg := ConfigFile.new()
+	cfg.load(hints_path)
+	cfg.set_value("hints", key, true)
+	cfg.save(hints_path)
 
 
 # ── I18n helper ─────────────────────────────────────────────────────

@@ -81,16 +81,19 @@ func _hide_confirm() -> void:
 # ── Internal UI binding ──────────────────────────────────────────────
 
 func _ensure_toast() -> void:
-	if _toast_label != null:
+	if _toast_label != null and is_instance_valid(_toast_label):
 		return
 	var toast := preload("res://scene/ui/toast.tscn").instantiate()
 	_toast_label = toast.get_node("Label")
-	var parent := _get_ui_parent()
+	var parent := _get_toast_parent()
 	if parent:
 		parent.add_child(toast)
-		toast.set_anchors_preset(Control.PRESET_CENTER_TOP)
-		toast.anchor_top = 0.02
-		toast.anchor_bottom = 0.02
+		if toast is Control:
+			toast.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			toast.z_index = 1000
+			toast.set_anchors_preset(Control.PRESET_CENTER_TOP)
+			toast.anchor_top = 0.02
+			toast.anchor_bottom = 0.02
 
 
 func _ensure_confirm() -> void:
@@ -131,6 +134,13 @@ func _get_ui_parent() -> Node:
 		if hud is Control:
 			return hud
 		return game_view
+	return _ctx.get_tree().root
+
+
+func _get_toast_parent() -> Node:
+	var global_ui = _ctx.get_node_or_null("GlobalUI")
+	if global_ui is Control:
+		return global_ui
 	return _ctx.get_tree().root
 
 

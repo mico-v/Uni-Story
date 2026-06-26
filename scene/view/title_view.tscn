@@ -39,35 +39,45 @@ custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 text = "开始游戏"
 
-[node name="BtnContinue" type="Button" parent="HBox/Sidebar/VBox" index="6"]
+[node name="BtnChapterSelect" type="Button" parent="HBox/Sidebar/VBox" index="6"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "章节选择"
+
+[node name="BtnContinue" type="Button" parent="HBox/Sidebar/VBox" index="7"]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 text = "继续游戏"
 
-[node name="BtnLoad" type="Button" parent="HBox/Sidebar/VBox" index="7"]
+[node name="BtnLoad" type="Button" parent="HBox/Sidebar/VBox" index="8"]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 text = "读取存档"
 
-[node name="BtnSettings" type="Button" parent="HBox/Sidebar/VBox" index="8"]
+[node name="BtnSettings" type="Button" parent="HBox/Sidebar/VBox" index="9"]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 text = "系统设置"
 
-[node name="BtnGallery" type="Button" parent="HBox/Sidebar/VBox" index="9"]
+[node name="BtnGallery" type="Button" parent="HBox/Sidebar/VBox" index="10"]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 text = "图片鉴赏"
 
-[node name="BtnMusic" type="Button" parent="HBox/Sidebar/VBox" index="10"]
+[node name="BtnMusic" type="Button" parent="HBox/Sidebar/VBox" index="11"]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 text = "音乐鉴赏"
 
-[node name="Sep2" type="HSeparator" parent="HBox/Sidebar/VBox" index="11"]
+[node name="BtnHelp" type="Button" parent="HBox/Sidebar/VBox" index="12"]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "操作说明"
+
+[node name="Sep2" type="HSeparator" parent="HBox/Sidebar/VBox" index="13"]
 layout_mode = 2
 
-[node name="BtnQuit" type="Button" parent="HBox/Sidebar/VBox" index="12"]
+[node name="BtnQuit" type="Button" parent="HBox/Sidebar/VBox" index="14"]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 text = "退出游戏"

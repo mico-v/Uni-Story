@@ -7,6 +7,7 @@ extends SceneTree
 
 
 const SCENE_PATH := "res://scene/game.tscn"
+const HINTS_PATH := "user://tests/main_scene_hints.cfg"
 
 var _failures: Array[String] = []
 
@@ -22,7 +23,10 @@ func _run() -> void:
 		_finish()
 		return
 
+	_prepare_files()
 	var scene := (packed as PackedScene).instantiate()
+	if scene is NovaController:
+		(scene as NovaController).hints_path = HINTS_PATH
 	root.add_child(scene)
 	await process_frame
 	await create_timer(0.7).timeout
@@ -33,7 +37,13 @@ func _run() -> void:
 		_expect(nova.script_loader != null and nova.script_loader.load_ok, "NovaController should load scenario graph")
 		_expect(nova.script_loader.graph.nodes.size() >= 1, "scenario graph should contain nodes")
 		_expect(nova.game_state != null and nova.game_state.current_node == null, "GameState should be initialized but not playing at title")
-		_expect(nova.view_manager != null and nova.view_manager.current() == "title", "ViewManager should enter title view")
+		_expect(nova.view_manager != null and nova.view_manager.current() == "help", "ViewManager should show first-run help from title")
+		var chapter_view := nova.get_node_or_null("ChapterSelectView")
+		var help_view := nova.get_node_or_null("HelpView")
+		_expect(chapter_view is Control and chapter_view.has_signal("chapter_selected"), "ChapterSelectView should be present")
+		_expect(help_view is Control and help_view.has_signal("back_requested"), "HelpView should be present")
+		_expect(nova.view_manager != null and nova.view_manager.has_view("chapter_select"), "ViewManager should register chapter select view")
+		_expect(nova.view_manager != null and nova.view_manager.has_view("help"), "ViewManager should register help view")
 		_expect(nova.settings_coordinator != null, "SettingsCoordinator should be initialized")
 		_expect(nova.save_system != null and nova.save_system.slot_count == nova.save_slot_count, "SaveSystem should receive exported slot count")
 		_expect(nova.preload_system != null and nova.preload_system.max_cache_size == nova.preload_cache_size, "PreloadSystem should receive exported cache size")
@@ -51,6 +61,12 @@ func _run() -> void:
 	await process_frame
 	await process_frame
 	_finish()
+
+
+func _prepare_files() -> void:
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("user://tests"))
+	if FileAccess.file_exists(HINTS_PATH):
+		DirAccess.remove_absolute(HINTS_PATH)
 
 
 func _finish() -> void:

@@ -65,6 +65,10 @@ func current() -> String:
 	return _current_view
 
 
+func has_view(view_name: String) -> bool:
+	return _views.has(view_name)
+
+
 # ── Transition implementations ────────────────────────────────────────
 
 func _do_instant(old_ctrl: Control, new_ctrl: Control) -> void:

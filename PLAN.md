@@ -73,8 +73,9 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 
 - [x] 对比 `Nova/` 与当前工程，形成 `review.md` 差异报告。
 - [x] 重写 `PLAN.md`，确立 GDScript-first 的成熟化路线。
-- [ ] 为每个后续 Phase 建立 issue/commit 粒度清单。
-- [ ] 统一术语：node、entry、checkpoint、bookmark、reached、chapter、branch mode、runtime stage。
+- [x] 为每个后续 Phase 建立 issue/commit 粒度清单：见 `docs/PhaseBacklog.md`。
+- [x] 统一术语：node、entry、checkpoint、bookmark、reached、chapter、branch mode、runtime stage：见 `docs/ProjectTerms.md`。
+- [x] 建立编码规范与记忆规则文档：见 `docs/CodingStandards.md`。
 
 验收：
 
@@ -148,16 +149,16 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 - [x] 把 `SaveSystem` 拆分为 bookmark slot 管理；底层恢复交给 `CheckpointManager`。
 - [x] 保存 reached dialogue，用于回顾、已读、章节解锁、skip unread。
 - [x] 实现 bookmark metadata：创建时间、章节名、对白索引、截图路径、global save id。
-- [ ] 实现存档截图：在游戏视图生成 thumbnail，存入 user data。
-- [ ] 实现从最近 checkpoint restore + replay 到目标 entry。
+- [x] 实现存档截图：在游戏视图生成 thumbnail，存入 user data。
+- [x] 实现从最近 checkpoint restore + replay 到目标 entry。
 - [x] 为脚本升级预留 node text hash 和 save version 字段。
 
 验收：
 
 - 从回顾点击任意已读对白，可恢复到正确视觉状态。
 - 手动存档/读档/自动存档都走 bookmark。
-- 删除、覆盖、损坏存档都有明确 UI 提示。
-- `test_all.txt` 增加回跳和读档自检段。
+- 删除、覆盖、损坏存档已有底层状态和日志；完整 Alert/Notification 化 UI 留到 Phase 5。
+- 已由 `checkpoint_manager_smoke_test.gd`、`save_system_smoke_test.gd`、`game_state_smoke_test.gd` 和回顾 restore 路径覆盖核心行为；`test_all.txt` 自检段留到 Phase 10 回归套件整理。
 
 ### Phase 4：章节选择、全局进度与标题体验
 
@@ -165,13 +166,14 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 
 任务：
 
-- [ ] 新建 `scene/view/chapter_select_view.tscn` 和 `ChapterSelectViewController.gd`。
-- [ ] 按 start node 类型显示章节：normal、unlocked、debug。
-- [ ] 用 reached dialogue 解锁章节。
-- [ ] 标题菜单改为：开始/章节选择/继续/读取/设置/CG/音乐/帮助/退出。
-- [ ] 新增 HelpView，承载项目说明、操作说明和首次提示。
-- [ ] 新增首次提示策略：首次进入游戏、首次解锁章节、首次使用回顾跳转。
-- [ ] 标题 BGM、UI 音效、视图切换音效接入 AudioSystem。
+- [x] 新建 `scene/view/chapter_select_view.tscn` 和 `ChapterSelectViewController.gd`。
+- [x] 按 start node 类型显示章节：normal、unlocked、debug。
+- [x] 用 reached dialogue 解锁章节。
+- [x] 标题菜单改为：开始/章节选择/继续/读取/设置/CG/音乐/帮助/退出。
+- [x] 新增 HelpView，承载项目说明、操作说明和首次提示。
+- [x] 新增首次提示策略：首次进入游戏、首次解锁章节、首次使用回顾跳转。
+- [x] 标题 BGM 接入 AudioSystem，进入游戏/继续/读档时淡出。
+- [ ] UI 音效、视图切换音效接入 AudioSystem，留到 Phase 5 的 ViewManager/通知体系统一处理。
 
 验收：
 
@@ -322,11 +324,11 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 
 | Phase | 名称 | 状态 | 优先级 |
 |-------|------|------|--------|
-| 0 | 计划锁定与基线整理 | 进行中 | P0 |
+| 0 | 计划锁定与基线整理 | 完成 | P0 |
 | 1 | 架构边界与工程骨架 | 完成 | P0 |
 | 2 | NovaScript 兼容基线 | 完成 | P0 |
-| 3 | Checkpoint / Bookmark 存档核心 | 待开始 | P0 |
-| 4 | 章节选择、全局进度与标题体验 | 待开始 | P0 |
+| 3 | Checkpoint / Bookmark 存档核心 | 核心完成，产品化收尾待后续 | P0 |
+| 4 | 章节选择、全局进度与标题体验 | 核心完成，音效收尾待 Phase 5 | P0 |
 | 5 | ViewManager 与 UI 产品层成熟化 | 待开始 | P1 |
 | 6 | 动画系统升级 | 待开始 | P1 |
 | 7 | VFX / Shader / Transition 系统 | 待开始 | P1 |
@@ -369,4 +371,24 @@ Phase 2 已完成。执行记录：
 8. [x] 新增 `nova_compat_smoke_test.gd`、`nova_runtime_compile_test.gd`、`nova_ch1_playback_smoke_test.gd`，覆盖兼容转换、全量 runtime 编译和 ch1 基础播放。
 9. [x] 更新 `docs/NovaScript.md`，明确 Phase 2 支持范围和不支持完整 Lua VM 的限制。
 
-下一步进入 Phase 3：Checkpoint / Bookmark 存档核心。优先建立 `CheckpointManager`、`NodeRecord`、reached dialogue/end、bookmark metadata，并把 `is_save_point()` 从流程图标记接入真实恢复路径。
+Phase 3 核心任务已推进。执行记录：
+
+1. [x] 新增 `CheckpointManager`，落地 node record、reached dialogue/end、checkpoint snapshot 和 bookmark envelope。
+2. [x] `SaveSystem` 写入 bookmark 格式并保留 legacy snapshot 读取兼容。
+3. [x] 存档 metadata 写入创建时间、章节、entry index、缩略图路径和 `global_save_id`。
+4. [x] `GameViewController` 支持保存 320x180 thumbnail 到 `user://saves/thumbnails/`。
+5. [x] 回顾跳转优先从最近 position checkpoint 恢复，再 replay 到目标 entry；无法 replay 时保留直接跳转兜底。
+6. [x] reached dialogue 接入章节解锁、回顾和后续 skip unread 基础。
+7. [x] 新增 `checkpoint_manager_smoke_test.gd`，覆盖删除目标 checkpoint 后从更早 checkpoint 恢复并重放 lazy/after_dialogue 到目标 entry。
+
+Phase 4 核心任务已推进。执行记录：
+
+1. [x] 对齐 Nova 标题体验：首次标题页自动打开 Help，Help 返回后继续检查标题提示。
+2. [x] 新增章节选择视图，按 normal/unlocked/debug start node 显示，单 unlocked start 直接开始。
+3. [x] reached history 解锁已到达章节，并提供章节选择首次提示。
+4. [x] 标题菜单补齐开始、章节选择、继续、读取、设置、CG、音乐、帮助、退出。
+5. [x] 标题 BGM 接入 `AudioSystem`，开始/继续/读档进入游戏时淡出。
+6. [x] 回顾面板首次打开显示一次跳转提示，toast 改为全局 UI 层承载。
+7. [x] 新增 `chapter_select_smoke_test.gd`，主场景 smoke test 覆盖 Help/ChapterSelect 注册。
+
+下一步进入 Phase 5：ViewManager 与 UI 产品层成熟化。优先统一 Notification/Alert、视图状态机、过渡输入屏蔽，并把 UI/视图切换音效收敛到 `AudioSystem`。

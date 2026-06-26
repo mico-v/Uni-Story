@@ -5,30 +5,36 @@ class_name TitleViewController extends Control
 ## (NovaController) decides which view to switch to.
 
 signal new_game_requested()
+signal chapter_select_requested()
 signal continue_requested()
 signal load_requested()
 signal settings_requested()
 signal gallery_requested()
 signal music_requested()
+signal help_requested()
 signal quit_requested()
 
 @onready var logo_label: Label = $HBox/Sidebar/VBox/Logo
 @onready var btn_new_game: Button = $HBox/Sidebar/VBox/BtnNewGame
+@onready var btn_chapter_select: Button = $HBox/Sidebar/VBox/BtnChapterSelect
 @onready var btn_continue: Button = $HBox/Sidebar/VBox/BtnContinue
 @onready var btn_load: Button = $HBox/Sidebar/VBox/BtnLoad
 @onready var btn_settings: Button = $HBox/Sidebar/VBox/BtnSettings
 @onready var btn_gallery: Button = $HBox/Sidebar/VBox/BtnGallery
 @onready var btn_music: Button = $HBox/Sidebar/VBox/BtnMusic
+@onready var btn_help: Button = $HBox/Sidebar/VBox/BtnHelp
 @onready var btn_quit: Button = $HBox/Sidebar/VBox/BtnQuit
 
 
 func _ready() -> void:
 	btn_new_game.pressed.connect(func() -> void: new_game_requested.emit())
+	btn_chapter_select.pressed.connect(func() -> void: chapter_select_requested.emit())
 	btn_continue.pressed.connect(func() -> void: continue_requested.emit())
 	btn_load.pressed.connect(func() -> void: load_requested.emit())
 	btn_settings.pressed.connect(func() -> void: settings_requested.emit())
 	btn_gallery.pressed.connect(func() -> void: gallery_requested.emit())
 	btn_music.pressed.connect(func() -> void: music_requested.emit())
+	btn_help.pressed.connect(func() -> void: help_requested.emit())
 	btn_quit.pressed.connect(func() -> void: quit_requested.emit())
 	_apply_style()
 
@@ -46,6 +52,8 @@ func apply_i18n(i18n: I18n) -> void:
 		logo_label.text = i18n.t("title.subtitle", "Story With Y")
 	if btn_new_game:
 		btn_new_game.text = i18n.t("title.menu.start", "新的游戏")
+	if btn_chapter_select:
+		btn_chapter_select.text = i18n.t("title.menu.chapter_select", "章节选择")
 	if btn_continue:
 		btn_continue.text = i18n.t("title.menu.continue", "继续游戏")
 	if btn_load:
@@ -56,6 +64,8 @@ func apply_i18n(i18n: I18n) -> void:
 		btn_gallery.text = i18n.t("title.menu.gallery", "图片鉴赏")
 	if btn_music:
 		btn_music.text = i18n.t("title.menu.musicgallery", "音乐鉴赏")
+	if btn_help:
+		btn_help.text = i18n.t("title.menu.help", "操作说明")
 	if btn_quit:
 		btn_quit.text = i18n.t("title.menu.quit", "退出游戏")
 

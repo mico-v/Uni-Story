@@ -26,6 +26,7 @@ func setup(ctx: Node) -> void:
 
 
 func open() -> void:
+	_show_first_hint()
 	_clear_children(_backlog_list)
 	var backlog_title := _backlog_panel_title_node()
 	if backlog_title:
@@ -124,3 +125,8 @@ func _t(key: String, fallback: String = "") -> String:
 	if _ctx == null or _ctx.i18n == null:
 		return fallback
 	return _ctx.i18n.t(key, fallback)
+
+
+func _show_first_hint() -> void:
+	if _ctx != null and _ctx.has_method("show_once_hint"):
+		_ctx.call("show_once_hint", "backlog", "log.first.hint", _t("log.first.hint", "选择已读文本可以跳转"), 2.5)

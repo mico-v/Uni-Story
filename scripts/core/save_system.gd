@@ -12,6 +12,9 @@ const DEFAULT_SLOT_COUNT := 6
 const DEFAULT_AUTO_SAVE_SLOT := 99
 const SAVE_VERSION := 2
 const LEGACY_SAVE_VERSION := 1
+const THUMBNAIL_DIR := "thumbnails"
+const THUMBNAIL_WIDTH := 320
+const THUMBNAIL_HEIGHT := 180
 
 var _ctx: Node
 var save_dir := DEFAULT_SAVE_DIR
@@ -159,6 +162,9 @@ func _create_save_data(slot: int) -> Dictionary:
 			data["format"] = "bookmark"
 			var metadata = data.get("bookmark", {})
 			if metadata is Dictionary:
+				var thumbnail_path := _capture_thumbnail(slot)
+				if not thumbnail_path.is_empty():
+					metadata["screenshot_path"] = thumbnail_path
 				data["chapter"] = str(metadata.get("chapter", ""))
 			return data
 
@@ -240,3 +246,16 @@ func _checkpoint_manager() -> Object:
 	if _ctx == null:
 		return null
 	return _ctx.get("checkpoint_manager") as Object
+
+
+func _capture_thumbnail(slot: int) -> String:
+	if _ctx == null or not _ctx.has_method("capture_save_thumbnail"):
+		return ""
+	var path := _thumbnail_path(slot)
+	var ok := bool(_ctx.call("capture_save_thumbnail", path, THUMBNAIL_WIDTH, THUMBNAIL_HEIGHT))
+	return path if ok else ""
+
+
+func _thumbnail_path(slot: int) -> String:
+	var base := save_dir.rstrip("/")
+	return base.path_join(THUMBNAIL_DIR).path_join("slot_%d.png" % slot)

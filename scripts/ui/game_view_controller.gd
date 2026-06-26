@@ -364,6 +364,24 @@ func load_game() -> void:
 		_status_label.text = _t("ui.status.loaded", "状态：已读档")
 
 
+func capture_thumbnail(path: String, width: int = 320, height: int = 180) -> bool:
+	var target: String = path.strip_edges()
+	if target.is_empty() or get_viewport() == null:
+		return false
+	if DisplayServer.get_name().to_lower() == "headless":
+		return false
+	var tex: ViewportTexture = get_viewport().get_texture()
+	if tex == null:
+		return false
+	var image: Image = tex.get_image()
+	if image == null or image.is_empty():
+		return false
+	image.resize(maxi(width, 1), maxi(height, 1), Image.INTERPOLATE_LANCZOS)
+	var absolute: String = ProjectSettings.globalize_path(target)
+	DirAccess.make_dir_recursive_absolute(absolute.get_base_dir())
+	return image.save_png(absolute) == OK
+
+
 func reset_world() -> void:
 	# Clean up runtime-loaded prefabs.
 	if _ctx and _ctx.prefab_loader:

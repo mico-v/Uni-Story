@@ -1,0 +1,27 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="PackedScene" uid="uid://basemenu_unistory" path="res://scene/ui/base_menu_view.tscn" id="1_base"]
+[ext_resource type="Script" path="res://scripts/ui/chapter_select_view_controller.gd" id="1_vc"]
+
+[node name="ChapterSelectView" instance=ExtResource("1_base")]
+script = ExtResource("1_vc")
+
+[node name="Title" parent="HBox/Sidebar/VBox" index="0"]
+text = "章节选择"
+
+[node name="BtnBack" parent="HBox/Sidebar/VBox" index="2"]
+custom_minimum_size = Vector2(0, 44)
+
+[node name="Scroll" type="ScrollContainer" parent="HBox/Content" index="0"]
+layout_mode = 2
+
+[node name="ChapterList" type="VBoxContainer" parent="HBox/Content/Scroll" index="0"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="EmptyLabel" type="Label" parent="HBox/Content/Scroll/ChapterList" index="0"]
+layout_mode = 2
+text = "（无可用章节）"
+horizontal_alignment = 1
+

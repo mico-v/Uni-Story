@@ -30,6 +30,8 @@
 - 新存档格式必须保留 `version` 和可迁移字段；读取逻辑要尽量兼容已有旧存档，不轻易破坏玩家数据。
 - Checkpoint 数据要包含当前 `GameState`、变量快照、restorable 快照、reached dialogue/end、node record，以及为脚本升级预留的 hash/version 字段。
 - 恢复顺序要谨慎：先恢复 `GameState`，再恢复其他表现/进度 restorable，避免 replay 与表现状态互相覆盖。
+- 回顾或任意已读对白跳转必须优先走“最近 checkpoint restore + replay 到目标 entry”；直接 `jump_to_position()` 只能作为无法 replay 时的兜底。
+- 修改 `before_checkpoint`、default lazy、`after_dialogue` 或 checkpoint/replay 顺序时，必须跑 `checkpoint_manager_smoke_test.gd` 和 `save_system_smoke_test.gd`。
 
 ## NovaScript 兼容
 

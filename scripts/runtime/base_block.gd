@@ -121,7 +121,7 @@ func is_end(end_name = null) -> void:
 func show(obj: Variant, image_path: String = "", coord = null, color = null) -> void:
 	var obj_name := str(obj)
 	# Nova Lua show() uses integer 0 to mean "default / no effect", not a color tint.
-	if color == 0:
+	if _is_default_effect_value(color):
 		color = null
 	# Nova color-name shorthand for display objects: 'black' on bg/fg means tint, not image.
 	if image_path == "black" and (obj_name == "bg" or obj_name == "fg"):
@@ -621,17 +621,21 @@ func _show_nova_character(char_name: String, pose: String, coord: Variant, color
 	if coord == null:
 		coord = _nova_pos(0.50)
 	# Nova Lua show() uses 0 to mean "default / no effect", not a color.
-	if color == 0:
+	if _is_default_effect_value(color):
 		color = null
 	_ctx.composer.show_char(char_name, pose, coord, color)
 
 
 func _show_nova_cg(obj_name: String, pose: String, coord: Variant, color: Variant) -> void:
 # Nova Lua show() uses 0 to mean "default / no effect", not a color.
-	if color == 0:
+	if _is_default_effect_value(color):
 		color = null
 	var resolved_pose := _nova_cg_pose(obj_name, pose)
 	_ctx.graphics.show(obj_name, resolved_pose, coord, color)
+
+
+func _is_default_effect_value(value: Variant) -> bool:
+	return (value is int or value is float) and float(value) == 0.0
 
 
 func _nova_pose_layers(pose: String) -> Dictionary:
