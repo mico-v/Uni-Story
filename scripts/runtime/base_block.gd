@@ -133,20 +133,20 @@ func show(obj: Variant, image_path: String = "", coord = null, color = null) -> 
 	if obj_name == "cg":
 		_show_nova_cg(obj_name, image_path, coord, color)
 		return
-	if _is_nova_character(obj_name):
-		_show_nova_character(obj_name, image_path, coord, color)
+	if _is_profile_character(obj_name):
+		_show_profile_character(obj_name, image_path, coord, color)
 		return
 	_ctx.graphics.show(obj, _nova_image_path(obj_name, image_path), coord, color)
 
 func hide(obj: Variant) -> void:
 	var obj_name := str(obj)
-	if _is_nova_character(obj_name):
+	if _is_profile_character(obj_name):
 		_ctx.composer.hide_char(obj_name)
 		return
 	_ctx.graphics.hide(obj)
 
 func move(obj: Variant, coord: Variant, scale = null, angle = null) -> void:
-	if _is_nova_character(str(obj)):
+	if _is_profile_character(str(obj)):
 		_ctx.composer.move_char(str(obj), coord, scale, angle)
 		return
 	if _is_camera_target(obj):
@@ -613,17 +613,20 @@ func _to_float(value: Variant, fallback: float) -> float:
 	return fallback
 
 
-func _is_nova_character(obj_name: String) -> bool:
-	return _nova_character_dir(obj_name) != ""
+func _is_profile_character(obj_name: String) -> bool:
+	var composer: Object = _composer()
+	return composer != null and composer.has_method("has_character_profile") and bool(composer.call("has_character_profile", obj_name))
 
 
-func _show_nova_character(char_name: String, pose: String, coord: Variant, color: Variant) -> void:
+func _show_profile_character(char_name: String, pose: String, coord: Variant, color: Variant) -> void:
 	if coord == null:
 		coord = _nova_pos(0.50)
 	# Nova Lua show() uses 0 to mean "default / no effect", not a color.
 	if _is_default_effect_value(color):
 		color = null
-	_ctx.composer.show_char(char_name, pose, coord, color)
+	var composer: Object = _composer()
+	if composer != null and composer.has_method("show_char"):
+		composer.call("show_char", char_name, pose, coord, color)
 
 
 func _show_nova_cg(obj_name: String, pose: String, coord: Variant, color: Variant) -> void:
@@ -638,31 +641,11 @@ func _is_default_effect_value(value: Variant) -> bool:
 	return (value is int or value is float) and float(value) == 0.0
 
 
-func _nova_pose_layers(pose: String) -> Dictionary:
-	return {"pose": pose}
+func _composer() -> Object:
+	if _ctx == null:
+		return null
+	return _ctx.get("composer") as Object
 
 
-func _nova_cg_pose(obj_name: String, pose: String) -> String:
-	if pose.find("/") != -1:
-		return pose
-	match pose:
-		"rain":
-			return "rain_back"
-		"rain_final":
-			return "rain_back+rain_text"
-		_:
-			return pose
-
-
-func _nova_character_dir(char_name: String) -> String:
-	match char_name.to_lower():
-		"ergong":
-			return "Ergong"
-		"gaotian":
-			return "Gaotian"
-		"qianye":
-			return "Qianye"
-		"xiben":
-			return "Xiben"
-		_:
-			return ""
+func _nova_cg_pose(_obj_name: String, pose: String) -> String:
+	return pose

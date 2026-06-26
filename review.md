@@ -395,7 +395,7 @@ Phase 1 结论：
 - `DialogueEntry` 与 `GameState` 支持 `before_checkpoint`、`default`、`after_dialogue` 三段 lazy action，并在对白显示前后执行。
 - `Variables` 支持普通变量、临时变量、`v_` 存档变量和 `gv_` 全局变量；`BaseBlock` 增加 Nova 变量读写 helper。
 - `BaseBlock` 补齐 Nova 原剧本基础播放所需的常量与 API：`pos_c/pos_l/pos_r`、`bg/fg/cg/bgm/bgs/voice`、`play()`、`sound()`、`auto_voice_*()`、`set_box()` 多参数兼容、头像/视频/输入/文本/提示等兼容入口。
-- `SpriteComposer` 支持直接读取 `resources/Standings/<Ergong|Gaotian|Qianye|Xiben>/`，`show("ergong"...)` 等 Nova 角色名可映射到 Godot 组合立绘。
+- `SpriteComposer` 支持通过项目 `StandingProfile` 资源读取组合立绘目录、pose、layer order 和 offset；当前示例作品的 Nova 角色映射放在 `resources/standing_profile.tres`。
 - `GameState` 对 speaker、正文、branch text 做 `{{var_name}}` 文本插值。
 - `FlowChartGraph` 不再把 Nova 合法循环视为错误，并允许 debug-only 剧本没有普通 start node。
 - 新增 `scripts/tests/nova_compat_smoke_test.gd`，覆盖局部 label、`is_save_point()`、branch image tuple、`v_`/`gv_`、临时变量插值和 stage 执行。
@@ -488,3 +488,32 @@ Phase 4 结论：
 
 - 标题层已经具备 Nova 原本产品体验的核心结构：Help、章节选择、继续、读取、设置、鉴赏、首次提示和标题 BGM。
 - Phase 4 可以按“核心完成，音效和通知产品化留到 Phase 5”收口。
+
+---
+
+## 十四、Phase 5 实施记录
+
+### 2026-06-26：View 状态、过渡输入屏蔽与安卓横屏适配
+
+已完成：
+
+- `ViewManager` 增加 Title/UI/Game/InTransition/Alert 状态、`state_changed` 信号、`state()`、`is_transitioning()` 和 `is_input_blocked()` 查询。
+- 视图过渡期间由 `ViewManager` 在 `GlobalUI` 下创建透明 `TransitionInputBlocker`，阻断重复点击；全局快捷键和游戏内快捷键会尊重 input-blocked 状态。
+- `DialogSystem.show_confirm()` / `answer_confirm()` 接入 Alert 状态，弹窗期间阻断误触。
+- 移动端启动时通过 `NovaController` 强制横屏和全屏；`project.godot` 的 stretch aspect 改为 `expand`，支持手机横屏按实际 viewport 扩展画布。
+- `GameViewController.apply_responsive_layout()` 根据当前 viewport 调整对白框、顶部控制条、存档面板和回顾面板，并在 resize 时重新应用。
+- `Graphics.show()` 对没有显式坐标的 `bg` / `cg` 做 cover fit，横屏下自动铺满 viewport；resize 后可通过 `fit_fullscreen_objects()` 重算。
+- `SpriteComposer` 改为读取 `StandingProfile` 资源，角色目录、pose、layer order 和 offset fallback 都由项目资源提供，避免 Android 导出包缺少 Unity `.asset` sidecar 时 eye/mouth/eyebrow 等脸部图层回到错误原点。
+- `Graphics` 的图片 alias 改为读取 `VisualProfile` 资源，当前示例作品的 CG alias 放在 `resources/visual_profile.tres`，不再写在 runtime 代码里。
+- 新增 `sprite_composer_smoke_test.gd`，覆盖 profile 驱动立绘 normal pose 的 body/eye/mouth 相对位置。
+
+验证：
+
+- 通过：`sprite_composer_smoke_test.gd`。
+- 通过：`main_scene_smoke_test.gd`，确认主场景、ViewManager Phase 5 状态和初始过渡输入状态可用。
+
+残留风险：
+
+- NotificationView/AlertView 的视觉层尚未统一，当前只是把 Confirm 接入 Alert 状态。
+- 切出 GameView 时暂停/恢复动画和音频还未实现，需等 Phase 6 动画域与 pause/resume 语义补齐后收敛。
+- 手机端还需要真机验证安全区、刘海屏、不同宽高比下对白框和控制条的最终观感。

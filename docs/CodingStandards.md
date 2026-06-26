@@ -58,6 +58,10 @@
 - `.tscn` 场景和 controller 职责保持分离；不要在 controller 里无边界创建复杂场景树。
 - VN 产品界面要安静、可扫描、可反复操作；存读档、回顾、设置等工具界面优先密度和清晰状态。
 - 不新增无意义的装饰性页面；功能入口应直接可用。
+- 移动端横屏布局不能假设固定 1280x720；游戏视图、对白框、控制条、背景和 CG 要按当前 viewport 重新适配。
+- 导出到 Android/iOS 时不要依赖 Godot 不识别的 sidecar 文件作为唯一运行时数据来源，例如 Unity `.asset`。如果必须读取，项目要提供 Godot `Resource` 或其他可导出的数据资源作为 fallback，不能写死在引擎脚本里。
+- 立绘合成必须保持 body、eye、eyebrow、mouth 等图层的相对空间关系；修改 offset/scale/anchor 逻辑后要跑 `sprite_composer_smoke_test.gd`。
+- 剧本/作品相关配置，包括角色名、pose、立绘目录、图层偏移、资源 alias 和章节展示数据，必须放在项目资源或配置文件里，通过组合根注入；不要写进 `scripts/runtime/*` 或核心引擎脚本。当前立绘使用 `StandingProfile`，视觉图片 alias 使用 `VisualProfile`。
 
 ## Git 与协作
 

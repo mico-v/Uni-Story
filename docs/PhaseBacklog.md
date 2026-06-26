@@ -23,6 +23,8 @@
 
 - `view-state-machine`：ViewManager 增加 Title/UI/Game/InTransition/Alert 状态。
 - `transition-input-blocker`：过渡中屏蔽重复输入，修复连续点击导致的视图状态错乱。
+- `mobile-landscape-layout`：移动端横屏全屏、viewport expand、GameView 自适应布局和背景/CG cover fit。
+- `standing-composer-offsets`：立绘合成读取项目 `StandingProfile` 资源，避免导出包缺 Unity `.asset` sidecar 时脸部图层错位。
 - `unified-notification-alert`：Toast/Confirm 迁移到 NotificationView/AlertView。
 - `input-mapping-ui`：按键录制、冲突提示、恢复默认、ConfigFile 持久化。
 - `save-load-rich-list`：存读档显示缩略图、章节名、时间、当前位置，支持更多槽位。
@@ -68,4 +70,3 @@
 - `export-smoke`：Windows/Linux/Android 导出产物基础检查。
 - `performance-baseline`：记录解析、预加载、存档、回跳耗时。
 - `release-docs`：整理快速开始、NovaScript 兼容表、资源规范、扩展系统和发布流程。
-

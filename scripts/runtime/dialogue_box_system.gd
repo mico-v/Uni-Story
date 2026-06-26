@@ -39,6 +39,17 @@ func set_box(pos_name: Variant = "bottom") -> void:
 	box.visible = true
 	_current_preset = key
 	_ensure_gradient_overlay(box)
+	_apply_preset(box, key)
+
+
+func reflow() -> void:
+	var box := _box()
+	if box == null or _current_preset == "hide":
+		return
+	_apply_preset(box, _current_preset)
+
+
+func _apply_preset(box: Control, key: String) -> void:
 	var a: Array = PRESETS.get(key, PRESETS["bottom"])
 	box.anchor_left = a[0]
 	box.anchor_right = a[1]

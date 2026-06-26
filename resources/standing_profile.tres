@@ -1,0 +1,72 @@
+[gd_resource type="Resource" script_class="StandingProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/runtime/standing_profile.gd" id="1_standing_profile"]
+
+[resource]
+script = ExtResource("1_standing_profile")
+character_root = "characters/"
+default_layer_order = Array[String](["body", "blush", "mouth", "eye", "eyebrow", "hair", "sweat", "effect"])
+offset_sidecar_extension = ".asset"
+offset_pixels_per_unit = 100.0
+invert_sidecar_y = true
+characters = {
+"ergong": {
+"directory": "Standings/Ergong",
+"layer_order": ["body", "blush", "mouth", "eye", "eyebrow", "hair", "sweat", "effect"],
+"poses": {
+"normal": ["body", "mouth_smile", "eye_normal", "eyebrow_normal", "hair"]
+},
+"offsets": {
+"body": Vector2(-56, 186),
+"hair": Vector2(-38, -518),
+"eye": Vector2(-118, -614),
+"eyebrow": Vector2(-151, -650),
+"mouth": Vector2(-96, -490)
+}
+},
+"gaotian": {
+"directory": "Standings/Gaotian",
+"layer_order": ["body", "blush", "mouth", "eye", "eyebrow", "hair", "sweat", "effect"],
+"poses": {
+"normal": ["body", "mouth_smile", "eye_normal", "eyebrow_normal", "hair"],
+"cry": ["body", "mouth_smile", "eye_cry", "eyebrow_normal", "hair"]
+},
+"offsets": {
+"body": Vector2(-8, 246),
+"hair": Vector2(33, -442),
+"eye": Vector2(96, -484),
+"eyebrow": Vector2(114, -538),
+"mouth": Vector2(80, -360),
+"blush": Vector2(50, -504),
+"sweat": Vector2(2, -419)
+}
+},
+"qianye": {
+"directory": "Standings/Qianye",
+"layer_order": ["body", "blush", "mouth", "eye", "eyebrow", "hair", "sweat", "effect"],
+"poses": {
+"normal": ["body", "mouth_close", "eye_normal", "eyebrow_normal", "hair"]
+},
+"offsets": {
+"body": Vector2(34, 106),
+"hair": Vector2(-118, -836),
+"eye": Vector2(-196, -850),
+"eyebrow": Vector2(-204, -872),
+"mouth": Vector2(-190, -662)
+}
+},
+"xiben": {
+"directory": "Standings/Xiben",
+"layer_order": ["body", "blush", "mouth", "eye", "eyebrow", "hair", "sweat", "effect"],
+"poses": {
+"normal": ["body", "mouth_close", "eye_normal", "eyebrow_normal", "hair"]
+},
+"offsets": {
+"body": Vector2(16, 204),
+"hair": Vector2(-38, -688),
+"eye": Vector2(0, -634),
+"eyebrow": Vector2(-4, -688),
+"mouth": Vector2(-2, -504)
+}
+}
+}

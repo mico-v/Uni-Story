@@ -3,7 +3,7 @@ class_name DialogSystem extends RefCounted
 ## Notification toasts and confirm dialogs for the game UI.
 ##
 ## Toast: brief message at top-center that fades out after a delay.
-## Confirm: modal dialog defined in game_view.tscn (Hud/ConfirmOverlay + Hud/ConfirmPanel).
+## Confirm: modal dialog defined in game_view.tscn (Hud/ModalLayer).
 ##
 ## Usage from NovaScript:
 ##   <| show_toast("快速存档完成") |>
@@ -54,6 +54,7 @@ func show_confirm(title: String, message: String) -> Signal:
 	if _confirm_panel == null:
 		confirm_result.emit(false)
 		return confirm_result
+	_begin_alert_state()
 	if _confirm_title:
 		_confirm_title.text = title
 	if _confirm_message:
@@ -68,6 +69,7 @@ func show_confirm(title: String, message: String) -> Signal:
 func answer_confirm(confirmed: bool) -> void:
 	if _confirm_panel and _confirm_panel.visible:
 		_hide_confirm()
+		_end_alert_state()
 		confirm_result.emit(confirmed)
 
 
@@ -76,6 +78,16 @@ func _hide_confirm() -> void:
 		_confirm_panel.visible = false
 	if _confirm_overlay:
 		_confirm_overlay.visible = false
+
+
+func _begin_alert_state() -> void:
+	if _ctx and _ctx.view_manager and _ctx.view_manager.has_method("begin_alert"):
+		_ctx.view_manager.begin_alert()
+
+
+func _end_alert_state() -> void:
+	if _ctx and _ctx.view_manager and _ctx.view_manager.has_method("end_alert"):
+		_ctx.view_manager.end_alert()
 
 
 # ── Internal UI binding ──────────────────────────────────────────────
@@ -100,15 +112,15 @@ func _ensure_confirm() -> void:
 	if _confirm_ready:
 		return
 	_confirm_ready = true
-	# Bind to nodes defined in game_view.tscn under Hud.
-	var hud := _get_ui_parent()
-	if hud == null:
+	# Bind to nodes defined in game_view.tscn under Hud/ModalLayer.
+	var modal_parent := _get_ui_parent()
+	if modal_parent == null:
 		push_error("DialogSystem: cannot find UI parent for confirm dialog")
 		return
-	_confirm_overlay = hud.get_node_or_null("ConfirmOverlay")
-	_confirm_panel = hud.get_node_or_null("ConfirmPanel")
+	_confirm_overlay = modal_parent.get_node_or_null("ConfirmOverlay")
+	_confirm_panel = modal_parent.get_node_or_null("ConfirmPanel")
 	if _confirm_panel == null:
-		push_error("DialogSystem: ConfirmPanel not found under Hud")
+		push_error("DialogSystem: ConfirmPanel not found under modal UI parent")
 		return
 	_confirm_title = _confirm_panel.get_node_or_null("VBox/Title")
 	_confirm_message = _confirm_panel.get_node_or_null("VBox/Message")
@@ -132,6 +144,9 @@ func _get_ui_parent() -> Node:
 	if game_view is Control:
 		var hud = game_view.get_node_or_null("Hud")
 		if hud is Control:
+			var modal_layer = hud.get_node_or_null("ModalLayer")
+			if modal_layer is Control:
+				return modal_layer
 			return hud
 		return game_view
 	return _ctx.get_tree().root

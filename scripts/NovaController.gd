@@ -49,6 +49,10 @@ const EngineLogScript := preload("res://scripts/core/engine_log.gd")
 @export var settings_path: String = "user://config/settings.cfg"
 @export var hints_path: String = "user://config/hints.cfg"
 @export var title_bgm_path: String = "BGM/prelude.ogg"
+@export var force_mobile_landscape: bool = true
+@export var mobile_fullscreen: bool = true
+@export var standing_profile: Resource = preload("res://resources/standing_profile.tres")
+@export var visual_profile: Resource = preload("res://resources/visual_profile.tres")
 @export_group("Preload")
 @export_range(1, 1024, 1) var preload_cache_size: int = 128
 @export_group("Gallery")
@@ -107,6 +111,7 @@ var _settings_return_to := "title"
 # ── Ready ────────────────────────────────────────────────────────────
 
 func _ready() -> void:
+	_configure_display()
 	_init_subsystems()
 	_setup_locale()
 
@@ -169,8 +174,10 @@ func _init_subsystems() -> void:
 	save_system.configure(save_dir, save_slot_count, auto_save_slot, auto_save_enabled)
 	backlog = Backlog.new()
 	graphics = Graphics.new(self)
+	graphics.configure(visual_profile)
 	animation = AnimationSystem.new(self)
 	composer = SpriteComposer.new(self)
+	composer.configure(standing_profile)
 	avatar = AvatarSystem.new(self)
 	audio = AudioSystem.new(self)
 	camera = CameraSystem.new(self)
@@ -502,6 +509,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if shortcut_manager == null:
 		return
+	if view_manager and view_manager.is_input_blocked():
+		get_viewport().set_input_as_handled()
+		return
 	# Navigation for non-game views.
 	if view_manager and view_manager.current() != "game":
 		if shortcut_manager.is_action_pressed("ui_leave"):
@@ -535,6 +545,13 @@ func _setup_settings() -> void:
 	if settings_coordinator == null:
 		return
 	settings_coordinator.setup(_settings_vc, _game_vc, settings_path, Callable(self, "_apply_i18n"))
+
+
+func _configure_display() -> void:
+	if force_mobile_landscape and (OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios")):
+		DisplayServer.screen_set_orientation(DisplayServer.SCREEN_LANDSCAPE)
+	if mobile_fullscreen and (OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios")):
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 
 func _on_setting_changed(key: String, value: Variant) -> void:
 	if settings_coordinator:

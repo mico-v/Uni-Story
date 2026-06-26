@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="VisualProfile" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/runtime/visual_profile.gd" id="1_visual_profile"]
+
+[resource]
+script = ExtResource("1_visual_profile")
+image_aliases = {
+"cg:rain": "rain_back",
+"cg:rain_final": "rain_back+rain_text"
+}

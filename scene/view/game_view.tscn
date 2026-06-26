@@ -40,24 +40,32 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="Status" type="Label" parent="Hud" unique_id=1557576252]
+[node name="DialogueLayer" type="Control" parent="Hud" unique_id=1061123179]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Status" type="Label" parent="Hud/DialogueLayer" unique_id=1557576252]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
 offset_bottom = 104.0
 grow_horizontal = 2
 
-[node name="DialogueBox" parent="Hud" unique_id=89621010 instance=ExtResource("DialogueBoxRes")]
+[node name="DialogueBox" parent="Hud/DialogueLayer" unique_id=89621010 instance=ExtResource("DialogueBoxRes")]
+visible = false
 layout_mode = 1
-anchor_left = 0.0
-anchor_top = 0.569
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = 0.32000732
+anchor_left = 0.1
+anchor_right = 0.9
+anchor_bottom = 0.96
 grow_horizontal = 2
 grow_vertical = 0
 
-[node name="ChoiceList" type="VBoxContainer" parent="Hud" unique_id=1227660917]
+[node name="ChoiceList" type="VBoxContainer" parent="Hud/DialogueLayer" unique_id=1227660917]
 custom_minimum_size = Vector2(100, 100)
 layout_mode = 1
 anchors_preset = 8
@@ -70,61 +78,33 @@ grow_vertical = 2
 alignment = 1
 script = ExtResource("2_cyfmi")
 
-[node name="Controls" type="HBoxContainer" parent="Hud" unique_id=846297658]
-layout_direction = 3
+[node name="ControlLayer" type="Control" parent="Hud" unique_id=1947522916]
 layout_mode = 1
-anchors_preset = 12
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Controls" type="HBoxContainer" parent="Hud/ControlLayer" unique_id=846297658]
+visible = false
+layout_direction = 2
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_top = -44.0
-grow_horizontal = 2
+offset_left = -808.0
+offset_top = -60.0
+offset_right = -48.0
+offset_bottom = -16.0
+grow_horizontal = 0
 grow_vertical = 0
+alignment = 2
 
-[node name="Quit" type="Button" parent="Hud/Controls" unique_id=1878893336]
-custom_minimum_size = Vector2(100, 44)
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 8
-text = "标题"
-
-[node name="Restart" type="Button" parent="Hud/Controls" unique_id=2113566389]
-custom_minimum_size = Vector2(100, 44)
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 8
-text = "重开"
-
-[node name="Save" type="Button" parent="Hud/Controls" unique_id=1440843677]
-custom_minimum_size = Vector2(100, 44)
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 8
-text = "存档"
-
-[node name="Load" type="Button" parent="Hud/Controls" unique_id=1802674086]
-custom_minimum_size = Vector2(100, 44)
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 8
-text = "读档"
-
-[node name="Backlog" type="Button" parent="Hud/Controls" unique_id=2093469893]
-custom_minimum_size = Vector2(100, 44)
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 8
-text = "回顾"
-
-[node name="Auto" type="Button" parent="Hud/Controls" unique_id=710982097]
-custom_minimum_size = Vector2(100, 44)
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 8
-toggle_mode = true
-text = "自动"
-
-[node name="Skip" type="Button" parent="Hud/Controls" unique_id=1138895797]
+[node name="Skip" type="Button" parent="Hud/ControlLayer/Controls" unique_id=1138895797]
 custom_minimum_size = Vector2(100, 44)
 layout_mode = 2
 size_flags_horizontal = 4
@@ -132,7 +112,59 @@ size_flags_vertical = 8
 toggle_mode = true
 text = "快进"
 
-[node name="TransitionOverlay" type="ColorRect" parent="Hud" unique_id=2058775679]
+[node name="Auto" type="Button" parent="Hud/ControlLayer/Controls" unique_id=710982097]
+custom_minimum_size = Vector2(100, 44)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 8
+toggle_mode = true
+text = "自动"
+
+[node name="Backlog" type="Button" parent="Hud/ControlLayer/Controls" unique_id=2093469893]
+custom_minimum_size = Vector2(100, 44)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 8
+text = "回顾"
+
+[node name="Save" type="Button" parent="Hud/ControlLayer/Controls" unique_id=1440843677]
+custom_minimum_size = Vector2(100, 44)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 8
+text = "存档"
+
+[node name="Load" type="Button" parent="Hud/ControlLayer/Controls" unique_id=1802674086]
+custom_minimum_size = Vector2(100, 44)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 8
+text = "读档"
+
+[node name="Restart" type="Button" parent="Hud/ControlLayer/Controls" unique_id=2113566389]
+custom_minimum_size = Vector2(100, 44)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 8
+text = "重开"
+
+[node name="Quit" type="Button" parent="Hud/ControlLayer/Controls" unique_id=1878893336]
+custom_minimum_size = Vector2(100, 44)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 8
+text = "标题"
+
+[node name="ModalLayer" type="Control" parent="Hud" unique_id=166876048]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="TransitionOverlay" type="ColorRect" parent="Hud/ModalLayer" unique_id=2058775679]
 visible = false
 layout_mode = 0
 anchor_right = 1.0
@@ -142,7 +174,7 @@ grow_vertical = 2
 mouse_filter = 2
 color = Color(0, 0, 0, 0)
 
-[node name="SavePanel" type="Panel" parent="Hud" unique_id=548235005]
+[node name="SavePanel" type="Panel" parent="Hud/ModalLayer" unique_id=548235005]
 visible = false
 layout_mode = 1
 anchors_preset = -1
@@ -151,7 +183,7 @@ anchor_top = 0.18
 anchor_right = 0.7
 anchor_bottom = 0.82
 
-[node name="SavePanelContainer" type="VBoxContainer" parent="Hud/SavePanel" unique_id=1416005405]
+[node name="SavePanelContainer" type="VBoxContainer" parent="Hud/ModalLayer/SavePanel" unique_id=1416005405]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -162,21 +194,21 @@ offset_bottom = -16.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Title" type="Label" parent="Hud/SavePanel/SavePanelContainer" unique_id=220025121]
+[node name="Title" type="Label" parent="Hud/ModalLayer/SavePanel/SavePanelContainer" unique_id=220025121]
 layout_mode = 2
 text = "存档"
 horizontal_alignment = 1
 
-[node name="Slots" type="VBoxContainer" parent="Hud/SavePanel/SavePanelContainer" unique_id=658209489]
+[node name="Slots" type="VBoxContainer" parent="Hud/ModalLayer/SavePanel/SavePanelContainer" unique_id=658209489]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="CloseButton" type="Button" parent="Hud/SavePanel/SavePanelContainer" unique_id=64118226]
+[node name="CloseButton" type="Button" parent="Hud/ModalLayer/SavePanel/SavePanelContainer" unique_id=64118226]
 custom_minimum_size = Vector2(220, 44)
 layout_mode = 2
 text = "关闭"
 
-[node name="BacklogPanel" type="Panel" parent="Hud" unique_id=817610761]
+[node name="BacklogPanel" type="Panel" parent="Hud/ModalLayer" unique_id=817610761]
 visible = false
 layout_mode = 1
 anchors_preset = -1
@@ -185,7 +217,7 @@ anchor_top = 0.1
 anchor_right = 0.85
 anchor_bottom = 0.9
 
-[node name="BacklogPanelContainer" type="VBoxContainer" parent="Hud/BacklogPanel" unique_id=598918918]
+[node name="BacklogPanelContainer" type="VBoxContainer" parent="Hud/ModalLayer/BacklogPanel" unique_id=598918918]
 layout_mode = 0
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -196,28 +228,28 @@ offset_bottom = -16.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Title" type="Label" parent="Hud/BacklogPanel/BacklogPanelContainer" unique_id=1291585542]
+[node name="Title" type="Label" parent="Hud/ModalLayer/BacklogPanel/BacklogPanelContainer" unique_id=1291585542]
 layout_mode = 2
 text = "文本回顾"
 horizontal_alignment = 1
 
-[node name="BacklogScroll" type="ScrollContainer" parent="Hud/BacklogPanel/BacklogPanelContainer" unique_id=363897023]
+[node name="BacklogScroll" type="ScrollContainer" parent="Hud/ModalLayer/BacklogPanel/BacklogPanelContainer" unique_id=363897023]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 horizontal_scroll_mode = 3
 
-[node name="BacklogList" type="VBoxContainer" parent="Hud/BacklogPanel/BacklogPanelContainer/BacklogScroll" unique_id=1169778468]
+[node name="BacklogList" type="VBoxContainer" parent="Hud/ModalLayer/BacklogPanel/BacklogPanelContainer/BacklogScroll" unique_id=1169778468]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="CloseButton" type="Button" parent="Hud/BacklogPanel/BacklogPanelContainer" unique_id=1418495885]
+[node name="CloseButton" type="Button" parent="Hud/ModalLayer/BacklogPanel/BacklogPanelContainer" unique_id=1418495885]
 custom_minimum_size = Vector2(220, 44)
 layout_mode = 2
 text = "关闭"
 
-[node name="ConfirmOverlay" type="ColorRect" parent="Hud" unique_id=624606600]
+[node name="ConfirmOverlay" type="ColorRect" parent="Hud/ModalLayer" unique_id=624606600]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -227,7 +259,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 0, 0, 0.4)
 
-[node name="ConfirmPanel" type="PanelContainer" parent="Hud" unique_id=930876383]
+[node name="ConfirmPanel" type="PanelContainer" parent="Hud/ModalLayer" unique_id=930876383]
 visible = false
 custom_minimum_size = Vector2(400, 200)
 layout_mode = 1
@@ -243,28 +275,28 @@ offset_bottom = 100.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="VBox" type="VBoxContainer" parent="Hud/ConfirmPanel" unique_id=435222107]
+[node name="VBox" type="VBoxContainer" parent="Hud/ModalLayer/ConfirmPanel" unique_id=435222107]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="Title" type="Label" parent="Hud/ConfirmPanel/VBox" unique_id=357454364]
+[node name="Title" type="Label" parent="Hud/ModalLayer/ConfirmPanel/VBox" unique_id=357454364]
 layout_mode = 2
 horizontal_alignment = 1
 
-[node name="Message" type="Label" parent="Hud/ConfirmPanel/VBox" unique_id=271248002]
+[node name="Message" type="Label" parent="Hud/ModalLayer/ConfirmPanel/VBox" unique_id=271248002]
 layout_mode = 2
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="Buttons" type="HBoxContainer" parent="Hud/ConfirmPanel/VBox" unique_id=1474392218]
+[node name="Buttons" type="HBoxContainer" parent="Hud/ModalLayer/ConfirmPanel/VBox" unique_id=1474392218]
 layout_mode = 2
 theme_override_constants/separation = 20
 alignment = 1
 
-[node name="OK" type="Button" parent="Hud/ConfirmPanel/VBox/Buttons" unique_id=1022531230]
+[node name="OK" type="Button" parent="Hud/ModalLayer/ConfirmPanel/VBox/Buttons" unique_id=1022531230]
 custom_minimum_size = Vector2(120, 40)
 layout_mode = 2
 
-[node name="Cancel" type="Button" parent="Hud/ConfirmPanel/VBox/Buttons" unique_id=1727092101]
+[node name="Cancel" type="Button" parent="Hud/ModalLayer/ConfirmPanel/VBox/Buttons" unique_id=1727092101]
 custom_minimum_size = Vector2(120, 40)
 layout_mode = 2

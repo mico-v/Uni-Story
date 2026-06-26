@@ -154,8 +154,9 @@ func _apply_transition_target(target: Variant, image_or_action: Variant) -> void
 
 
 func _move_target(obj: Variant, coord: Variant) -> void:
-	if _is_nova_character(str(obj)) and _ctx and _ctx.composer:
-		_ctx.composer.move_char(str(obj), coord)
+	var composer: Object = _composer()
+	if _is_profile_character(str(obj)) and composer != null and composer.has_method("move_char"):
+		composer.call("move_char", str(obj), coord)
 		return
 	if _is_camera_target(obj) and _ctx and _ctx.camera:
 		_ctx.camera.move_camera(coord)
@@ -165,8 +166,9 @@ func _move_target(obj: Variant, coord: Variant) -> void:
 
 
 func _tint_target(obj: Variant, color: Variant) -> void:
-	if _is_nova_character(str(obj)) and _ctx and _ctx.composer:
-		_ctx.composer.tint_char(str(obj), color)
+	var composer: Object = _composer()
+	if _is_profile_character(str(obj)) and composer != null and composer.has_method("tint_char"):
+		composer.call("tint_char", str(obj), color)
 		return
 	if _ctx and _ctx.graphics:
 		_ctx.graphics.tint(obj, color)
@@ -176,10 +178,11 @@ func _show_target(obj: Variant, image_path: String = "", coord: Variant = null) 
 	if _ctx == null:
 		return
 	var name := str(obj)
-	if _is_nova_character(name) and _ctx.composer:
+	var composer: Object = _composer()
+	if _is_profile_character(name) and composer != null and composer.has_method("show_char"):
 		if coord == null:
 			coord = _nova_pos(0.50)
-		_ctx.composer.show_char(name, _nova_pose_layers(image_path), coord)
+		composer.call("show_char", name, image_path, coord)
 		return
 	# Nova color-name shorthand: e.g. trans_fade(bg, 'black') means "tint to black".
 	if _is_nova_color_name(image_path):
@@ -194,8 +197,9 @@ func _show_target(obj: Variant, image_path: String = "", coord: Variant = null) 
 func _hide_target(obj: Variant) -> void:
 	if _ctx == null:
 		return
-	if _is_nova_character(str(obj)) and _ctx.composer:
-		_ctx.composer.hide_char(str(obj))
+	var composer: Object = _composer()
+	if _is_profile_character(str(obj)) and composer != null and composer.has_method("hide_char"):
+		composer.call("hide_char", str(obj))
 		return
 	if _ctx.has_method("hide"):
 		_ctx.hide(obj)
@@ -266,22 +270,15 @@ func _is_camera_target(obj: Variant) -> bool:
 	return name == "cam" or name == "cam2" or name == "cam_mask"
 
 
-func _is_nova_character(char_name: String) -> bool:
-	match char_name.to_lower():
-		"ergong", "gaotian", "qianye", "xiben":
-			return true
-		_:
-			return false
+func _is_profile_character(char_name: String) -> bool:
+	var composer: Object = _composer()
+	return composer != null and composer.has_method("has_character_profile") and bool(composer.call("has_character_profile", char_name))
 
 
-func _nova_pose_layers(pose: String) -> Dictionary:
-	match pose:
-		"cry":
-			return {"body": "", "eye": "cry", "eyebrow": "down", "mouth": "close", "hair": ""}
-		"smile":
-			return {"body": "", "eye": "smile", "eyebrow": "happy", "mouth": "smile", "hair": ""}
-		_:
-			return {"body": "", "eye": "normal", "eyebrow": "normal", "mouth": "close", "hair": ""}
+func _composer() -> Object:
+	if _ctx == null:
+		return null
+	return _ctx.get("composer") as Object
 
 
 func _nova_image_path(obj_name: String, image_path: String) -> String:

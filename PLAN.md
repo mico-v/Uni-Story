@@ -188,10 +188,15 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 
 任务：
 
-- [ ] `ViewManager` 增加状态：Title/UI/Game/InTransition/Alert。
+- [x] `ViewManager` 增加状态：Title/UI/Game/InTransition/Alert。
 - [ ] 切出 GameView 时暂停 per-dialogue/holding 动画和相关音频，切回时恢复。
-- [ ] 增加 transition input blocker，防止过渡中重复点击。
+- [x] 增加 transition input blocker，防止过渡中重复点击。
 - [ ] 新增 NotificationView 和 AlertView，Toast/Confirm 迁移到统一通知体系。
+- [x] Confirm 接入 Alert 状态，弹窗期间阻断全局和游戏内快捷键误触。
+- [x] 安卓/移动端启动时强制横屏和全屏，项目 stretch aspect 改为 `expand`。
+- [x] GameView 横屏自适应布局：对白框、顶部控制条、存读档/回顾面板按 viewport 比例调整。
+- [x] 背景/CG 在无显式坐标时按当前 viewport cover fit，支持手机横屏铺满。
+- [x] 立绘合成改为 `StandingProfile` 资源驱动，pose、目录、layer order 和 offset fallback 不再硬编码在引擎里。
 - [ ] 输入映射 UI：按键录制、恢复默认、冲突提示、保存到 ConfigFile。
 - [ ] 存读档 UI 显示截图、章节名、时间、当前位置。
 - [ ] 回顾 UI 支持语音重播、跳转确认、筛选未来文本。
@@ -329,7 +334,7 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 | 2 | NovaScript 兼容基线 | 完成 | P0 |
 | 3 | Checkpoint / Bookmark 存档核心 | 核心完成，产品化收尾待后续 | P0 |
 | 4 | 章节选择、全局进度与标题体验 | 核心完成，音效收尾待 Phase 5 | P0 |
-| 5 | ViewManager 与 UI 产品层成熟化 | 待开始 | P1 |
+| 5 | ViewManager 与 UI 产品层成熟化 | 进行中 | P1 |
 | 6 | 动画系统升级 | 待开始 | P1 |
 | 7 | VFX / Shader / Transition 系统 | 待开始 | P1 |
 | 8 | 资源加载、预加载与内容生产工具 | 待开始 | P1 |
@@ -391,4 +396,14 @@ Phase 4 核心任务已推进。执行记录：
 6. [x] 回顾面板首次打开显示一次跳转提示，toast 改为全局 UI 层承载。
 7. [x] 新增 `chapter_select_smoke_test.gd`，主场景 smoke test 覆盖 Help/ChapterSelect 注册。
 
-下一步进入 Phase 5：ViewManager 与 UI 产品层成熟化。优先统一 Notification/Alert、视图状态机、过渡输入屏蔽，并把 UI/视图切换音效收敛到 `AudioSystem`。
+Phase 5 已启动。执行记录：
+
+1. [x] `ViewManager` 增加 Title/UI/Game/InTransition/Alert 状态和 `state_changed` 信号。
+2. [x] 过渡期间创建透明 input blocker，屏蔽重复点击；全局和游戏内快捷键会尊重 `is_input_blocked()`。
+3. [x] `DialogSystem.show_confirm()` 接入 Alert 状态，弹窗期间阻断误触。
+4. [x] 移动端启动强制横屏/全屏，项目 stretch aspect 改为 `expand`，GameView 根据横屏 viewport 自适应布局。
+5. [x] 背景/CG cover fit 当前 viewport，避免安卓横屏黑边或压缩。
+6. [x] `SpriteComposer` 改为读取 `StandingProfile` 资源；当前示例作品的角色目录、pose 和 offset fallback 放在 `resources/standing_profile.tres`，并新增 `sprite_composer_smoke_test.gd` 覆盖脸部图层相对 body 的位置。
+7. [x] CG 等视觉资源 alias 改为 `VisualProfile` 资源驱动，当前示例作品 alias 放在 `resources/visual_profile.tres`。
+
+下一步继续 Phase 5：统一 NotificationView/AlertView 视觉层，补存读档丰富列表、输入映射 UI，并把 UI/视图切换音效收敛到 `AudioSystem`。
