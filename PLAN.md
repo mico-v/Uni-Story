@@ -142,15 +142,15 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 
 任务：
 
-- [ ] 新增 `CheckpointManager.gd`，管理 node record、checkpoint、reached dialogue、reached end。
-- [ ] 设计 `NodeRecord` 数据结构：name、parent、child/sibling 或等价历史关系、begin/end dialogue、variables hash。
-- [ ] 设计 `GameStateCheckpoint`：当前 entry、变量快照、各 restorable 子系统状态、checkpoint restraint。
-- [ ] 把 `SaveSystem` 拆分为 bookmark slot 管理；底层恢复交给 `CheckpointManager`。
-- [ ] 保存 reached dialogue，用于回顾、已读、章节解锁、skip unread。
-- [ ] 实现 bookmark metadata：创建时间、章节名、对白索引、截图路径、global save id。
+- [x] 新增 `CheckpointManager.gd`，管理 node record、checkpoint、reached dialogue、reached end。
+- [x] 设计 `NodeRecord` 数据结构：name、parent、begin/end dialogue、variables hash。
+- [x] 设计 `GameStateCheckpoint`：当前 entry、变量快照、各 restorable 子系统状态、checkpoint restraint。
+- [x] 把 `SaveSystem` 拆分为 bookmark slot 管理；底层恢复交给 `CheckpointManager`。
+- [x] 保存 reached dialogue，用于回顾、已读、章节解锁、skip unread。
+- [x] 实现 bookmark metadata：创建时间、章节名、对白索引、截图路径、global save id。
 - [ ] 实现存档截图：在游戏视图生成 thumbnail，存入 user data。
 - [ ] 实现从最近 checkpoint restore + replay 到目标 entry。
-- [ ] 为脚本升级预留 node text hash 和 save version 字段。
+- [x] 为脚本升级预留 node text hash 和 save version 字段。
 
 验收：
 

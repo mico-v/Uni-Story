@@ -47,9 +47,6 @@ scene/
 
 存档保存在 Godot 的 `user://saves/` 目录下，每个槽位一个 JSON 文件，包含模型快照以便重放恢复。
 
-## 开发插件
-
-仓库内含 Godot MCP 插件（`addons/godot_mcp/`），提供编辑器自动化与调试接口（场景运行、错误检查、节点操作等）。插件在 `project.godot` 中已启用。
 
 ## 更多信息
 

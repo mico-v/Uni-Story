@@ -822,7 +822,10 @@ func _on_backlog_jump(node_name: String, entry_index: int) -> void:
 	if _backlog_panel:
 		_backlog_panel.visible = false
 	reset_world()
-	if _ctx.game_state:
+	var restored := false
+	if _ctx.checkpoint_manager and _ctx.checkpoint_manager.has_method("restore_to_position"):
+		restored = bool(_ctx.checkpoint_manager.restore_to_position(node_name, entry_index))
+	if not restored and _ctx.game_state:
 		_ctx.game_state.jump_to_position(node_name, entry_index)
 	load_game()
 

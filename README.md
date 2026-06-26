@@ -59,7 +59,6 @@ resources/
   demo_media/                # 示例演示素材
   prefabs/                   # 运行时可加载的预制体场景（.tscn）
   shaders/                   # 6 个 GLSL shader（blur/grayscale/dissolve/chromatic/vignette/wipe）
-addons/godot_mcp/            # Godot MCP 调试/自动化插件
 ```
 
 ## 剧本 API

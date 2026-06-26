@@ -6,6 +6,7 @@ class_name NovaController extends Node
 
 const GalleryCoordinatorScript := preload("res://scripts/core/gallery_coordinator.gd")
 const SettingsCoordinatorScript := preload("res://scripts/core/settings_coordinator.gd")
+const CheckpointManagerScript := preload("res://scripts/core/checkpoint_manager.gd")
 const EngineLogScript := preload("res://scripts/core/engine_log.gd")
 
 @export var scenario_files: Array[String] = [
@@ -80,6 +81,7 @@ var dialog_system: DialogSystem
 var preload_system: PreloadSystem
 var engine_context: EngineContext
 var restorables: RestorableRegistry
+var checkpoint_manager: RefCounted
 var gallery_coordinator: RefCounted
 var settings_coordinator: RefCounted
 
@@ -150,6 +152,7 @@ func _exit_tree() -> void:
 func _init_subsystems() -> void:
 	engine_context = EngineContext.new(self)
 	restorables = RestorableRegistry.new()
+	checkpoint_manager = CheckpointManagerScript.new(self)
 	object_manager = ObjectManager.new()
 	runtime = GDRuntime.new(self)
 	script_loader = ScriptLoader.new(self)

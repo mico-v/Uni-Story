@@ -2,15 +2,16 @@ class_name SaveSystem extends RefCounted
 
 ## Slot-based save/load. Each slot is its own JSON file under user://saves/ —
 ## following the developer's note to split saves across files rather than keeping
-## a hand-rolled linked list. A save stores only the model snapshot (node, index,
-## variables); presentation is rebuilt by GameState.restore via replay.
+## a hand-rolled linked list. New saves are bookmark envelopes backed by
+## CheckpointManager; legacy v1 snapshot saves remain readable.
 
 const EngineLogScript := preload("res://scripts/core/engine_log.gd")
 
 const DEFAULT_SAVE_DIR := "user://saves/"
 const DEFAULT_SLOT_COUNT := 6
 const DEFAULT_AUTO_SAVE_SLOT := 99
-const SAVE_VERSION := 1
+const SAVE_VERSION := 2
+const LEGACY_SAVE_VERSION := 1
 
 var _ctx: Node
 var save_dir := DEFAULT_SAVE_DIR
@@ -40,12 +41,7 @@ func save(slot: int) -> bool:
 	if _ctx.game_state.current_node == null:
 		EngineLogScript.warn(EngineLogScript.Category.SAVE, "SaveSystem", "nothing to save (not in a chapter)")
 		return false
-	var data := {
-		"version": SAVE_VERSION,
-		"chapter": String(_ctx.game_state.current_node.name),
-		"state": _ctx.game_state.snapshot(),
-		"restorables": _snapshot_restorables(),
-	}
+	var data := _create_save_data(slot)
 	var f := FileAccess.open(_slot_path(slot), FileAccess.WRITE)
 	if f == null:
 		EngineLogScript.error(EngineLogScript.Category.SAVE, "SaveSystem", "cannot write slot %d" % slot)
@@ -64,16 +60,26 @@ func load_slot(slot: int) -> bool:
 	var text := f.get_as_text()
 	f.close()
 	var parsed = JSON.parse_string(text)
-	if not (parsed is Dictionary) or not parsed.has("state"):
+	if not (parsed is Dictionary):
 		EngineLogScript.error(EngineLogScript.Category.SAVE, "SaveSystem", "corrupt save in slot %d" % slot)
 		return false
 	var ver: int = int(parsed.get("version", 0))
-	if ver != SAVE_VERSION:
-		EngineLogScript.error(EngineLogScript.Category.SAVE, "SaveSystem", "save version mismatch in slot %d (expected %d, got %d)" % [slot, SAVE_VERSION, ver])
+	if not _is_supported_version(ver):
+		EngineLogScript.error(EngineLogScript.Category.SAVE, "SaveSystem", "unsupported save version in slot %d (latest %d, got %d)" % [slot, SAVE_VERSION, ver])
 		return false
-	var ok := _restore_game_state(parsed)
+
+	var ok := false
+	if _is_bookmark_save(parsed):
+		ok = _restore_bookmark(parsed)
+	else:
+		if not parsed.has("state"):
+			EngineLogScript.error(EngineLogScript.Category.SAVE, "SaveSystem", "corrupt save in slot %d" % slot)
+			return false
+		ok = _restore_game_state(parsed)
+
 	if ok:
-		_restore_secondary_state(parsed)
+		if not _is_bookmark_save(parsed):
+			_restore_secondary_state(parsed)
 	return ok
 
 
@@ -101,7 +107,20 @@ func slot_label(slot: int) -> String:
 	if not (parsed is Dictionary):
 		return "损坏"
 	var chapter := str(parsed.get("chapter", "?"))
-	var idx := int(parsed.get("state", {}).get("index", 0))
+	var idx := 0
+	if _is_bookmark_save(parsed):
+		var metadata = parsed.get("bookmark", {})
+		if metadata is Dictionary:
+			chapter = str(metadata.get("display_name", metadata.get("chapter", chapter)))
+			if chapter.is_empty():
+				chapter = str(metadata.get("chapter", "?"))
+			idx = int(metadata.get("entry_index", 0))
+		else:
+			var checkpoint = parsed.get("checkpoint", {})
+			if checkpoint is Dictionary:
+				idx = int(checkpoint.get("state", {}).get("index", 0))
+	else:
+		idx = int(parsed.get("state", {}).get("index", 0))
 	return "%s @%d" % [chapter, idx]
 
 
@@ -128,6 +147,58 @@ func _snapshot_restorables() -> Dictionary:
 	if _ctx.restorables:
 		return _ctx.restorables.snapshot_all(true)
 	return {}
+
+
+func _create_save_data(slot: int) -> Dictionary:
+	var manager := _checkpoint_manager()
+	if manager != null and manager.has_method("create_bookmark"):
+		var bookmark = manager.call("create_bookmark", slot)
+		if bookmark is Dictionary:
+			var data: Dictionary = bookmark.duplicate(true)
+			data["version"] = SAVE_VERSION
+			data["format"] = "bookmark"
+			var metadata = data.get("bookmark", {})
+			if metadata is Dictionary:
+				data["chapter"] = str(metadata.get("chapter", ""))
+			return data
+
+	return {
+		"version": SAVE_VERSION,
+		"format": "snapshot",
+		"chapter": String(_ctx.game_state.current_node.name),
+		"state": _ctx.game_state.snapshot(),
+		"restorables": _snapshot_restorables(),
+	}
+
+
+func _is_supported_version(version: int) -> bool:
+	return version == SAVE_VERSION or version == LEGACY_SAVE_VERSION
+
+
+func _is_bookmark_save(parsed: Dictionary) -> bool:
+	return parsed.has("checkpoint") or parsed.has("bookmark") or str(parsed.get("format", "")) == "bookmark"
+
+
+func _restore_bookmark(parsed: Dictionary) -> bool:
+	var manager := _checkpoint_manager()
+	if manager != null and manager.has_method("restore_bookmark"):
+		return bool(manager.call("restore_bookmark", parsed))
+	var checkpoint = parsed.get("checkpoint", {})
+	if not (checkpoint is Dictionary):
+		EngineLogScript.error(EngineLogScript.Category.RESTORE, "SaveSystem", "bookmark missing checkpoint data")
+		return false
+	return _restore_checkpoint_fallback(checkpoint)
+
+
+func _restore_checkpoint_fallback(checkpoint: Dictionary) -> bool:
+	var snapshot := {
+		"state": checkpoint.get("state", {}),
+		"restorables": checkpoint.get("restorables", {}),
+	}
+	var ok := _restore_game_state(snapshot)
+	if ok:
+		_restore_secondary_state(snapshot)
+	return ok
 
 
 func _restore_game_state(parsed: Dictionary) -> bool:
@@ -163,3 +234,9 @@ func _restore_secondary_state(parsed: Dictionary) -> void:
 		var bl_data = parsed["backlog"]
 		if bl_data is Array:
 			_ctx.backlog.restore(bl_data)
+
+
+func _checkpoint_manager() -> Object:
+	if _ctx == null:
+		return null
+	return _ctx.get("checkpoint_manager") as Object

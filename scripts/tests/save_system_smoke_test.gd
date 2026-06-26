@@ -5,6 +5,8 @@ extends SceneTree
 ## Usage:
 ##   godot --headless --path . --script res://scripts/tests/save_system_smoke_test.gd
 
+const CheckpointManagerScript := preload("res://scripts/core/checkpoint_manager.gd")
+
 
 class TestContext:
 	extends Node
@@ -16,16 +18,18 @@ class TestContext:
 	var game_state: GameState
 	var save_system: SaveSystem
 	var restorables: RestorableRegistry
+	var checkpoint_manager: RefCounted
 	var read_tracker: NoopReadTracker
 
 	func setup() -> void:
 		object_manager = ObjectManager.new()
 		variables = Variables.new()
+		restorables = RestorableRegistry.new()
+		checkpoint_manager = CheckpointManagerScript.new(self)
 		runtime = GDRuntime.new(self)
 		script_loader = ScriptLoader.new(self)
 		game_state = GameState.new(self)
 		save_system = SaveSystem.new(self)
-		restorables = RestorableRegistry.new()
 		read_tracker = NoopReadTracker.new()
 
 
@@ -94,12 +98,14 @@ func _run() -> void:
 	ctx.game_state.start_node(&"save_start")
 	await _wait_until(func() -> bool: return ctx.game_state.is_waiting_input)
 	_expect(ctx.game_state.current_index == 0, "save should start at first dialogue")
+	_expect(ctx.checkpoint_manager.is_dialogue_reached(&"save_start", 0), "checkpoint manager should track reached dialogue")
 	_expect(ctx.save_system.slot_count == 3, "configured slot count should be applied")
 	_expect(not ctx.save_system.auto_save(), "disabled auto-save should not write")
 
 	dummy.value = "saved"
 	_expect(ctx.save_system.save(0), "manual save should succeed")
 	_expect(ctx.save_system.has_save(0), "slot 0 should exist after save")
+	_assert_bookmark_file()
 
 	dummy.value = "changed"
 	await ctx.game_state.continue_after_input()
@@ -132,6 +138,29 @@ func _prepare_files() -> void:
 	var slot_path := SAVE_DIR.path_join("slot_0.json")
 	if FileAccess.file_exists(slot_path):
 		DirAccess.remove_absolute(slot_path)
+
+
+func _assert_bookmark_file() -> void:
+	var slot_path := SAVE_DIR.path_join("slot_0.json")
+	var file := FileAccess.open(slot_path, FileAccess.READ)
+	if file == null:
+		_failures.append("failed to read saved slot")
+		return
+	var parsed = JSON.parse_string(file.get_as_text())
+	file.close()
+	_expect(parsed is Dictionary, "saved slot should be JSON dictionary")
+	if not (parsed is Dictionary):
+		return
+	_expect(int(parsed.get("version", 0)) == SaveSystem.SAVE_VERSION, "saved slot should use latest save version")
+	_expect(str(parsed.get("format", "")) == "bookmark", "saved slot should use bookmark format")
+	_expect(parsed.has("bookmark"), "saved slot should include bookmark metadata")
+	_expect(parsed.has("checkpoint"), "saved slot should include checkpoint data")
+	var checkpoint = parsed.get("checkpoint", {})
+	if checkpoint is Dictionary:
+		var reached = checkpoint.get("reached", {})
+		if reached is Dictionary:
+			var dialogues = reached.get("dialogues", {})
+			_expect(dialogues is Dictionary and dialogues.has("save_start:0"), "checkpoint should persist reached dialogue data")
 
 
 func _wait_until(predicate: Callable, max_frames: int = 30) -> void:
