@@ -121,7 +121,7 @@ func is_end(end_name = null) -> void:
 func show(obj: Variant, image_path: String = "", coord = null, color = null) -> void:
 	var obj_name := str(obj)
 	# Nova Lua show() uses integer 0 to mean "default / no effect", not a color tint.
-	if color == 0:
+	if _is_default_effect_value(color):
 		color = null
 	# Nova color-name shorthand for display objects: 'black' on bg/fg means tint, not image.
 	if image_path == "black" and (obj_name == "bg" or obj_name == "fg"):
@@ -133,20 +133,20 @@ func show(obj: Variant, image_path: String = "", coord = null, color = null) -> 
 	if obj_name == "cg":
 		_show_nova_cg(obj_name, image_path, coord, color)
 		return
-	if _is_nova_character(obj_name):
-		_show_nova_character(obj_name, image_path, coord, color)
+	if _is_profile_character(obj_name):
+		_show_profile_character(obj_name, image_path, coord, color)
 		return
 	_ctx.graphics.show(obj, _nova_image_path(obj_name, image_path), coord, color)
 
 func hide(obj: Variant) -> void:
 	var obj_name := str(obj)
-	if _is_nova_character(obj_name):
+	if _is_profile_character(obj_name):
 		_ctx.composer.hide_char(obj_name)
 		return
 	_ctx.graphics.hide(obj)
 
 func move(obj: Variant, coord: Variant, scale = null, angle = null) -> void:
-	if _is_nova_character(str(obj)):
+	if _is_profile_character(str(obj)):
 		_ctx.composer.move_char(str(obj), coord, scale, angle)
 		return
 	if _is_camera_target(obj):
@@ -282,25 +282,27 @@ func play_se(path: String, volume_db: float = 0.0) -> void:
 	_ctx.audio.play_se(path, volume_db)
 
 func play_voice(path: String):
+	if _ctx.backlog and _ctx.backlog.has_method("note_voice"):
+		_ctx.backlog.note_voice(path)
 	return _ctx.audio.play_voice(path)
 
 
-func play(channel: Variant, path: String, fade: float = 0.0, volume: Variant = null):
+func play(channel: Variant, path: String, fade: float = 0.0, vol_db: Variant = null):
 	var channel_name := str(channel)
 	match channel_name:
 		"bgm":
 			return play_bgm(_audio_path("BGM", path), fade)
 		"bgs":
-			play_se(_audio_path("Sounds", path), _linear_volume_to_db(volume))
+			play_se(_audio_path("Sounds", path), _linear_volume_to_db(vol_db))
 		"voice":
 			return play_voice(str(path))
 		_:
-			play_se(_audio_path("Sounds", path), _linear_volume_to_db(volume))
+			play_se(_audio_path("Sounds", path), _linear_volume_to_db(vol_db))
 	return null
 
 
-func sound(path: String, volume: Variant = null) -> void:
-	play_se(_audio_path("Sounds", path), _linear_volume_to_db(volume))
+func sound(path: String, vol_db: Variant = null) -> void:
+	play_se(_audio_path("Sounds", path), _linear_volume_to_db(vol_db))
 
 
 func auto_voice_on(_speaker: String, _start_id: Variant = null) -> void:
@@ -598,9 +600,9 @@ func _audio_path(folder: String, path: String) -> String:
 	return "%s/%s.ogg" % [folder, path]
 
 
-func _linear_volume_to_db(volume: Variant) -> float:
-	if volume is int or volume is float:
-		var linear := clampf(float(volume), 0.0, 1.0)
+func _linear_volume_to_db(linear_vol: Variant) -> float:
+	if linear_vol is int or linear_vol is float:
+		var linear := clampf(float(linear_vol), 0.0, 1.0)
 		if linear <= 0.0:
 			return -80.0
 		return 20.0 * log(linear) / log(10.0)
@@ -613,52 +615,55 @@ func _to_float(value: Variant, fallback: float) -> float:
 	return fallback
 
 
-func _is_nova_character(obj_name: String) -> bool:
-	return _nova_character_dir(obj_name) != ""
+func _is_profile_character(obj_name: String) -> bool:
+	var composer: Object = _composer()
+	return composer != null and composer.has_method("has_character_profile") and bool(composer.call("has_character_profile", obj_name))
 
 
-func _show_nova_character(char_name: String, pose: String, coord: Variant, color: Variant) -> void:
+func _show_profile_character(char_name: String, pose: String, coord: Variant, color: Variant) -> void:
 	if coord == null:
 		coord = _nova_pos(0.50)
 	# Nova Lua show() uses 0 to mean "default / no effect", not a color.
-	if color == 0:
+	if _is_default_effect_value(color):
 		color = null
-	_ctx.composer.show_char(char_name, pose, coord, color)
+	var composer: Object = _composer()
+	if composer != null and composer.has_method("show_char"):
+		composer.call("show_char", char_name, pose, coord, color)
 
 
 func _show_nova_cg(obj_name: String, pose: String, coord: Variant, color: Variant) -> void:
 # Nova Lua show() uses 0 to mean "default / no effect", not a color.
-	if color == 0:
+	if _is_default_effect_value(color):
 		color = null
 	var resolved_pose := _nova_cg_pose(obj_name, pose)
 	_ctx.graphics.show(obj_name, resolved_pose, coord, color)
 
 
-func _nova_pose_layers(pose: String) -> Dictionary:
-	return {"pose": pose}
+func _is_default_effect_value(value: Variant) -> bool:
+	return (value is int or value is float) and float(value) == 0.0
 
 
-func _nova_cg_pose(obj_name: String, pose: String) -> String:
-	if pose.find("/") != -1:
-		return pose
-	match pose:
-		"rain":
-			return "rain_back"
-		"rain_final":
-			return "rain_back+rain_text"
-		_:
-			return pose
+func _composer() -> Object:
+	if _ctx == null:
+		return null
+	return _ctx.get("composer") as Object
 
 
-func _nova_character_dir(char_name: String) -> String:
-	match char_name.to_lower():
-		"ergong":
-			return "Ergong"
-		"gaotian":
-			return "Gaotian"
-		"qianye":
-			return "Qianye"
-		"xiben":
-			return "Xiben"
-		_:
-			return ""
+func _nova_cg_pose(_obj_name: String, pose: String) -> String:
+	return pose
+
+# --- Interrupt / Minigame API -------------------------------------------------
+
+func begin_interrupt() -> int:
+	if _ctx.interrupt_manager and _ctx.interrupt_manager.has_method("begin_interrupt"):
+		return _ctx.interrupt_manager.begin_interrupt()
+	return -1
+
+func end_interrupt(interrupt_id: int) -> void:
+	if _ctx.interrupt_manager and _ctx.interrupt_manager.has_method("end_interrupt"):
+		_ctx.interrupt_manager.end_interrupt(interrupt_id)
+
+func is_interrupt_active() -> bool:
+	if _ctx.interrupt_manager and _ctx.interrupt_manager.has_method("is_active"):
+		return _ctx.interrupt_manager.is_active()
+	return false

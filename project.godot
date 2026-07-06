@@ -15,10 +15,6 @@ run/main_scene="res://scene/game.tscn"
 config/features=PackedStringArray("4.6", "Mobile")
 config/icon="res://resources/icon.svg"
 
-[autoload]
-
-MCPRuntime="*res://addons/godot_mcp/runtime/mcp_runtime.gd"
-
 [display]
 
 window/size/viewport_width=1280
@@ -26,15 +22,12 @@ window/size/viewport_height=720
 window/size/window_width_override=1280
 window/size/window_height_override=720
 window/stretch/mode="canvas_items"
-
-[editor_plugins]
-
-enabled=PackedStringArray("res://addons/godot_mcp/plugin.cfg")
+window/stretch/aspect="expand"
 
 [gui]
 
 theme/custom="res://resources/themes/main_theme.tres"
-theme/custom_font="res://resources/fonts/NotoSerifCJK.ttc"
+theme/custom_font="res://resources/fonts/NotoSansSC-Regular.ttf"
 
 [input]
 

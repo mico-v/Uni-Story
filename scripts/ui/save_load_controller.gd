@@ -56,14 +56,19 @@ func _refresh() -> void:
 			mode_label.text = _t("ingame.save.button", "存档")
 		else:
 			mode_label.text = _t("ingame.load.button", "读档")
+	var SlotRowScene: PackedScene = preload("res://scene/ui/slot_row.tscn")
 	for slot in _ctx.save_system.slot_count:
-		var label_text := _t("ui.save.slot_format", "存档位 %d：%s") % [slot + 1, _ctx.save_system.slot_label(slot)]
-		var b := _make_button(label_text)
-		b.custom_minimum_size = Vector2(0, 52)
-		if not _is_save_mode and not _ctx.save_system.has_save(slot):
-			b.disabled = true
-		b.pressed.connect(_on_slot_pressed.bind(slot))
-		slot_list.add_child(b)
+		var has: bool = _ctx.save_system.has_save(slot)
+		var metadata: Dictionary = _ctx.save_system.slot_metadata(slot)
+		var label := _t("ingame.save.button", "存档") if _is_save_mode else _t("ingame.load.button", "读档")
+		var row := SlotRowScene.instantiate() as Node
+		if row == null:
+			continue
+		if row.has_method("bind"):
+			row.bind(label, metadata, has, _is_save_mode)
+		if row.has_signal("pressed"):
+			row.pressed.connect(_on_slot_pressed.bind(slot))
+		slot_list.add_child(row)
 
 
 func _on_slot_pressed(slot: int) -> void:

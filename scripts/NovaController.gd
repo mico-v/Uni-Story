@@ -6,7 +6,10 @@ class_name NovaController extends Node
 
 const GalleryCoordinatorScript := preload("res://scripts/core/gallery_coordinator.gd")
 const SettingsCoordinatorScript := preload("res://scripts/core/settings_coordinator.gd")
+const CheckpointManagerScript := preload("res://scripts/core/checkpoint_manager.gd")
 const EngineLogScript := preload("res://scripts/core/engine_log.gd")
+const MobileUiSupportScript := preload("res://scripts/ui/mobile_ui_support.gd")
+const InterruptManagerScript := preload("res://scripts/core/interrupt_manager.gd")
 
 @export var scenario_files: Array[String] = [
 	"res://resources/scenarios/ch1.txt",
@@ -46,6 +49,12 @@ const EngineLogScript := preload("res://scripts/core/engine_log.gd")
 @export var auto_save_slot: int = 99
 @export var auto_save_enabled: bool = true
 @export var settings_path: String = "user://config/settings.cfg"
+@export var hints_path: String = "user://config/hints.cfg"
+@export var title_bgm_path: String = "BGM/prelude.ogg"
+@export var force_mobile_landscape: bool = true
+@export var mobile_fullscreen: bool = true
+@export var standing_profile: Resource = preload("res://resources/standing_profile.tres")
+@export var visual_profile: Resource = preload("res://resources/visual_profile.tres")
 @export_group("Preload")
 @export_range(1, 1024, 1) var preload_cache_size: int = 128
 @export_group("Gallery")
@@ -80,8 +89,11 @@ var dialog_system: DialogSystem
 var preload_system: PreloadSystem
 var engine_context: EngineContext
 var restorables: RestorableRegistry
+var checkpoint_manager: RefCounted
 var gallery_coordinator: RefCounted
 var settings_coordinator: RefCounted
+var mobile_ui_support: MobileUiSupport
+var interrupt_manager: RefCounted
 
 # ── View management ─────────────────────────────────────────────────
 var view_manager: ViewManager
@@ -93,6 +105,8 @@ var _settings_vc: SettingsViewController
 var _cg_vc: CgGalleryController
 var _music_vc: MusicGalleryController
 var _save_load_vc: SaveLoadController
+var _chapter_select_vc: Control
+var _help_vc: Control
 
 # ── Settings return tracking ──────────────────────────────────────────
 var _settings_return_to := "title"
@@ -101,6 +115,7 @@ var _settings_return_to := "title"
 # ── Ready ────────────────────────────────────────────────────────────
 
 func _ready() -> void:
+	_configure_display()
 	_init_subsystems()
 	_setup_locale()
 
@@ -114,6 +129,7 @@ func _ready() -> void:
 	_setup_gallery()
 	_apply_i18n()
 	_load_settings()
+	_setup_mobile_ui_support()
 
 	sf = _localized_scenario_files(sf)
 	script_loader.load_all(sf)
@@ -123,8 +139,10 @@ func _ready() -> void:
 
 	game_state.setup(script_loader.graph)
 	view_manager.switch_to("title")
+	_play_title_bgm()
 	if _title_vc and save_system:
 		_title_vc.set_continue_enabled(save_system.has_auto_save())
+	_show_title_hints()
 
 	# Start file watching for hot reload (debug builds only).
 	hot_reload.start(scenario_files)
@@ -150,6 +168,7 @@ func _exit_tree() -> void:
 func _init_subsystems() -> void:
 	engine_context = EngineContext.new(self)
 	restorables = RestorableRegistry.new()
+	checkpoint_manager = CheckpointManagerScript.new(self)
 	object_manager = ObjectManager.new()
 	runtime = GDRuntime.new(self)
 	script_loader = ScriptLoader.new(self)
@@ -160,8 +179,10 @@ func _init_subsystems() -> void:
 	save_system.configure(save_dir, save_slot_count, auto_save_slot, auto_save_enabled)
 	backlog = Backlog.new()
 	graphics = Graphics.new(self)
+	graphics.configure(visual_profile)
 	animation = AnimationSystem.new(self)
 	composer = SpriteComposer.new(self)
+	composer.configure(standing_profile)
 	avatar = AvatarSystem.new(self)
 	audio = AudioSystem.new(self)
 	camera = CameraSystem.new(self)
@@ -176,6 +197,7 @@ func _init_subsystems() -> void:
 	dialog_system = DialogSystem.new(self)
 	preload_system = PreloadSystem.new(self)
 	preload_system.configure(preload_cache_size)
+	interrupt_manager = InterruptManagerScript.new(self)
 	gallery_coordinator = GalleryCoordinatorScript.new(self)
 	settings_coordinator = SettingsCoordinatorScript.new(self)
 	_register_restorables()
@@ -241,6 +263,13 @@ func _bind_view_controllers() -> void:
 		_save_load_vc = save_load_node as SaveLoadController
 		if _save_load_vc:
 			_save_load_vc.setup(self)
+	var chapter_node := get_node_or_null("ChapterSelectView")
+	if chapter_node is Control and chapter_node.has_method("setup"):
+		_chapter_select_vc = chapter_node as Control
+		_chapter_select_vc.call("setup", self)
+	var help_node := get_node_or_null("HelpView")
+	if help_node is Control:
+		_help_vc = help_node as Control
 
 
 # ── ViewManager initialization ──────────────────────────────────────
@@ -260,6 +289,10 @@ func _init_view_manager() -> void:
 		view_manager.register("music_gallery", _music_vc, T.SLIDE_LEFT)
 	if _save_load_vc:
 		view_manager.register("save_load", _save_load_vc, T.SLIDE_LEFT)
+	if _chapter_select_vc:
+		view_manager.register("chapter_select", _chapter_select_vc, T.SLIDE_LEFT)
+	if _help_vc:
+		view_manager.register("help", _help_vc, T.SLIDE_LEFT)
 
 
 # ── Signal wiring ───────────────────────────────────────────────────
@@ -310,6 +343,7 @@ func _connect_model_signals() -> void:
 	# TitleVC → navigation.
 	if _title_vc:
 		_title_vc.new_game_requested.connect(_on_title_new_game)
+		_title_vc.chapter_select_requested.connect(_on_title_chapter_select)
 		_title_vc.continue_requested.connect(_on_title_continue)
 		_title_vc.load_requested.connect(_on_title_load)
 		_title_vc.settings_requested.connect(func() -> void:
@@ -318,7 +352,18 @@ func _connect_model_signals() -> void:
 		)
 		_title_vc.gallery_requested.connect(func() -> void: view_manager.switch_to("cg_gallery"))
 		_title_vc.music_requested.connect(func() -> void: view_manager.switch_to("music_gallery"))
+		_title_vc.help_requested.connect(func() -> void: view_manager.switch_to("help"))
 		_title_vc.quit_requested.connect(_on_quit)
+	# ChapterSelectVC → navigation.
+	if _chapter_select_vc:
+		_chapter_select_vc.connect("chapter_selected", Callable(self, "_on_chapter_selected"))
+		_chapter_select_vc.connect("back_requested", func() -> void: view_manager.switch_to("title"))
+	# HelpVC → back.
+	if _help_vc:
+		_help_vc.connect("back_requested", func() -> void:
+			view_manager.switch_to("title")
+			_show_title_hints()
+		)
 	# SettingsVC → back.
 	if _settings_vc:
 		_settings_vc.back_requested.connect(func() -> void: view_manager.switch_to(_settings_return_to))
@@ -346,11 +391,20 @@ func _apply_i18n() -> void:
 		_music_vc.apply_i18n(i18n)
 	if _save_load_vc:
 		_save_load_vc.apply_i18n(i18n)
+	if _chapter_select_vc:
+		_chapter_select_vc.call("apply_i18n", i18n)
+	if _help_vc:
+		_help_vc.call("apply_i18n", i18n)
 
 
 # ── Navigation handlers ─────────────────────────────────────────────
 
 func _on_title_new_game() -> void:
+	if _chapter_select_vc:
+		if bool(_chapter_select_vc.call("show_or_start_first")):
+			return
+		view_manager.switch_to("chapter_select")
+		return
 	var first_node: StringName = &""
 	if script_loader.graph.start_nodes.size() > 0:
 		first_node = script_loader.graph.start_nodes[0]
@@ -359,9 +413,29 @@ func _on_title_new_game() -> void:
 	if first_node == &"":
 		EngineLogScript.error(EngineLogScript.Category.RUNTIME, "NovaController", "no start node found")
 		return
+	_start_chapter(first_node)
+
+
+func _on_title_chapter_select() -> void:
+	if _chapter_select_vc:
+		_chapter_select_vc.call("refresh")
+		view_manager.switch_to("chapter_select")
+		return
+	_on_title_new_game()
+
+
+func _on_chapter_selected(node_name: StringName) -> void:
+	_start_chapter(node_name)
+
+
+func _start_chapter(node_name: StringName) -> void:
+	if node_name == &"":
+		EngineLogScript.error(EngineLogScript.Category.RUNTIME, "NovaController", "empty start node")
+		return
+	_stop_title_bgm()
 	view_manager.switch_to("game")
 	if _game_vc:
-		_game_vc.enter_game(first_node)
+		_game_vc.enter_game(node_name)
 
 
 func _on_title_continue() -> void:
@@ -369,6 +443,7 @@ func _on_title_continue() -> void:
 		if _game_vc:
 			_game_vc.reset_world()
 		if save_system.load_auto_save():
+			_stop_title_bgm()
 			view_manager.switch_to("game")
 			if _game_vc:
 				_game_vc.load_game()
@@ -389,8 +464,10 @@ func _on_game_title_requested() -> void:
 	if _game_vc:
 		_game_vc.reset_world()
 	view_manager.switch_to("title")
+	_play_title_bgm()
 	if _title_vc and save_system:
 		_title_vc.set_continue_enabled(save_system.has_auto_save())
+	_show_title_hints()
 
 
 func cleanup_display() -> void:
@@ -401,8 +478,15 @@ func _on_save_load_completed() -> void:
 	if _game_vc:
 		_game_vc.reset_world()
 	view_manager.switch_to("game")
+	_stop_title_bgm()
 	if _game_vc:
 		_game_vc.load_game()
+
+
+func capture_save_thumbnail(path: String, width: int = 320, height: int = 180) -> bool:
+	if _game_vc == null:
+		return false
+	return _game_vc.capture_thumbnail(path, width, height)
 
 
 func _on_quit() -> void:
@@ -418,6 +502,14 @@ func _setup_gallery() -> void:
 	gallery_coordinator.load_configs()
 
 
+func _setup_mobile_ui_support() -> void:
+	if mobile_ui_support == null:
+		mobile_ui_support = MobileUiSupportScript.new()
+		mobile_ui_support.name = "MobileUiSupport"
+		add_child(mobile_ui_support)
+	mobile_ui_support.setup(self)
+
+
 ## Called by the scenario engine when a CG is displayed in-game.
 func unlock_cg_by_path(tex_path: String) -> void:
 	if gallery_coordinator:
@@ -431,6 +523,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if shortcut_manager == null:
 		return
+	if view_manager and view_manager.is_input_blocked():
+		get_viewport().set_input_as_handled()
+		return
 	# Navigation for non-game views.
 	if view_manager and view_manager.current() != "game":
 		if shortcut_manager.is_action_pressed("ui_leave"):
@@ -438,7 +533,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			match view:
 				"settings":
 					view_manager.switch_to(_settings_return_to)
-				"cg_gallery", "music_gallery", "save_load":
+				"cg_gallery", "music_gallery", "save_load", "chapter_select", "help":
 					view_manager.switch_to("title")
 				"title":
 					_on_quit()
@@ -465,6 +560,13 @@ func _setup_settings() -> void:
 		return
 	settings_coordinator.setup(_settings_vc, _game_vc, settings_path, Callable(self, "_apply_i18n"))
 
+
+func _configure_display() -> void:
+	if force_mobile_landscape and (OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios")):
+		DisplayServer.screen_set_orientation(DisplayServer.SCREEN_LANDSCAPE)
+	if mobile_fullscreen and (OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios")):
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+
 func _on_setting_changed(key: String, value: Variant) -> void:
 	if settings_coordinator:
 		settings_coordinator.apply_setting(key, value)
@@ -473,6 +575,64 @@ func _on_setting_changed(key: String, value: Variant) -> void:
 func _load_settings() -> void:
 	if settings_coordinator:
 		settings_coordinator.load_settings()
+
+
+# ── Title product experience ────────────────────────────────────────
+
+func _play_title_bgm() -> void:
+	if audio == null:
+		return
+	var path := title_bgm_path.strip_edges()
+	if path.is_empty():
+		return
+	audio.play_bgm(path, 0.8)
+
+
+func _stop_title_bgm() -> void:
+	if audio == null:
+		return
+	audio.stop_bgm(0.5)
+
+
+func _show_title_hints() -> void:
+	if view_manager == null or view_manager.current() != "title":
+		return
+	if _help_vc != null and not _hint_seen("first_help"):
+		_set_hint_seen("first_help")
+		view_manager.switch_to("help")
+		return
+	if _chapter_select_vc == null or not _has_multiple_reached_chapters():
+		return
+	show_once_hint("chapter_select", "title.first.selectchapter", "现在可以选择章节", 2.5)
+
+
+func show_once_hint(key: String, text_key: String, fallback: String, duration: float = 2.5) -> void:
+	if dialog_system == null or _hint_seen(key):
+		return
+	_set_hint_seen(key)
+	dialog_system.show_toast(_t(text_key, fallback), duration)
+
+
+func _has_multiple_reached_chapters() -> bool:
+	if _chapter_select_vc == null:
+		return false
+	var unlocked = _chapter_select_vc.call("get_unlocked_nodes")
+	return unlocked is Array and unlocked.size() > 1
+
+
+func _hint_seen(key: String) -> bool:
+	var cfg := ConfigFile.new()
+	if cfg.load(hints_path) != OK:
+		return false
+	return bool(cfg.get_value("hints", key, false))
+
+
+func _set_hint_seen(key: String) -> void:
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(hints_path.get_base_dir()))
+	var cfg := ConfigFile.new()
+	cfg.load(hints_path)
+	cfg.set_value("hints", key, true)
+	cfg.save(hints_path)
 
 
 # ── I18n helper ─────────────────────────────────────────────────────

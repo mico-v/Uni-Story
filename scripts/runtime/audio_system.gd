@@ -79,6 +79,14 @@ func is_voice_playing() -> bool:
 	return _voice_player.playing
 
 
+## Return the path of the currently playing (or recently played) voice stream.
+## Returns empty string if nothing is loaded.
+func get_voice_path() -> String:
+	if _voice_player.stream:
+		return _voice_player.stream.resource_path
+	return ""
+
+
 func stop_voice() -> void:
 	_voice_player.stop()
 	_voice_player.stream = null

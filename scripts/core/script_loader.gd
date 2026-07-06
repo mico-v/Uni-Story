@@ -221,7 +221,6 @@ func _parse_branch_mode(value: Variant) -> int:
 func is_chapter() -> void:
 	if _current_node:
 		_current_node.type = FlowChartNode.Type.CHAPTER
-		_current_node.is_debug = true
 
 func is_start() -> void:
 	if _current_node:

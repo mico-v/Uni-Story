@@ -1,24 +1,11 @@
-[gd_scene load_steps=5 format=3 uid="uid://cqdghibhuyigy"]
+[gd_scene format=3 uid="uid://cqdghibhuyigy"]
 
-[ext_resource type="PackedScene" uid="uid://basemenu_unistory" path="res://scene/ui/base_menu_view.tscn" id="1_base"]
+[ext_resource type="PackedScene" path="res://scene/ui/base_menu_view.tscn" id="1_base"]
 [ext_resource type="Script" uid="uid://dv4ieuejwoh2m" path="res://scripts/ui/title_view_controller.gd" id="1_vc"]
-[ext_resource type="Texture2D" path="res://resources/cg/home_bg.png" id="2_bg"]
-[ext_resource type="Texture2D" path="res://resources/logo.png" id="3_logo"]
+[ext_resource type="Texture2D" uid="uid://b5gq2dlk1rirx" path="res://resources/logo.png" id="3_logo"]
 
-[node name="TitleView" instance=ExtResource("1_base")]
+[node name="TitleView" unique_id=563783535 instance=ExtResource("1_base")]
 script = ExtResource("1_vc")
-
-[node name="BgImage" type="TextureRect" parent="." index="0"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-texture = ExtResource("2_bg")
-expand_mode = 3
-stretch_mode = 6
 
 [node name="Title" parent="HBox/Sidebar/VBox" index="0"]
 text = "Story With Y"
@@ -26,61 +13,64 @@ text = "Story With Y"
 [node name="BtnBack" parent="HBox/Sidebar/VBox" index="2"]
 visible = false
 
-[node name="Logo" type="Label" parent="HBox/Sidebar/VBox" index="3"]
+[node name="Logo" type="Label" parent="HBox/Sidebar/VBox" index="3" unique_id=1622036789]
 layout_mode = 2
 text = "Story With Y"
 horizontal_alignment = 1
 
-[node name="Sep1" type="HSeparator" parent="HBox/Sidebar/VBox" index="4"]
+[node name="Sep1" type="HSeparator" parent="HBox/Sidebar/VBox" index="4" unique_id=1327610094]
 layout_mode = 2
 
-[node name="BtnNewGame" type="Button" parent="HBox/Sidebar/VBox" index="5"]
+[node name="BtnNewGame" type="Button" parent="HBox/Sidebar/VBox" index="5" unique_id=1082768695]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 text = "开始游戏"
 
-[node name="BtnContinue" type="Button" parent="HBox/Sidebar/VBox" index="6"]
+[node name="BtnChapterSelect" type="Button" parent="HBox/Sidebar/VBox" index="6" unique_id=823398419]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "章节选择"
+
+[node name="BtnContinue" type="Button" parent="HBox/Sidebar/VBox" index="7" unique_id=1577555133]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 text = "继续游戏"
 
-[node name="BtnLoad" type="Button" parent="HBox/Sidebar/VBox" index="7"]
+[node name="BtnLoad" type="Button" parent="HBox/Sidebar/VBox" index="8" unique_id=1729584912]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 text = "读取存档"
 
-[node name="BtnSettings" type="Button" parent="HBox/Sidebar/VBox" index="8"]
+[node name="BtnSettings" type="Button" parent="HBox/Sidebar/VBox" index="9" unique_id=2005684434]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 text = "系统设置"
 
-[node name="BtnGallery" type="Button" parent="HBox/Sidebar/VBox" index="9"]
+[node name="BtnGallery" type="Button" parent="HBox/Sidebar/VBox" index="10" unique_id=1918682475]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 text = "图片鉴赏"
 
-[node name="BtnMusic" type="Button" parent="HBox/Sidebar/VBox" index="10"]
+[node name="BtnMusic" type="Button" parent="HBox/Sidebar/VBox" index="11" unique_id=458146660]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 text = "音乐鉴赏"
 
-[node name="Sep2" type="HSeparator" parent="HBox/Sidebar/VBox" index="11"]
+[node name="BtnHelp" type="Button" parent="HBox/Sidebar/VBox" index="12" unique_id=1993833238]
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+text = "操作说明"
+
+[node name="Sep2" type="HSeparator" parent="HBox/Sidebar/VBox" index="13" unique_id=114427957]
 layout_mode = 2
 
-[node name="BtnQuit" type="Button" parent="HBox/Sidebar/VBox" index="12"]
+[node name="BtnQuit" type="Button" parent="HBox/Sidebar/VBox" index="14" unique_id=1584199245]
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
 text = "退出游戏"
 
-[node name="LogoImage" type="TextureRect" parent="HBox/Content" index="0"]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-grow_horizontal = 2
-grow_vertical = 2
+[node name="LogoImage" type="TextureRect" parent="HBox/Content" index="0" unique_id=602509146]
+layout_mode = 2
 texture = ExtResource("3_logo")
 expand_mode = 1
 stretch_mode = 5

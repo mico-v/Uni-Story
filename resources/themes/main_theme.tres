@@ -1,5 +1,7 @@
 [gd_resource type="Theme" format=3 uid="uid://dcsv32sc5cj7x"]
 
+[ext_resource type="FontFile" uid="uid://d2vo4pkh6yd03" path="res://resources/fonts/NotoSansSC-Regular.ttf" id="1_noto"]
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_disabled"]
 content_margin_left = 12.0
 content_margin_top = 6.0
@@ -190,6 +192,7 @@ shadow_color = Color(0, 0, 0, 0.15)
 shadow_size = 8
 
 [resource]
+default_font = ExtResource("1_noto")
 Button/colors/font_color = Color(0.1, 0.07, 0.13, 1)
 Button/colors/font_disabled_color = Color(0.42, 0.38, 0.48, 1)
 Button/colors/font_focus_color = Color(0.08, 0.05, 0.1, 1)

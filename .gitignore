@@ -16,15 +16,11 @@ export.cfg
 # IdeaJ
 .idea/*
 
-#cache
-addons/godot_mcp/cache/
-
-# Large font files (download separately)
-resources/fonts/NotoSerifCJK.ttc
-
 #release
 release/
 
 output/
 
 android/
+
+Nova/

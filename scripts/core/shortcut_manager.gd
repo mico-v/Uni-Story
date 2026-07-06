@@ -90,6 +90,17 @@ func get_all_actions() -> Array:
 	return actions
 
 
+## Find which action (if any) is already bound to the given keycode.
+## Returns the action name or empty string if the key is free.
+func find_action_by_key(keycode: int) -> String:
+	var defaults := _get_defaults()
+	for action in defaults:
+		var kc := get_keycode(action)
+		if kc == keycode:
+			return action
+	return ""
+
+
 # ── Persistence ─────────────────────────────────────────────────────────
 
 func save_bindings() -> void:

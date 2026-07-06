@@ -182,10 +182,11 @@ gv_last_line = "room_intro"
 - 不执行完整 Lua；`pairs`、`ipairs`、协程、元表、require、任意 Lua 标准库都不属于 Phase 2 范围。
 - 只翻译常见 Nova 剧本形态；复杂多行表达式和动态拼接可能需要手动迁移为 GDScript 写法。
 - Nova Lua runtime API 尚未完整对齐，`__Nova` 仅有少量兼容替换。
-- `anim` / `anim_hold` 当前是“能播放、不崩溃”的兼容代理，不等价于完整 NovaAnimation；复杂并行组、暂停恢复、shader/VFX 参数动画在 Phase 6/7 完善。
-- `auto_voice_*` 当前是 API 兼容入口，真实自动语音队列、角色语音编号调度和恢复策略仍待后续实现。
-- `is_save_point()` 目前只写入流程图节点标记，完整 checkpoint/bookmark 恢复体系在 Phase 3 实现。
-- 章节选择、debug start 展示策略和解锁 UI 在 Phase 4 完成。
+- `anim` / `anim_hold` 当前兼容代理已可用；完整动画系统（域/pause/resume/easing）已通过 AnimationSystem 实现。
+- `auto_voice_*` 当前是 API 兼容入口，真实自动语音队列仍待后续实现。
+- 中断/小游戏协议已实现：`begin_interrupt()` / `end_interrupt()` 可暂停对话推进并在结束后自动 checkpoint。
+- 存读档 UI 已支持缩略图、章节名、时间和当前位置显示。
+- 回顾面板已支持语音重播和跳转确认。
 
 ---
 
@@ -680,7 +681,63 @@ anim:fade_out(bgm, 2)
 |>
 ```
 
-兼容代理会优先把简单动作映射到当前运行时，无法完整表达的 NovaAnimation 行为会退化为 no-op 或基础等待。它用于保障 Nova 原剧本可基础播放；成熟动画系统仍按 PLAN 的 Phase 6 继续建设。
+### 动画域与命名 Holding 组（Phase 6）
+
+`AnimationSystem` 支持以下动画域：
+
+| 域 | 枚举值 | 说明 |
+|----|--------|------|
+| PER_DIALOGUE | 0 | 对白期间动画，切出 GameView 时暂停 |
+| HOLDING | 1 | 持续循环动画，通过 `o.anim.holding("group_name")` 创建 |
+| UI | 2 | UI 动画 |
+| TEXT | 3 | 文字效果动画 |
+
+```gdscript
+# Holding animation with named group:
+<|
+o.anim.holding("ambient")\
+    .MoveTo(o.bg, Vector2(10, 0), 2.0)
+|>
+
+# Stop a specific holding group:
+<|
+_ctx.animation.stop_holding_group("ambient")
+|>
+```
+
+### 缓动解析器
+
+`AnimationSystem.parse_easing("inOutCubic")` 支持 Nova 风格缓动字符串，返回 Godot Tween 枚举。支持的类型：Linear、Sine、Quint、Quart、Quad、Expo、Elastic、Cubic、Circ、Bounce、Back、Spring。前缀：`in`、`out`、`inOut`、`outIn`。
+
+---
+
+## 中断 / 小游戏 API（Phase 9）
+
+中断协议允许小游戏或外部系统接管 VN 控制，完成后无缝恢复。
+
+```gdscript
+# 开始中断（暂停对话推进、auto/skip 模式）：
+<| var interrupt_id = begin_interrupt() |>
+
+# ... 小游戏逻辑 ...
+
+# 结束中断（创建 checkpoint，恢复对话）：
+<| end_interrupt(interrupt_id) |>
+
+# 检查是否处于中断状态：
+<| if is_interrupt_active(): ... |>
+```
+
+| 方法 | 签名 | 说明 |
+|------|------|------|
+| `begin_interrupt` | `begin_interrupt() -> int` | 开始中断，返回中断 ID |
+| `end_interrupt` | `end_interrupt(interrupt_id: int) -> void` | 结束中断，自动 checkpoint |
+| `is_interrupt_active` | `is_interrupt_active() -> bool` | 查询中断状态 |
+
+中断期间：
+- 点击/键盘推进被阻止
+- Auto/Skip 模式被暂停
+- `end_interrupt()` 会自动调用 `CheckpointManager.create_checkpoint()` 保存状态
 
 ---
 

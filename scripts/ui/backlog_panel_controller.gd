@@ -26,6 +26,7 @@ func setup(ctx: Node) -> void:
 
 
 func open() -> void:
+	_show_first_hint()
 	_clear_children(_backlog_list)
 	var backlog_title := _backlog_panel_title_node()
 	if backlog_title:
@@ -60,18 +61,31 @@ func open() -> void:
 			else:
 				lbl.text = "[b]%s[/b]：%s" % [speaker, text]
 			if node_name != "" and entry_idx >= 0:
-				lbl.mouse_filter = Control.MOUSE_FILTER_STOP
+				lbl.mouse_filter = Control.MOUSE_FILTER_PASS
 				lbl.gui_input.connect(_on_backlog_entry_click.bind(i, lbl))
 				# Hover effects
 				lbl.mouse_entered.connect(func() -> void: _on_entry_hover(lbl, true))
 				lbl.mouse_exited.connect(func() -> void: _on_entry_hover(lbl, false))
-			_backlog_list.add_child(lbl)
+			# Voice replay button for entries with voice.
+			var voice_path := str(entry.get("voice", ""))
+			if not voice_path.is_empty():
+				var voice_btn := Button.new()
+				voice_btn.text = "▶"  # ▶
+				voice_btn.custom_minimum_size = Vector2(32, 32)
+				voice_btn.tooltip_text = _t("log.replay.voice", "重播语音")
+				voice_btn.flat = true
+				voice_btn.pressed.connect(func() -> void: _on_voice_replay(voice_path))
+				var row := HBoxContainer.new()
+				row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+				row.add_child(lbl)
+				row.add_child(voice_btn)
+				_backlog_list.add_child(row)
+			else:
+				_backlog_list.add_child(lbl)
 	await _ctx.get_tree().process_frame
 	for child in _backlog_list.get_children():
 		if child is RichTextLabel:
 			child.custom_minimum_size.y = child.size.y
-	if _backlog_scroll:
-		_backlog_scroll.scroll_vertical = int(_backlog_scroll.get_v_scroll_bar().max_value)
 
 
 func _on_entry_hover(lbl: RichTextLabel, hovered: bool) -> void:
@@ -79,6 +93,11 @@ func _on_entry_hover(lbl: RichTextLabel, hovered: bool) -> void:
 		lbl.modulate = Color(1.0, 1.0, 0.8, 1.0)
 	else:
 		lbl.modulate = Color.WHITE
+
+
+func _on_voice_replay(voice_path: String) -> void:
+	if _ctx and _ctx.audio and not voice_path.is_empty():
+		_ctx.audio.play_voice(voice_path)
 
 
 func _is_after_current(entry_node: String, entry_idx: int, current_node: String, current_idx: int) -> bool:
@@ -108,9 +127,19 @@ func _backlog_panel_title_node() -> Label:
 func _on_backlog_entry_click(event: InputEvent, entry_index: int, _lbl: RichTextLabel) -> void:
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
-		if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT and not mb.is_echo():
-			if _ctx.backlog:
-				_ctx.backlog.request_jump(entry_index)
+		if not mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT and not mb.is_echo():
+			_request_jump_if_not_scrolling(entry_index)
+	elif event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if not touch.pressed:
+			_request_jump_if_not_scrolling(entry_index)
+
+
+func _request_jump_if_not_scrolling(entry_index: int) -> void:
+	if _backlog_scroll and MobileUiSupport.should_suppress_tap(_backlog_scroll):
+		return
+	if _ctx.backlog:
+		_ctx.backlog.request_jump(entry_index)
 
 
 func _clear_children(node: Node) -> void:
@@ -124,3 +153,8 @@ func _t(key: String, fallback: String = "") -> String:
 	if _ctx == null or _ctx.i18n == null:
 		return fallback
 	return _ctx.i18n.t(key, fallback)
+
+
+func _show_first_hint() -> void:
+	if _ctx != null and _ctx.has_method("show_once_hint"):
+		_ctx.call("show_once_hint", "backlog", "log.first.hint", _t("log.first.hint", "选择已读文本可以跳转"), 2.5)

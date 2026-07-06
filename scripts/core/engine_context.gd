@@ -113,6 +113,10 @@ var restorables: RestorableRegistry:
 	get:
 		return _owner.restorables if _owner else null
 
+var checkpoint_manager: RefCounted:
+	get:
+		return _owner.checkpoint_manager if _owner else null
+
 var view_manager: ViewManager:
 	get:
 		return _owner.view_manager if _owner else null
@@ -137,6 +141,7 @@ func validate_core() -> Array[String]:
 		"i18n",
 		"save_system",
 		"restorables",
+		"checkpoint_manager",
 	]:
 		if _owner == null or _owner.get(name) == null:
 			errors.append("EngineContext: missing required subsystem '%s'" % name)

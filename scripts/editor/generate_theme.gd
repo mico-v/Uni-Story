@@ -4,8 +4,15 @@ extends EditorScript
 ## Generates the global dark GALGAME theme for Uni-Story.
 ## Run from Godot Editor: File > Run > This Script
 
+const UI_FONT_PATH := "res://resources/fonts/NotoSansSC-Regular.ttf"
+
 func _run() -> void:
 	var theme := Theme.new()
+	var ui_font := load(UI_FONT_PATH) as Font
+	if ui_font:
+		theme.default_font = ui_font
+	else:
+		push_warning("UI font not found: %s" % UI_FONT_PATH)
 
 	# ── Colors ───────────────────────────────────────────────────────────
 	var bg_dark := Color(0.12, 0.12, 0.14, 0.95)

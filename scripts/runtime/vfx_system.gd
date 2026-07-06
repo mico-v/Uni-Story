@@ -328,6 +328,7 @@ func transition(effect_name: String, duration: float = 0.5) -> void:
 	if overlay == null or not overlay is ColorRect:
 		return
 
+	# Known shader transitions with their params.
 	match effect_name:
 		"dissolve":
 			_shader_transition(overlay, "res://resources/shaders/dissolve.gdshader", "threshold", 0.0, 1.0, duration)

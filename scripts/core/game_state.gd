@@ -89,6 +89,51 @@ func restore(data: Dictionary) -> bool:
 		pending_jump = &""  # ignore mid-node jumps during replay
 
 	var e = current_node.entries[target]
+	_mark_dialogue_reached()
+	is_waiting_input = true
+	dialogue_changed.emit(_format_text(e.speaker), _format_text(e.text))
+	dialogue_advanced.emit()
+	return true
+
+
+## Replay from the current restored position to a target entry in the same node.
+## This is used by checkpoint restore when the exact target line does not have
+## its own checkpoint but an earlier position checkpoint exists.
+func replay_to_position(node_name: String, entry_index: int) -> bool:
+	if not _graph.has_node_named(StringName(node_name)):
+		push_warning("GameState: unknown node for replay '%s'" % node_name)
+		return false
+	var target_node: FlowChartNode = _graph.get_node_named(StringName(node_name))
+	if target_node == null or target_node.entries.is_empty():
+		return false
+	if current_node == null or current_node.name != target_node.name:
+		return false
+	var target: int = clampi(entry_index, 0, target_node.entries.size() - 1)
+	if current_index > target:
+		return false
+
+	is_waiting_branch = false
+	is_waiting_input = false
+	is_ended = false
+	is_processing = false
+	current_end_name = ""
+	pending_jump = &""
+
+	var start_index: int = max(current_index + 1, 0)
+	for i in range(start_index, target + 1):
+		current_index = i
+		var entry = current_node.entries[i]
+		if entry.has_before_checkpoint():
+			_ctx.runtime.run_block(entry.before_checkpoint_source)
+		if entry.has_lazy():
+			_ctx.runtime.run_block(entry.lazy_source)
+		if entry.has_after_dialogue():
+			_ctx.runtime.run_block(entry.after_dialogue_source)
+		pending_jump = &""
+
+	var e = current_node.entries[target]
+	_mark_dialogue_reached()
+	is_waiting_input = true
 	dialogue_changed.emit(_format_text(e.speaker), _format_text(e.text))
 	dialogue_advanced.emit()
 	return true
@@ -126,6 +171,7 @@ func jump_to_position(node_name: String, entry_index: int) -> bool:
 	# Present the target entry directly.
 	if current_index >= 0 and current_index < current_node.entries.size():
 		var e = current_node.entries[current_index]
+		_mark_dialogue_reached()
 		dialogue_changed.emit(_format_text(e.speaker), _format_text(e.text))
 		is_waiting_input = true
 		return true
@@ -173,6 +219,7 @@ func _continue_after_wait() -> void:
 		is_waiting_input = true
 		if _ctx.read_tracker:
 			_ctx.read_tracker.mark_read(current_node.name, current_index)
+		_mark_dialogue_reached()
 		dialogue_changed.emit(_format_text(entry.speaker), _format_text(entry.text))
 		if current_node.type == FlowChartNode.Type.CHAPTER:
 			chapter_started.emit()
@@ -253,6 +300,7 @@ func _on_node_exhausted() -> bool:
 		is_ended = true
 		current_end_name = current_node.end_name
 		if current_end_name != "":
+			_mark_end_reached(current_end_name)
 			ending_reached.emit(current_end_name)
 		game_ended.emit()
 		return false
@@ -349,6 +397,26 @@ func _goto(name: StringName) -> bool:
 	if not str(name).contains(":") and _ctx and _ctx.has_method("cleanup_display"):
 		_ctx.cleanup_display()
 	return true
+
+
+func _mark_dialogue_reached() -> void:
+	if current_node == null or current_index < 0:
+		return
+	var manager = _checkpoint_manager()
+	if manager != null and manager.has_method("mark_dialogue_reached"):
+		manager.call("mark_dialogue_reached", current_node.name, current_index, current_node.display_name)
+
+
+func _mark_end_reached(end_name: String) -> void:
+	var manager = _checkpoint_manager()
+	if manager != null and manager.has_method("mark_end_reached"):
+		manager.call("mark_end_reached", end_name)
+
+
+func _checkpoint_manager() -> Object:
+	if _ctx == null:
+		return null
+	return _ctx.get("checkpoint_manager") as Object
 
 
 func _format_text(text: String) -> String:

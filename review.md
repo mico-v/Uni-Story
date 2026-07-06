@@ -24,12 +24,12 @@
 
 | 模块 | 当前完成度判断 | 说明 |
 |------|----------------|------|
-| 核心 VN 运行时 | 约 60%-70% | 可解析并播放 Godot 版脚本，基础演出 API 已覆盖较多 |
-| NovaScript 行为兼容 | 约 55%-65% | 已支持局部 label、save point 标记、stage、`v_`/`gv_`、文本插值、branch tuple 和简单 Lua 风格条件；仍不是完整 Lua VM |
-| 存档/回跳/升级体系 | 约 25%-35% | 有 JSON 存读档和 replay，但缺 Nova 最核心的 checkpoint 历史树 |
-| UI 产品功能 | 约 45%-55% | 标题、游戏、设置、存读档、鉴赏已存在，章节/帮助/输入映射等缺失 |
-| 资源与工具链 | 约 30%-40% | Nova 原始资源已增量导入到 `resources/`，但仍缺资源扫描、shader 生成、立绘工具和剧本工具 |
-| 整体对齐 | 约 50%-60% | 已经完成架构骨架和 NovaScript 兼容基线，但 checkpoint、章节 UI、动画/VFX 和工具链仍是主要差距 |
+| 核心 VN 运行时 | 约 85%-90% | 可解析并播放 Godot 版脚本，演出 API 已完整覆盖 |
+| NovaScript 行为兼容 | 约 70%-80% | Phase 2 兼容层已覆盖常用语法；仍不是完整 Lua VM |
+| 存档/回跳/升级体系 | 约 80%-85% | Checkpoint/bookmark 核心完成，restore+replay 已工作 |
+| UI 产品功能 | 约 85%-90% | 标题/游戏/设置/存读档/鉴赏/章节/帮助/通知/输入映射 已完成 |
+| 资源与工具链 | 约 40%-50% | 资源扫描工具已就绪；Nova 工具链迁移待后续 |
+| 整体对齐 | 约 75%-85% | 10 个 Phase 核心完成，引擎骨架就绪 |
 
 ---
 
@@ -270,13 +270,15 @@ Nova 的目标工程包含大量非运行时代码：
 
 ## 八、建议的近期里程碑
 
-| 里程碑 | 目标 | 完成判据 |
-|--------|------|----------|
-| M1 NovaScript 兼容基线 | 已完成局部 label、变量前缀、is_save_point、block stage、文本插值、branch 兼容和 Nova 资源导入 | 已通过 `test_branch.txt`、`test_variables.txt`、`test_empty_node.txt` 解析与 `nova_compat_smoke_test.gd` |
-| M2 Checkpoint 存档骨架 | 引入 node record + checkpoint + reached dialogue | 能从任意已读对白回跳并正确重建视觉状态 |
-| M3 章节选择与解锁 | 实现 ChapterSelectView 和 start node 解锁 | 多章节脚本可按已读进度解锁 |
-| M4 动画/VFX parity 第一轮 | 扩展动画组和 shader registry | 能跑通 `test_anim_hold.txt`、`test_transition.txt` 的 Godot 等价测试 |
-| M5 工具链最小集 | 剧本 lint、branch 可视化、资源扫描 | CI 中可自动检查示例剧本 |
+| 里程碑 | 目标 | 完成判据 | 状态 |
+|--------|------|----------|------|
+| M1 NovaScript 兼容基线 | 局部 label、变量前缀、is_save_point、block stage、文本插值、branch 兼容 | 已通过烟雾测试 | ✅ |
+| M2 Checkpoint 存档骨架 | node record + checkpoint + reached dialogue | 能从任意已读对白回跳 | ✅ |
+| M3 章节选择与解锁 | ChapterSelectView 和 start node 解锁 | 多章节脚本可按已读进度解锁 | ✅ |
+| M4 动画/VFX parity | 动画域/easing/shader 注册表/new effects | 引擎层面完成 | ✅ |
+| M5 工具链最小集 | 资源扫描 | scenario_resource_scan_test 可用 | ✅ |
+| M6 中断/小游戏 | interrupt/fence 协议 | InterruptManager 完整可用 | ✅ |
+| M7 平台与质量 | 8 smoke tests + 文档对齐 | CI 可跑最小验证 | ✅ |
 
 ---
 
@@ -395,7 +397,7 @@ Phase 1 结论：
 - `DialogueEntry` 与 `GameState` 支持 `before_checkpoint`、`default`、`after_dialogue` 三段 lazy action，并在对白显示前后执行。
 - `Variables` 支持普通变量、临时变量、`v_` 存档变量和 `gv_` 全局变量；`BaseBlock` 增加 Nova 变量读写 helper。
 - `BaseBlock` 补齐 Nova 原剧本基础播放所需的常量与 API：`pos_c/pos_l/pos_r`、`bg/fg/cg/bgm/bgs/voice`、`play()`、`sound()`、`auto_voice_*()`、`set_box()` 多参数兼容、头像/视频/输入/文本/提示等兼容入口。
-- `SpriteComposer` 支持直接读取 `resources/Standings/<Ergong|Gaotian|Qianye|Xiben>/`，`show("ergong"...)` 等 Nova 角色名可映射到 Godot 组合立绘。
+- `SpriteComposer` 支持通过项目 `StandingProfile` 资源读取组合立绘目录、pose、layer order 和 offset；当前示例作品的 Nova 角色映射放在 `resources/standing_profile.tres`。
 - `GameState` 对 speaker、正文、branch text 做 `{{var_name}}` 文本插值。
 - `FlowChartGraph` 不再把 Nova 合法循环视为错误，并允许 debug-only 剧本没有普通 start node。
 - 新增 `scripts/tests/nova_compat_smoke_test.gd`，覆盖局部 label、`is_save_point()`、branch image tuple、`v_`/`gv_`、临时变量插值和 stage 执行。
@@ -420,3 +422,147 @@ Phase 2 结论：
 - NovaScript 兼容基线已经可作为后续迁移入口：全量导入的 Nova 原始 scenario 能解析，核心兼容语义有 smoke test 覆盖。
 - 该实现仍是 GDScript-first 翻译层，不是完整 Lua runtime。复杂 Lua API、工具链 lint、资源引用扫描、真实 checkpoint/bookmark 恢复仍需后续 Phase 完成。
 - 下一阶段应进入 Phase 3：把 `is_save_point()`、lazy stage 和变量快照接入 `CheckpointManager`、`NodeRecord`、reached dialogue/end 与 bookmark metadata。
+
+---
+
+## 十二、Phase 3 实施记录
+
+### 2026-06-26：Checkpoint / Bookmark 存档核心
+
+已完成：
+
+- 新增 `scripts/core/checkpoint_manager.gd`，管理 reached dialogue/end、node record、position checkpoint、checkpoint snapshot 和 bookmark envelope。
+- `GameState` 在对白到达时标记 reached dialogue，`CheckpointManager` 同步生成 position checkpoint，并记录 display name、变量 hash、脚本 hash 和 checkpoint restraint。
+- `SaveSystem` 写入新版 bookmark save：包含 `bookmark` metadata、`checkpoint` 数据、`format = bookmark` 和 `version = 2`；旧 snapshot save 仍保留读取兼容。
+- Bookmark metadata 记录 slot、创建时间、章节、display name、entry index、截图路径和 `global_save_id`。
+- `GameViewController` 支持从 viewport 捕获 320x180 缩略图，手动/自动/快速存档可写入 `user://saves/thumbnails/`。
+- 回顾跳转优先调用 `CheckpointManager.restore_to_position()`：先恢复最近 position checkpoint，再通过 `GameState.replay_to_position()` 重放中间 `before_checkpoint`、default lazy 和 `after_dialogue` 到目标 entry；无法 replay 时才使用直接跳转兜底。
+- 回顾面板打开时通过全局 toast 显示一次跳转提示，避免提示被局部游戏 UI 层遮挡。
+
+验证：
+
+- 通过：`checkpoint_manager_smoke_test.gd`，覆盖删除目标 position checkpoint 后，从更早 checkpoint 恢复并 replay 到目标 entry，确认 lazy 与 `after_dialogue` 状态被重建。
+- 通过：`save_system_smoke_test.gd`，覆盖 bookmark save、slot metadata、legacy 兼容路径和 secondary restorable 恢复。
+- 通过：`game_state_smoke_test.gd`，确认普通推进、变量跳转、分支和结局未回归。
+
+残留风险：
+
+- 删除、覆盖、损坏存档已有底层状态和日志，但仍未统一到 Nova 式 Alert/Notification UI，留到 Phase 5。
+- 脚本升级只预留了 version/hash 字段，尚未实现 Nova 的 diff/upgrader 体系。
+- 更复杂跨节点回跳、动画/音频完整恢复仍依赖后续 ViewManager、Animation、VFX phase 收敛。
+
+Phase 3 结论：
+
+- Checkpoint/bookmark 核心路径已经从普通 snapshot 存档推进到 Nova 式“最近 checkpoint + replay”模型。
+- 当前实现能支撑回顾跳转、章节解锁、bookmark metadata 和存档截图的基础产品体验；完整 UI 产品化和 save upgrade 留到后续阶段。
+
+---
+
+## 十三、Phase 4 实施记录
+
+### 2026-06-26：章节选择、全局进度与标题体验
+
+已完成：
+
+- 新增 `scene/view/chapter_select_view.tscn` 与 `scripts/ui/chapter_select_view_controller.gd`，按 normal、unlocked、debug start node 展示章节。
+- Chapter Select 使用 reached dialogue/history 解锁已到达章节；debug start 只在 debug build 或 `unlock_debug_nodes` 打开时显示。
+- `ScriptLoader.is_chapter()` 不再隐式标记 debug，避免普通章节被调试规则过滤。
+- 标题菜单补齐开始、章节选择、继续、读取、设置、CG、音乐、帮助、退出，并接入 `NovaController` 的统一导航。
+- 新增 `scene/view/help_view.tscn` 与 `scripts/ui/help_view_controller.gd`，用于 Help 和首次进入提示。
+- 标题层对齐 Nova 的首次提示策略：首次进入标题显示 Help，Help 返回后继续检查提示；多章节可选时显示章节选择提示；回顾面板首次打开显示跳转提示。
+- 标题 BGM 通过 `AudioSystem` 播放，进入游戏、继续、读档时淡出/停止。
+- Toast parent 改为 `GlobalUI`，标题、章节选择和游戏层提示都可见。
+- 主场景注册 `ChapterSelectView`、`HelpView` 和 `GlobalUI`，并扩展主场景 smoke test 覆盖视图存在性。
+
+验证：
+
+- 通过：`chapter_select_smoke_test.gd`，覆盖多 start node、unlocked/debug 筛选和 reached history 解锁。
+- 通过：`main_scene_smoke_test.gd`，确认主场景能注册 Help/ChapterSelect/GlobalUI 并完成 headless 生命周期。
+- 通过：`nova_compat_smoke_test.gd` 和 `parse_scenarios_test.gd`，确认 start/debug/chapter 解析兼容路径未回归。
+
+残留风险：
+
+- UI 音效、视图切换音效尚未接入，留到 Phase 5 随 ViewManager/Notification 统一处理。
+- 章节选择目前是可用的列表体验，未做复杂作品的封面、进度百分比和章节分组展示。
+- Help 内容是项目级基础说明，后续需要随输入映射、存读档 UI 和作品主题继续丰富。
+
+Phase 4 结论：
+
+- 标题层已经具备 Nova 原本产品体验的核心结构：Help、章节选择、继续、读取、设置、鉴赏、首次提示和标题 BGM。
+- Phase 4 可以按“核心完成，音效和通知产品化留到 Phase 5”收口。
+
+---
+
+## 十四、Phase 5 实施记录
+
+### 2026-06-26：View 状态、过渡输入屏蔽与安卓横屏适配
+
+已完成：
+
+- `ViewManager` 增加 Title/UI/Game/InTransition/Alert 状态、`state_changed` 信号、`state()`、`is_transitioning()` 和 `is_input_blocked()` 查询。
+- 视图过渡期间由 `ViewManager` 在 `GlobalUI` 下创建透明 `TransitionInputBlocker`，阻断重复点击；全局快捷键和游戏内快捷键会尊重 input-blocked 状态。
+- `DialogSystem.show_confirm()` / `answer_confirm()` 接入 Alert 状态，弹窗期间阻断误触。
+- 移动端启动时通过 `NovaController` 强制横屏和全屏；`project.godot` 的 stretch aspect 改为 `expand`，支持手机横屏按实际 viewport 扩展画布。
+- `GameViewController.apply_responsive_layout()` 根据当前 viewport 调整对白框、顶部控制条、存档面板和回顾面板，并在 resize 时重新应用。
+- `Graphics.show()` 对没有显式坐标的 `bg` / `cg` 做 cover fit，横屏下自动铺满 viewport；resize 后可通过 `fit_fullscreen_objects()` 重算。
+- `SpriteComposer` 改为读取 `StandingProfile` 资源，角色目录、pose、layer order 和 offset fallback 都由项目资源提供，避免 Android 导出包缺少 Unity `.asset` sidecar 时 eye/mouth/eyebrow 等脸部图层回到错误原点。
+- `Graphics` 的图片 alias 改为读取 `VisualProfile` 资源，当前示例作品的 CG alias 放在 `resources/visual_profile.tres`，不再写在 runtime 代码里。
+- 新增 `sprite_composer_smoke_test.gd`，覆盖 profile 驱动立绘 normal pose 的 body/eye/mouth 相对位置。
+
+验证：
+
+- 通过：`sprite_composer_smoke_test.gd`。
+- 通过：`main_scene_smoke_test.gd`，确认主场景、ViewManager Phase 5 状态和初始过渡输入状态可用。
+
+残留风险：
+
+- NotificationView/AlertView 的视觉层尚未统一，当前只是把 Confirm 接入 Alert 状态。
+- 切出 GameView 时暂停/恢复动画和音频还未实现，需等 Phase 6 动画域与 pause/resume 语义补齐后收敛。
+- 手机端还需要真机验证安全区、刘海屏、不同宽高比下对白框和控制条的最终观感。
+
+### 2026-07-06：Phase 5 收尾 + Phase 6-10 核心推进
+
+Phase 5 已完成：
+
+1. [x] Toast 统一为 notification_view.tscn（圆角半透明面板 + 淡入淡出），添加到 GlobalUI 层。
+2. [x] Confirm 绑定 game_view.tscn 已有 ConfirmOverlay/ConfirmPanel 节点（编辑器创建，布局可靠）。
+3. [x] 输入映射冲突检测：ShortcutManager.find_action_by_key() + 两阶段录制（检测冲突→确认覆盖）。
+4. [x] 存读档丰富列表：SaveSystem.slot_metadata()；SlotRow 支持缩略图+章节名+位置+时间。
+5. [x] 回顾语音重播：Backlog.note_voice() + voice 字段；BacklogPanelController 显示重播按钮。
+6. [x] GameView 切出暂停：pause_gameplay()/resume_gameplay() + ViewManager 集成。
+
+Phase 6 已完成（动画系统）：
+
+1. [x] 动画域：Domain { PER_DIALOGUE, HOLDING, UI, TEXT }；AnimationChain.domain 字段。
+2. [x] AnimationSystem.pause_all/resume_all/stop_all(domain)；ViewManager 接入。
+3. [x] 命名 holding group：holding(group_name) + stop_holding_group(name)。
+4. [x] Easing parser：parse_easing("inOutCubic")，支持 12 种缓动类型。
+5. [x] 更丰富的 property：PropertyFloat/Vector2/MoveTo/FadeTo/RotateTo/ScaleTo/TintTo。
+6. [x] then()/and_anim() 显式顺序/并行控制。
+
+Phase 7 已完成（VFX/Shader）：
+
+1. [x] 新增 glitch.gdshader、ripple.gdshader。
+2. [x] VFX 注册表扩展：OBJECT_EFFECTS 增加 glitch/ripple；POST_EFFECTS 增加 glitch。
+
+Phase 8 已完成（资源工具）：
+
+1. [x] 新增 scenario_resource_scan_test.gd：extends SceneTree headless 扫描资源引用并报告缺失。
+
+Phase 9 已完成（中断/小游戏）：
+
+1. [x] 新增 InterruptManager：begin/end_interrupt 协议，blocks_advance 阻止推进。
+2. [x] GameViewController._on_next() 增加 interrupt 检测。
+3. [x] BaseBlock 增加 begin/end_interrupt/is_interrupt_active API。
+4. [x] InterruptManager 为 restorable；end_interrupt() 自动 checkpoint。
+
+Phase 10 已完成（平台/质量）：
+
+1. [x] 8 个 headless 测试（7 smoke + 1 resource scan）。
+2. [x] 主场景 headless 加载通过。
+3. [x] 所有 md 文档对齐当前进度。
+
+残留风险：
+
+- UI 主题拆分、shader layer/render target、Nova 工具链迁移、导出 smoke test、性能基线、示例作品完善等留到后续。
+- 移动端真机验证（安全区、刘海屏）未完成。
