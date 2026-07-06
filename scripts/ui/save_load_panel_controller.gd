@@ -64,19 +64,15 @@ func _refresh() -> void:
 
 func _build_slot_row(slot: int, save_mode: bool) -> void:
 	var has: bool = _ctx.save_system.has_save(slot)
-	var label := _t("ui.save.slot_format", "存档位 %d：%s") % [slot + 1, _ctx.save_system.slot_label(slot)]
-	var row := SlotRowScene.instantiate()
-	var main_btn: Button = row.get_node("MainButton")
-	var del_btn: Button = row.get_node("DeleteButton")
-	main_btn.text = label
-	main_btn.custom_minimum_size = Vector2(300, 40)
-	main_btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	if not save_mode and not has:
-		main_btn.disabled = true
-	main_btn.pressed.connect(func() -> void: slot_pressed.emit(slot, save_mode))
-	del_btn.visible = has
+	var metadata: Dictionary = _ctx.save_system.slot_metadata(slot)
+	var label := _t("ingame.save.button", "存档") if save_mode else _t("ingame.load.button", "读档")
+	var row := SlotRowScene.instantiate() as SlotRow
+	if row == null:
+		return
+	row.bind(label, metadata, has, save_mode)
+	row.pressed.connect(func() -> void: slot_pressed.emit(slot, save_mode))
 	if has:
-		del_btn.pressed.connect(func() -> void:
+		row.delete_requested.connect(func() -> void:
 			if _ctx.save_system:
 				_ctx.save_system.delete_slot(slot)
 			_refresh()

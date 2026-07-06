@@ -9,6 +9,7 @@ const SettingsCoordinatorScript := preload("res://scripts/core/settings_coordina
 const CheckpointManagerScript := preload("res://scripts/core/checkpoint_manager.gd")
 const EngineLogScript := preload("res://scripts/core/engine_log.gd")
 const MobileUiSupportScript := preload("res://scripts/ui/mobile_ui_support.gd")
+const InterruptManagerScript := preload("res://scripts/core/interrupt_manager.gd")
 
 @export var scenario_files: Array[String] = [
 	"res://resources/scenarios/ch1.txt",
@@ -92,6 +93,7 @@ var checkpoint_manager: RefCounted
 var gallery_coordinator: RefCounted
 var settings_coordinator: RefCounted
 var mobile_ui_support: MobileUiSupport
+var interrupt_manager: RefCounted
 
 # ── View management ─────────────────────────────────────────────────
 var view_manager: ViewManager
@@ -195,6 +197,7 @@ func _init_subsystems() -> void:
 	dialog_system = DialogSystem.new(self)
 	preload_system = PreloadSystem.new(self)
 	preload_system.configure(preload_cache_size)
+	interrupt_manager = InterruptManagerScript.new(self)
 	gallery_coordinator = GalleryCoordinatorScript.new(self)
 	settings_coordinator = SettingsCoordinatorScript.new(self)
 	_register_restorables()

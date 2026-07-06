@@ -3,36 +3,6 @@
 # file: path relative to res://resources/
 # unlocked: false by default; dynamically unlocked when shown in-game
 
-[cg1]
-name = CG 1
-file = cg/cg1.png
-unlocked = false
-
-[cg2]
-name = CG 2
-file = cg/cg2.png
-unlocked = false
-
-[cg3]
-name = CG 3
-file = cg/cg3.png
-unlocked = false
-
-[cg4]
-name = CG 4
-file = cg/cg4.png
-unlocked = false
-
-[cg5]
-name = CG 5
-file = cg/cg5.png
-unlocked = false
-
-[home_bg]
-name = Home Background
-file = cg/home_bg.png
-unlocked = true
-
 [rain_back]
 name = Rain Background
 file = cg/rain_back.png

@@ -282,25 +282,27 @@ func play_se(path: String, volume_db: float = 0.0) -> void:
 	_ctx.audio.play_se(path, volume_db)
 
 func play_voice(path: String):
+	if _ctx.backlog and _ctx.backlog.has_method("note_voice"):
+		_ctx.backlog.note_voice(path)
 	return _ctx.audio.play_voice(path)
 
 
-func play(channel: Variant, path: String, fade: float = 0.0, volume: Variant = null):
+func play(channel: Variant, path: String, fade: float = 0.0, vol_db: Variant = null):
 	var channel_name := str(channel)
 	match channel_name:
 		"bgm":
 			return play_bgm(_audio_path("BGM", path), fade)
 		"bgs":
-			play_se(_audio_path("Sounds", path), _linear_volume_to_db(volume))
+			play_se(_audio_path("Sounds", path), _linear_volume_to_db(vol_db))
 		"voice":
 			return play_voice(str(path))
 		_:
-			play_se(_audio_path("Sounds", path), _linear_volume_to_db(volume))
+			play_se(_audio_path("Sounds", path), _linear_volume_to_db(vol_db))
 	return null
 
 
-func sound(path: String, volume: Variant = null) -> void:
-	play_se(_audio_path("Sounds", path), _linear_volume_to_db(volume))
+func sound(path: String, vol_db: Variant = null) -> void:
+	play_se(_audio_path("Sounds", path), _linear_volume_to_db(vol_db))
 
 
 func auto_voice_on(_speaker: String, _start_id: Variant = null) -> void:
@@ -598,9 +600,9 @@ func _audio_path(folder: String, path: String) -> String:
 	return "%s/%s.ogg" % [folder, path]
 
 
-func _linear_volume_to_db(volume: Variant) -> float:
-	if volume is int or volume is float:
-		var linear := clampf(float(volume), 0.0, 1.0)
+func _linear_volume_to_db(linear_vol: Variant) -> float:
+	if linear_vol is int or linear_vol is float:
+		var linear := clampf(float(linear_vol), 0.0, 1.0)
 		if linear <= 0.0:
 			return -80.0
 		return 20.0 * log(linear) / log(10.0)
@@ -649,3 +651,19 @@ func _composer() -> Object:
 
 func _nova_cg_pose(_obj_name: String, pose: String) -> String:
 	return pose
+
+# --- Interrupt / Minigame API -------------------------------------------------
+
+func begin_interrupt() -> int:
+	if _ctx.interrupt_manager and _ctx.interrupt_manager.has_method("begin_interrupt"):
+		return _ctx.interrupt_manager.begin_interrupt()
+	return -1
+
+func end_interrupt(interrupt_id: int) -> void:
+	if _ctx.interrupt_manager and _ctx.interrupt_manager.has_method("end_interrupt"):
+		_ctx.interrupt_manager.end_interrupt(interrupt_id)
+
+func is_interrupt_active() -> bool:
+	if _ctx.interrupt_manager and _ctx.interrupt_manager.has_method("is_active"):
+		return _ctx.interrupt_manager.is_active()
+	return false

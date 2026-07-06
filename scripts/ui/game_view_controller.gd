@@ -819,6 +819,9 @@ func _on_dbox_click(event: InputEvent) -> void:
 
 
 func _on_next() -> void:
+	# Block advance if an interrupt (minigame) is active.
+	if _ctx.interrupt_manager and _ctx.interrupt_manager.has_method("is_active") and _ctx.interrupt_manager.is_active():
+		return
 	if _is_typing:
 		if click_stop_anim:
 			_finish_typewriter()
@@ -1291,7 +1294,7 @@ func _fit_full_rect(control: Control) -> void:
 	control.offset_bottom = 0.0
 
 
-func _center_modal_panel(panel: Control, size: Vector2, margins: Vector4) -> void:
+func _center_modal_panel(panel: Control, panel_size: Vector2, margins: Vector4) -> void:
 	if panel == null:
 		return
 	var shift := Vector2((margins.x - margins.z) * 0.5, (margins.y - margins.w) * 0.5)
@@ -1299,10 +1302,10 @@ func _center_modal_panel(panel: Control, size: Vector2, margins: Vector4) -> voi
 	panel.anchor_top = 0.5
 	panel.anchor_right = 0.5
 	panel.anchor_bottom = 0.5
-	panel.offset_left = -size.x * 0.5 + shift.x
-	panel.offset_top = -size.y * 0.5 + shift.y
-	panel.offset_right = size.x * 0.5 + shift.x
-	panel.offset_bottom = size.y * 0.5 + shift.y
+	panel.offset_left = -panel_size.x * 0.5 + shift.x
+	panel.offset_top = -panel_size.y * 0.5 + shift.y
+	panel.offset_right = panel_size.x * 0.5 + shift.x
+	panel.offset_bottom = panel_size.y * 0.5 + shift.y
 
 
 func _apply_controls_metrics(content_size: Vector2, margin_x: float) -> Vector2:
@@ -1408,3 +1411,18 @@ func _is_save_panel_visible() -> bool:
 
 func _is_backlog_panel_visible() -> bool:
 	return _backlog_panel != null and _backlog_panel.visible
+
+
+## Pause gameplay when switching away from GameView.
+## Stops typewriter, voice, and deactivates auto/skip to prevent leaks.
+func pause_gameplay() -> void:
+	_kill_typewriter()
+	_deactivate_modes()
+	if click_stop_voice and _ctx and _ctx.audio:
+		_ctx.audio.stop_voice()
+
+
+## Resume gameplay when switching back to GameView.
+## Currently a no-op: the game is left in a clean stopped state.
+func resume_gameplay() -> void:
+	pass

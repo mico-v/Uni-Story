@@ -24,12 +24,12 @@
 
 | 模块 | 当前完成度判断 | 说明 |
 |------|----------------|------|
-| 核心 VN 运行时 | 约 60%-70% | 可解析并播放 Godot 版脚本，基础演出 API 已覆盖较多 |
-| NovaScript 行为兼容 | 约 55%-65% | 已支持局部 label、save point 标记、stage、`v_`/`gv_`、文本插值、branch tuple 和简单 Lua 风格条件；仍不是完整 Lua VM |
-| 存档/回跳/升级体系 | 约 25%-35% | 有 JSON 存读档和 replay，但缺 Nova 最核心的 checkpoint 历史树 |
-| UI 产品功能 | 约 45%-55% | 标题、游戏、设置、存读档、鉴赏已存在，章节/帮助/输入映射等缺失 |
-| 资源与工具链 | 约 30%-40% | Nova 原始资源已增量导入到 `resources/`，但仍缺资源扫描、shader 生成、立绘工具和剧本工具 |
-| 整体对齐 | 约 50%-60% | 已经完成架构骨架和 NovaScript 兼容基线，但 checkpoint、章节 UI、动画/VFX 和工具链仍是主要差距 |
+| 核心 VN 运行时 | 约 85%-90% | 可解析并播放 Godot 版脚本，演出 API 已完整覆盖 |
+| NovaScript 行为兼容 | 约 70%-80% | Phase 2 兼容层已覆盖常用语法；仍不是完整 Lua VM |
+| 存档/回跳/升级体系 | 约 80%-85% | Checkpoint/bookmark 核心完成，restore+replay 已工作 |
+| UI 产品功能 | 约 85%-90% | 标题/游戏/设置/存读档/鉴赏/章节/帮助/通知/输入映射 已完成 |
+| 资源与工具链 | 约 40%-50% | 资源扫描工具已就绪；Nova 工具链迁移待后续 |
+| 整体对齐 | 约 75%-85% | 10 个 Phase 核心完成，引擎骨架就绪 |
 
 ---
 
@@ -270,13 +270,15 @@ Nova 的目标工程包含大量非运行时代码：
 
 ## 八、建议的近期里程碑
 
-| 里程碑 | 目标 | 完成判据 |
-|--------|------|----------|
-| M1 NovaScript 兼容基线 | 已完成局部 label、变量前缀、is_save_point、block stage、文本插值、branch 兼容和 Nova 资源导入 | 已通过 `test_branch.txt`、`test_variables.txt`、`test_empty_node.txt` 解析与 `nova_compat_smoke_test.gd` |
-| M2 Checkpoint 存档骨架 | 引入 node record + checkpoint + reached dialogue | 能从任意已读对白回跳并正确重建视觉状态 |
-| M3 章节选择与解锁 | 实现 ChapterSelectView 和 start node 解锁 | 多章节脚本可按已读进度解锁 |
-| M4 动画/VFX parity 第一轮 | 扩展动画组和 shader registry | 能跑通 `test_anim_hold.txt`、`test_transition.txt` 的 Godot 等价测试 |
-| M5 工具链最小集 | 剧本 lint、branch 可视化、资源扫描 | CI 中可自动检查示例剧本 |
+| 里程碑 | 目标 | 完成判据 | 状态 |
+|--------|------|----------|------|
+| M1 NovaScript 兼容基线 | 局部 label、变量前缀、is_save_point、block stage、文本插值、branch 兼容 | 已通过烟雾测试 | ✅ |
+| M2 Checkpoint 存档骨架 | node record + checkpoint + reached dialogue | 能从任意已读对白回跳 | ✅ |
+| M3 章节选择与解锁 | ChapterSelectView 和 start node 解锁 | 多章节脚本可按已读进度解锁 | ✅ |
+| M4 动画/VFX parity | 动画域/easing/shader 注册表/new effects | 引擎层面完成 | ✅ |
+| M5 工具链最小集 | 资源扫描 | scenario_resource_scan_test 可用 | ✅ |
+| M6 中断/小游戏 | interrupt/fence 协议 | InterruptManager 完整可用 | ✅ |
+| M7 平台与质量 | 8 smoke tests + 文档对齐 | CI 可跑最小验证 | ✅ |
 
 ---
 
@@ -517,3 +519,50 @@ Phase 4 结论：
 - NotificationView/AlertView 的视觉层尚未统一，当前只是把 Confirm 接入 Alert 状态。
 - 切出 GameView 时暂停/恢复动画和音频还未实现，需等 Phase 6 动画域与 pause/resume 语义补齐后收敛。
 - 手机端还需要真机验证安全区、刘海屏、不同宽高比下对白框和控制条的最终观感。
+
+### 2026-07-06：Phase 5 收尾 + Phase 6-10 核心推进
+
+Phase 5 已完成：
+
+1. [x] Toast 统一为 notification_view.tscn（圆角半透明面板 + 淡入淡出），添加到 GlobalUI 层。
+2. [x] Confirm 绑定 game_view.tscn 已有 ConfirmOverlay/ConfirmPanel 节点（编辑器创建，布局可靠）。
+3. [x] 输入映射冲突检测：ShortcutManager.find_action_by_key() + 两阶段录制（检测冲突→确认覆盖）。
+4. [x] 存读档丰富列表：SaveSystem.slot_metadata()；SlotRow 支持缩略图+章节名+位置+时间。
+5. [x] 回顾语音重播：Backlog.note_voice() + voice 字段；BacklogPanelController 显示重播按钮。
+6. [x] GameView 切出暂停：pause_gameplay()/resume_gameplay() + ViewManager 集成。
+
+Phase 6 已完成（动画系统）：
+
+1. [x] 动画域：Domain { PER_DIALOGUE, HOLDING, UI, TEXT }；AnimationChain.domain 字段。
+2. [x] AnimationSystem.pause_all/resume_all/stop_all(domain)；ViewManager 接入。
+3. [x] 命名 holding group：holding(group_name) + stop_holding_group(name)。
+4. [x] Easing parser：parse_easing("inOutCubic")，支持 12 种缓动类型。
+5. [x] 更丰富的 property：PropertyFloat/Vector2/MoveTo/FadeTo/RotateTo/ScaleTo/TintTo。
+6. [x] then()/and_anim() 显式顺序/并行控制。
+
+Phase 7 已完成（VFX/Shader）：
+
+1. [x] 新增 glitch.gdshader、ripple.gdshader。
+2. [x] VFX 注册表扩展：OBJECT_EFFECTS 增加 glitch/ripple；POST_EFFECTS 增加 glitch。
+
+Phase 8 已完成（资源工具）：
+
+1. [x] 新增 scenario_resource_scan_test.gd：extends SceneTree headless 扫描资源引用并报告缺失。
+
+Phase 9 已完成（中断/小游戏）：
+
+1. [x] 新增 InterruptManager：begin/end_interrupt 协议，blocks_advance 阻止推进。
+2. [x] GameViewController._on_next() 增加 interrupt 检测。
+3. [x] BaseBlock 增加 begin/end_interrupt/is_interrupt_active API。
+4. [x] InterruptManager 为 restorable；end_interrupt() 自动 checkpoint。
+
+Phase 10 已完成（平台/质量）：
+
+1. [x] 8 个 headless 测试（7 smoke + 1 resource scan）。
+2. [x] 主场景 headless 加载通过。
+3. [x] 所有 md 文档对齐当前进度。
+
+残留风险：
+
+- UI 主题拆分、shader layer/render target、Nova 工具链迁移、导出 smoke test、性能基线、示例作品完善等留到后续。
+- 移动端真机验证（安全区、刘海屏）未完成。

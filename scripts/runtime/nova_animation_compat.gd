@@ -94,7 +94,7 @@ func trans(target: Variant = null, image_or_action: Variant = null, _kind: Varia
 	return self
 
 
-func trans2(target: Variant = null, image_or_action: Variant = null, kind: Variant = "fade", duration: Variant = 0.0, params: Variant = {}, extra: Variant = null) -> NovaAnimationCompat:
+func trans2(target: Variant = null, image_or_action: Variant = null, kind: Variant = "fade", duration: Variant = 0.0, params: Variant = {}, _extra: Variant = null) -> NovaAnimationCompat:
 	return trans(target, image_or_action, kind, duration, params)
 
 

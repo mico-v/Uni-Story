@@ -1,27 +1,37 @@
 class_name Backlog extends RefCounted
 
 ## Rolling history of dialogue shown to the player, for the review screen.
-## Each entry stores speaker, text, and the position (node + index) where
-## it appeared, enabling jump-back from the review screen.
+## Each entry stores speaker, text, position (node + index), and optionally
+## a voice path for replay.
 
 signal jump_requested(node_name: String, entry_index: int)
 
 const MAX_ENTRIES := 200
 
-var _entries: Array[Dictionary] = []  # Array[{speaker, text, node, index}]
+var _entries: Array[Dictionary] = []  # Array[{speaker, text, node, index, voice}]
+var _last_voice_path: String = ""
 
 
 func record(speaker: String, text: String, node_name: String = "", entry_index: int = -1) -> void:
 	if text.strip_edges().is_empty():
 		return
+	var voice := _last_voice_path
+	_last_voice_path = ""
 	_entries.append({
 		"speaker": speaker,
 		"text": text,
 		"node": node_name,
 		"index": entry_index,
+		"voice": voice,
 	})
 	if _entries.size() > MAX_ENTRIES:
 		_entries.pop_front()
+
+
+## Store a voice path that will be attached to the next record() call.
+func note_voice(path: String) -> void:
+	if not path.is_empty():
+		_last_voice_path = path
 
 
 func entries() -> Array:

@@ -102,29 +102,45 @@ func delete_slot(slot: int) -> bool:
 func slot_label(slot: int) -> String:
 	if not has_save(slot):
 		return "空"
+	var meta := slot_metadata(slot)
+	if meta.is_empty():
+		return "损坏"
+	var chapter := str(meta.get("display_name", meta.get("chapter", "?")))
+	if chapter.is_empty():
+		chapter = str(meta.get("chapter", "?"))
+	var idx := int(meta.get("entry_index", 0))
+	return "%s @%d" % [chapter, idx]
+
+
+## Structured metadata for a slot, used by rich save/load UI.
+## Returns empty dict for empty/corrupt slots.
+func slot_metadata(slot: int) -> Dictionary:
+	if not has_save(slot):
+		return {}
 	var f := FileAccess.open(_slot_path(slot), FileAccess.READ)
 	if f == null:
-		return "空"
+		return {}
 	var parsed = JSON.parse_string(f.get_as_text())
 	f.close()
 	if not (parsed is Dictionary):
-		return "损坏"
-	var chapter := str(parsed.get("chapter", "?"))
-	var idx := 0
-	if _is_bookmark_save(parsed):
-		var metadata = parsed.get("bookmark", {})
-		if metadata is Dictionary:
-			chapter = str(metadata.get("display_name", metadata.get("chapter", chapter)))
-			if chapter.is_empty():
-				chapter = str(metadata.get("chapter", "?"))
-			idx = int(metadata.get("entry_index", 0))
-		else:
-			var checkpoint = parsed.get("checkpoint", {})
-			if checkpoint is Dictionary:
-				idx = int(checkpoint.get("state", {}).get("index", 0))
-	else:
-		idx = int(parsed.get("state", {}).get("index", 0))
-	return "%s @%d" % [chapter, idx]
+		return {}
+	var metadata = parsed.get("bookmark", {})
+	if metadata is Dictionary:
+		return {
+			"chapter": str(metadata.get("chapter", "")),
+			"display_name": str(metadata.get("display_name", "")),
+			"entry_index": int(metadata.get("entry_index", 0)),
+			"created_at_unix": float(metadata.get("created_at_unix", 0.0)),
+			"screenshot_path": str(metadata.get("screenshot_path", "")),
+		}
+	# Fallback for legacy snapshot saves: extract what we can.
+	return {
+		"chapter": str(parsed.get("chapter", "")),
+		"display_name": str(parsed.get("chapter", "")),
+		"entry_index": int(parsed.get("state", {}).get("index", 0)),
+		"created_at_unix": 0.0,
+		"screenshot_path": "",
+	}
 
 
 ## Auto-save helpers — use a dedicated slot (99) separate from manual (0-5) and quick (98).

@@ -48,6 +48,19 @@ func switch_to(view_name: String, transition_override: int = -1) -> void:
 	var old_ctrl: Control = null
 	if _current_view != "":
 		old_ctrl = _views.get(_current_view) as Control
+	# Pause game when leaving GameView: stop typewriter, voice, and animation domains.
+	if _current_view == "game" and old_ctrl and old_ctrl.has_method("pause_gameplay"):
+		old_ctrl.pause_gameplay()
+	# Also pause per-dialogue and holding animations via AnimationSystem.
+	if _current_view == "game" and _ctx.animation and _ctx.animation.has_method("pause_all"):
+		_ctx.animation.pause_all(0)  # PER_DIALOGUE
+		_ctx.animation.pause_all(1)  # HOLDING
+	# Resume game when returning to GameView.
+	if view_name == "game" and new_ctrl.has_method("resume_gameplay"):
+		new_ctrl.resume_gameplay()
+	if view_name == "game" and _ctx.animation and _ctx.animation.has_method("resume_all"):
+		_ctx.animation.resume_all(0)  # PER_DIALOGUE
+		_ctx.animation.resume_all(1)  # HOLDING
 	var trans: int = transition_override if transition_override >= 0 else int(_transitions.get(view_name, Transition.NONE))
 	_is_transitioning = true
 	_set_state(ViewState.IN_TRANSITION)

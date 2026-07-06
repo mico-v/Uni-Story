@@ -294,6 +294,7 @@ func _open_key_recorder(action: String, btn: Button) -> void:
 	_recorder_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_recorder_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	var hint := Label.new()
+	hint.name = "RecorderHint"
 	hint.text = _t("config.recorderpopup", "按下新的快捷键")
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
@@ -301,15 +302,52 @@ func _open_key_recorder(action: String, btn: Button) -> void:
 	hint.add_theme_font_size_override("font_size", 28)
 	hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_recorder_overlay.add_child(hint)
+
+	var conflict_label := Label.new()
+	conflict_label.name = "ConflictLabel"
+	conflict_label.text = ""
+	conflict_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	conflict_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	conflict_label.anchor_top = 0.55
+	conflict_label.offset_top = 40.0
+	conflict_label.add_theme_font_size_override("font_size", 20)
+	conflict_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	conflict_label.visible = false
+	_recorder_overlay.add_child(conflict_label)
+
+	var _pending_action := action  # Captured for conflict confirm step.
+	var pending_key: Array = [0]  # Mutable container for conflict stage.
+
 	_recorder_overlay.gui_input.connect(func(event: InputEvent) -> void:
 		if event is InputEventKey and event.pressed and not event.is_echo():
 			var key_event := event as InputEventKey
 			if key_event.keycode == KEY_ESCAPE:
 				_close_key_recorder()
 				return
-			if _ctx and _ctx.shortcut_manager:
-				_ctx.shortcut_manager.remap(action, key_event.keycode)
-				btn.text = _ctx.shortcut_manager.get_key_label(action)
+			if _ctx == null or _ctx.shortcut_manager == null:
+				_close_key_recorder()
+				return
+			var sm: ShortcutManager = _ctx.shortcut_manager
+			var new_key := key_event.keycode
+			# Find if this key is already used by another action.
+			var existing := sm.find_action_by_key(new_key)
+			if existing == _pending_action:
+				# Same action — nothing to conflict with.
+				existing = ""
+			if not existing.is_empty() and not conflict_label.visible:
+				# First conflict: show warning, wait for confirm or cancel.
+				var conflict_name := _t(ACTION_I18N.get(existing, ""), existing)
+				conflict_label.text = _t("config.key.conflict", "与 %s 冲突，再按一次覆盖，Esc 取消") % conflict_name
+				conflict_label.visible = true
+				# Store the pending key for second-stage confirm.
+				pending_key[0] = new_key
+				return
+			if not existing.is_empty() and conflict_label.visible:
+				# Second press on conflict: confirm override.
+				sm.remap(existing, sm.get_keycode(existing))  # Will be overwritten below
+			# Apply the new binding.
+			sm.remap(_pending_action, new_key)
+			btn.text = sm.get_key_label(_pending_action)
 			_close_key_recorder()
 	)
 	if _ctx:

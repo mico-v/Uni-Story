@@ -1,0 +1,65 @@
+[gd_scene format=3 uid="uid://buvpgq5nhm3du"]
+
+[node name="AlertView" type="Control" unique_id=748915866]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Overlay" type="ColorRect" parent="." unique_id=107212034]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.4)
+
+[node name="PanelContainer" type="PanelContainer" parent="." unique_id=1985463934]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -220.0
+offset_top = -120.0
+offset_right = 220.0
+offset_bottom = 120.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="PanelContainer" unique_id=541364559]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="Title" type="Label" parent="PanelContainer/VBox" unique_id=235457693]
+layout_mode = 2
+text = "Title"
+horizontal_alignment = 1
+
+[node name="Message" type="Label" parent="PanelContainer/VBox" unique_id=739174895]
+layout_mode = 2
+size_flags_vertical = 3
+text = "Message"
+horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 2
+
+[node name="Buttons" type="HBoxContainer" parent="PanelContainer/VBox" unique_id=411641386]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 2
+
+[node name="OK" type="Button" parent="PanelContainer/VBox/Buttons" unique_id=740216324]
+custom_minimum_size = Vector2(100, 36)
+layout_mode = 2
+text = "OK"
+
+[node name="Cancel" type="Button" parent="PanelContainer/VBox/Buttons" unique_id=478848255]
+custom_minimum_size = Vector2(100, 36)
+layout_mode = 2
+text = "Cancel"

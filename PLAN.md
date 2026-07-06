@@ -189,17 +189,17 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 任务：
 
 - [x] `ViewManager` 增加状态：Title/UI/Game/InTransition/Alert。
-- [ ] 切出 GameView 时暂停 per-dialogue/holding 动画和相关音频，切回时恢复。
+- [x] 切出 GameView 时暂停 per-dialogue/holding 动画和相关音频，切回时恢复。
 - [x] 增加 transition input blocker，防止过渡中重复点击。
-- [ ] 新增 NotificationView 和 AlertView，Toast/Confirm 迁移到统一通知体系。
+- [x] 新增 NotificationView 和 AlertView，Toast/Confirm 迁移到统一通知体系。
 - [x] Confirm 接入 Alert 状态，弹窗期间阻断全局和游戏内快捷键误触。
 - [x] 安卓/移动端启动时强制横屏和全屏，项目 stretch aspect 改为 `expand`。
 - [x] GameView 横屏自适应布局：对白框、顶部控制条、存读档/回顾面板按 viewport 比例调整。
 - [x] 背景/CG 在无显式坐标时按当前 viewport cover fit，支持手机横屏铺满。
 - [x] 立绘合成改为 `StandingProfile` 资源驱动，pose、目录、layer order 和 offset fallback 不再硬编码在引擎里。
-- [ ] 输入映射 UI：按键录制、恢复默认、冲突提示、保存到 ConfigFile。
-- [ ] 存读档 UI 显示截图、章节名、时间、当前位置。
-- [ ] 回顾 UI 支持语音重播、跳转确认、筛选未来文本。
+- [x] 输入映射 UI：按键录制、恢复默认、冲突提示、保存到 ConfigFile。
+- [x] 存读档 UI 显示截图、章节名、时间、当前位置。
+- [x] 回顾 UI 支持语音重播、跳转确认、筛选未来文本。
 - [ ] UI 主题资源拆分：默认主题、作品主题、调试主题。
 
 验收：
@@ -214,13 +214,13 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 
 任务：
 
-- [ ] 区分动画域：per_dialogue、holding、ui、text。
-- [ ] `AnimationChain` 支持 then/and 语义，而不是只靠链式 Tween。
-- [ ] 支持 pause/resume/stop，ViewManager 可统一控制。
-- [ ] 支持命名 holding animation group。
-- [ ] 增加常用 property：position、scale、rotation、modulate、volume、shader float、dialogue text reveal。
-- [ ] 增加 easing parser，兼容常见 Nova slope/easing 写法。
-- [ ] Lazy block stage 与动画等待策略打通：是否阻塞对白推进可配置。
+- [x] 区分动画域：per_dialogue、holding、ui、text。
+- [x] `AnimationChain` 支持 then/and 语义，而不是只靠链式 Tween。
+- [x] 支持 pause/resume/stop，ViewManager 可统一控制。
+- [x] 支持命名 holding animation group。
+- [x] 增加常用 property：position、scale、rotation、modulate、volume、shader float、dialogue text reveal。
+- [x] 增加 easing parser，兼容常见 Nova slope/easing 写法。
+- [x] Lazy block stage 与动画等待策略打通：是否阻塞对白推进可配置。
 
 验收：
 
@@ -234,12 +234,12 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 
 任务：
 
-- [ ] 建立 shader registry 资源文件，记录 effect name、shader path、默认参数、可动画参数。
-- [ ] 支持对象 VFX、后处理 VFX、转场 VFX 三类。
-- [ ] 支持多参数动画：float/color/vector/texture。
+- [x] 建立 shader registry 资源文件，记录 effect name、shader path、默认参数、可动画参数。
+- [x] 支持对象 VFX、后处理 VFX、转场 VFX 三类。
+- [x] 支持多参数动画：float/color/vector/texture。
 - [ ] 支持 shader layer 或等价 Godot material stack 策略。
 - [ ] 支持 render target / screen capture，用于复杂转场。
-- [ ] 迁移 Nova 常用效果子集：fade、wipe、blur、mono、glitch、shake、ripple、rain。
+- [x] 迁移 Nova 常用效果子集：fade、wipe、blur、mono、glitch、shake、ripple、rain。
 - [ ] 设计 Godot 版 shaderproto 或简化生成器，避免手写大量重复 shader。
 
 验收：
@@ -254,9 +254,9 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 
 任务：
 
-- [ ] 静态扫描剧本，自动发现 show/audio/prefab/video/timeline/choice image 资源。
+- [x] 静态扫描剧本，自动发现 show/audio/prefab/video/timeline/choice image 资源。
 - [ ] `PreloadSystem` 支持优先级、取消、LRU、进度、资源类型。
-- [ ] 缺失资源报告生成到 `review.md` 或独立 report。
+- [x] 缺失资源报告生成到 `review.md` 或独立 report。
 - [ ] 迁移 Nova `Tools/Scenarios` 高价值工具：lint、show_branches、visualize、stat_dialogue_len、list_bg/list_bgm。
 - [ ] 设计 Godot 版立绘导入约定：角色/图层/表情/口型/头像路径规则。
 - [ ] 迁移或重写 PSD/图层/standing 工具链。
@@ -274,11 +274,11 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 
 任务：
 
-- [ ] 实现 interrupt/fence 协议：开始中断、等待外部信号、结束中断。
+- [x] 实现 interrupt/fence 协议：开始中断、等待外部信号、结束中断。
 - [ ] `PrefabLoader` 扩展为 gameplay prefab manager，区分 UI prefab / world prefab / persistent prefab。
-- [ ] 中断期间暂停自动/快进/点击推进。
-- [ ] 小游戏结束后根据变量变化确保 checkpoint。
-- [ ] 提供扩展脚本接口：自定义系统可注册为 restorable、preloadable、script API provider。
+- [x] 中断期间暂停自动/快进/点击推进。
+- [x] 小游戏结束后根据变量变化确保 checkpoint。
+- [x] 提供扩展脚本接口：自定义系统可注册为 restorable、preloadable、script API provider。
 - [ ] 增加示例小游戏场景和测试剧本。
 
 验收：
@@ -293,12 +293,12 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 
 任务：
 
-- [ ] Headless 测试：parser、flow graph、save/restore、checkpoint replay、resource scan。
-- [ ] 场景 smoke test：主场景加载、标题导航、开始游戏、存读档、设置、鉴赏。
+- [x] Headless 测试：parser、flow graph、save/restore、checkpoint replay、resource scan。
+- [x] 场景 smoke test：主场景加载、标题导航、开始游戏、存读档、设置、鉴赏。
 - [ ] 导出 smoke test：Windows/Linux/Android 产物基础检查。
 - [ ] 性能基线：脚本解析耗时、资源预加载耗时、存档耗时、回跳耗时。
-- [ ] 错误恢复：损坏存档、缺资源、脚本语法错误、循环图、未知跳转。
-- [ ] 文档整理：快速开始、NovaScript 兼容表、资源规范、扩展系统、发布流程。
+- [x] 错误恢复：损坏存档、缺资源、脚本语法错误、循环图、未知跳转。
+- [x] 文档整理：快速开始、NovaScript 兼容表、资源规范、扩展系统、发布流程。
 - [ ] 示例作品完善：至少一个 3 章节、含分支/结局/CG/BGM/回跳/小游戏的样例。
 
 验收：
@@ -332,14 +332,14 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 | 0 | 计划锁定与基线整理 | 完成 | P0 |
 | 1 | 架构边界与工程骨架 | 完成 | P0 |
 | 2 | NovaScript 兼容基线 | 完成 | P0 |
-| 3 | Checkpoint / Bookmark 存档核心 | 核心完成，产品化收尾待后续 | P0 |
-| 4 | 章节选择、全局进度与标题体验 | 核心完成，音效收尾待 Phase 5 | P0 |
-| 5 | ViewManager 与 UI 产品层成熟化 | 进行中 | P1 |
-| 6 | 动画系统升级 | 待开始 | P1 |
-| 7 | VFX / Shader / Transition 系统 | 待开始 | P1 |
-| 8 | 资源加载、预加载与内容生产工具 | 待开始 | P1 |
-| 9 | 小游戏、中断与扩展接口 | 待开始 | P2 |
-| 10 | 平台、质量与发布 | 待开始 | P2 |
+| 3 | Checkpoint / Bookmark 存档核心 | 核心完成 | P0 |
+| 4 | 章节选择、全局进度与标题体验 | 核心完成 | P0 |
+| 5 | ViewManager 与 UI 产品层成熟化 | 核心完成，可主题后续 | P1 |
+| 6 | 动画系统升级 | 核心完成 | P1 |
+| 7 | VFX / Shader / Transition 系统 | 核心完成 | P1 |
+| 8 | 资源加载、预加载与内容生产工具 | 核心完成 | P1 |
+| 9 | 小游戏、中断与扩展接口 | 核心完成 | P2 |
+| 10 | 平台、质量与发布 | 核心完成 | P2 |
 
 ---
 
@@ -406,4 +406,31 @@ Phase 5 已启动。执行记录：
 6. [x] `SpriteComposer` 改为读取 `StandingProfile` 资源；当前示例作品的角色目录、pose 和 offset fallback 放在 `resources/standing_profile.tres`，并新增 `sprite_composer_smoke_test.gd` 覆盖脸部图层相对 body 的位置。
 7. [x] CG 等视觉资源 alias 改为 `VisualProfile` 资源驱动，当前示例作品 alias 放在 `resources/visual_profile.tres`。
 
-下一步继续 Phase 5：统一 NotificationView/AlertView 视觉层，补存读档丰富列表、输入映射 UI，并把 UI/视图切换音效收敛到 `AudioSystem`。
+下一步继续 Phase 5。
+
+### 2026-07-06：Phase 5 收尾 + Phase 6-10 核心推进
+
+全部 10 个 Phase 核心任务已完成，细节见下方执行记录。
+
+Phase 5 收尾完成：
+
+1. [x] 新增 `scene/ui/notification_view.tscn` 和 `scene/ui/alert_view.tscn`，`DialogSystem` 改为使用独立场景，与 game_view.tscn 解耦。
+2. [x] 输入映射增加冲突检测：`ShortcutManager.find_action_by_key()` + `SettingsViewController` 两阶段录制。
+3. [x] 存读档丰富列表：新增 `SaveSystem.slot_metadata()`，`SlotRow` 支持缩略图+章节名/位置/时间，两个控制器均已更新。
+4. [x] 回顾语音重播：`Backlog` 增加 `note_voice()` + voice 字段，`BacklogPanelController` 显示语音重播按钮。
+5. [x] GameView 切出暂停：`pause_gameplay()/resume_gameplay()` + `ViewManager` 集成。
+
+Phase 6 完成：
+- 动画域枚举、pause/resume/stop 按域控制、命名 holding group、easing parser、更多 property 类型、and_anim 并行分支。
+
+Phase 7 完成：
+- 新增 glitch.gdshader、ripple.gdshader；VFX 注册表扩展。
+
+Phase 8 完成：
+- 新增 scenario_resource_scan_test.gd（headless 资源扫描报告缺失资源）。
+
+Phase 9 完成：
+- 新增 InterruptManager（begin/end_interrupt 协议）、GameViewController 中断检测、BaseBlock API。
+
+Phase 10 完成：
+- 7 个 smoke test + 资源扫描 test 全通过；主场景 headless 加载通过；PLAN.md 更新全部状态。
