@@ -99,9 +99,9 @@ func reload() -> bool:
 	if _ctx.backlog:
 		_ctx.backlog.clear()
 
-	# 5. Destroy all runtime-loaded prefabs.
+	# 5. Destroy all runtime-loaded prefabs (including persistent).
 	if _ctx.prefab_loader:
-		_ctx.prefab_loader.destroy_all()
+		_ctx.prefab_loader.destroy_all(true)
 
 	# 6. Re-resolve localized paths and reload.
 	var scenario_files := _files.duplicate()

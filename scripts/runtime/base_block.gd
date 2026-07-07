@@ -220,11 +220,29 @@ func clear_post_fx(duration: float = 0.3):
 func shake(intensity: float = 10.0, duration: float = 0.5):
 	return _ctx.vfx.shake(intensity, duration)
 
+## Clear only a specific named effect from a target, leaving other stacked effects intact.
+func clear_effect(effect_name: String, target: Variant, duration: float = 0.3):
+	return _ctx.vfx.clear_effect(effect_name, target, duration)
+
+## Capture the current game screen to a texture (for script-driven transitions).
+func capture_screen():
+	return _ctx.vfx.capture_screen()
+
+## Capture screen then play a shader-based transition.
+func capture_transition(effect_name: String, duration: float = 0.5):
+	return _ctx.vfx.transition_with_capture(effect_name, duration)
+
 
 # --- prefab API ----------------------------------------------------------------
 
-func load_prefab(name: String, path: String, coord = null, color = null, ui: bool = false):
-	return _ctx.prefab_loader.load_prefab(name, path, coord, color, ui)
+func load_prefab(name: String, path: String, coord = null, color = null, category = PrefabLoader.PrefabCategory.WORLD):
+	return _ctx.prefab_loader.load_prefab(name, path, coord, color, category)
+
+func load_ui_prefab(name: String, path: String, coord = null, color = null):
+	return _ctx.prefab_loader.load_prefab(name, path, coord, color, PrefabLoader.PrefabCategory.UI)
+
+func load_persistent_prefab(name: String, path: String, coord = null, color = null):
+	return _ctx.prefab_loader.load_prefab(name, path, coord, color, PrefabLoader.PrefabCategory.PERSISTENT)
 
 func show_prefab(name: String) -> void:
 	_ctx.prefab_loader.show_prefab(name)
@@ -258,8 +276,8 @@ func show_confirm(title: String, message: String):
 	return _ctx.dialog_system.show_confirm(title, message)
 
 
-func preload_asset(path: String) -> void:
-	_ctx.preload_system.preload_asset(path)
+func preload_asset(path: String, type: String = "", priority: int = 0) -> void:
+	_ctx.preload_system.preload_asset(path, type, priority)
 
 
 func cancel_preload(path: String) -> void:

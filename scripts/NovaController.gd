@@ -57,7 +57,11 @@ const ThemeManagerScript := preload("res://scripts/core/theme_manager.gd")
 @export var standing_profile: Resource = preload("res://resources/standing_profile.tres")
 @export var visual_profile: Resource = preload("res://resources/visual_profile.tres")
 @export_group("Preload")
-@export_range(1, 1024, 1) var preload_cache_size: int = 128
+@export_range(1, 1024, 1) var preload_cache_size: int = 128  # legacy total, kept for backward compat
+@export_range(1, 512, 1) var preload_image_cache: int = 60
+@export_range(1, 128, 1) var preload_audio_cache: int = 20
+@export_range(1, 32, 1) var preload_prefab_cache: int = 8
+@export_range(1, 256, 1) var preload_other_cache: int = 40
 @export_group("Gallery")
 @export var cg_gallery_config: String = "res://resources/gallery/cg_gallery.txt"
 @export var music_gallery_config: String = "res://resources/gallery/music_gallery.txt"
@@ -167,6 +171,8 @@ func _exit_tree() -> void:
 		video_system.stop()
 	if read_tracker:
 		read_tracker.save_to_disk()
+	if prefab_loader:
+		prefab_loader.destroy_all(true)
 
 
 # ── Subsystem creation ──────────────────────────────────────────────
@@ -203,6 +209,7 @@ func _init_subsystems() -> void:
 	dialog_system = DialogSystem.new(self)
 	preload_system = PreloadSystem.new(self)
 	preload_system.configure(preload_cache_size)
+	preload_system.configure_types(preload_image_cache, preload_audio_cache, preload_prefab_cache, preload_other_cache)
 	interrupt_manager = InterruptManagerScript.new(self)
 	theme_manager = ThemeManagerScript.new(self)
 	theme_manager.configure(base_theme_path, work_theme_path)

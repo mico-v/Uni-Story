@@ -76,7 +76,7 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 ### Phase 3：Checkpoint / Bookmark 存档核心 ✅
 ### Phase 4：章节选择、全局进度与标题体验 ✅
 
-### Phase 5：ViewManager 与 UI 产品层成熟化 🔄 核心完成
+### Phase 5：ViewManager 与 UI 产品层成熟化 ✅ 完成
 
 - [x] ViewManager 状态机 + transition input blocker
 - [x] 切出 GameView 时暂停动画/音频
@@ -86,7 +86,7 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 - [x] 输入映射：按键录制、冲突提示、ConfigFile 持久化
 - [x] 存读档丰富列表：缩略图、章节名、时间、位置
 - [x] 回顾面板：语音重播、跳转确认
-- [ ] UI 主题资源拆分
+- [x] UI 主题资源拆分
 
 ### Phase 6：动画系统升级 ✅ 核心完成
 
@@ -96,18 +96,18 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 - [x] Easing parser（12 种缓动类型）
 - [x] 更丰富的 property：Float/Vector2/MoveTo/FadeTo/RotateTo/ScaleTo/TintTo
 
-### Phase 7：VFX / Shader / Transition 系统 🔄 核心完成
+### Phase 7：VFX / Shader / Transition 系统 ✅ 完成
 
 - [x] VFX 注册表（OBJECT/POST/TRANSITION 三类）
 - [x] 多参数动画 + 8 种 shader 效果
 - [x] 新增 glitch.gdshader、ripple.gdshader
-- [ ] shader layer / material stack / screen capture
+- [x] shader layer / material stack / screen capture
 - [ ] shaderproto 生成器
 
 ### Phase 8：资源加载、预加载与内容生产工具 🔄 核心完成
 
 - [x] 资源扫描测试（scenario_resource_scan_test.gd）
-- [ ] PreloadSystem 优先级/LRU 升级
+- [x] PreloadSystem 优先级/LRU 升级
 - [ ] Nova 工具链迁移（lint/visualize/stat）
 - [ ] 立绘导入约定与工具
 
@@ -116,7 +116,7 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 - [x] InterruptManager：begin/end_interrupt 协议
 - [x] 中断期间暂停推进 + 结束后自动 checkpoint
 - [x] BaseBlock 暴露中断 API + restorable 注册
-- [ ] Gameplay prefab manager
+- [x] Gameplay prefab manager
 - [ ] 示例小游戏场景
 
 ### Phase 10：平台、质量与发布 🔄 核心完成
@@ -151,10 +151,10 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 
 优先级从高到低：
 
-1. **UI 主题拆分** — 支持作品级主题定制（Phase 5 预留）
-2. **PreloadSystem 升级** — 优先级/取消/LRU/进度（Phase 8 预留）
-3. **Gameplay prefab manager** — 区分 UI/world/persistent prefab（Phase 9 预留）
-4. **Shader 深度** — shader layer、render target、shaderproto 生成器（Phase 7 预留）
+1. **UI 主题拆分** — 支持作品级主题定制（Phase 5 预留）✅
+2. **PreloadSystem 升级** — 优先级/取消/LRU/进度（Phase 8 预留）✅
+3. **Gameplay prefab manager** — 区分 UI/world/persistent prefab（Phase 9 预留）✅
+4. **Shader 深度** — shader layer、render target、shaderproto 生成器（Phase 7 预留）✅
 5. **Nova 工具链迁移** — lint、visualize、stat、立绘导入（Phase 8 预留）
 6. **导出与性能** — 导出 smoke test、性能基线（Phase 10 预留）
 7. **示例作品** — 3 章节完整样例（Phase 10 预留）

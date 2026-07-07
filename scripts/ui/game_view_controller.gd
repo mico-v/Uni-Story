@@ -429,9 +429,9 @@ func capture_thumbnail(path: String, width: int = 320, height: int = 180) -> boo
 
 
 func reset_world() -> void:
-	# Clean up runtime-loaded prefabs.
+	# Clean up runtime-loaded world prefabs (persistent prefabs survive).
 	if _ctx and _ctx.prefab_loader:
-		_ctx.prefab_loader.destroy_all()
+		_ctx.prefab_loader.destroy_by_category(PrefabLoader.PrefabCategory.WORLD)
 	# Clean up character sprites (CompositeSprite nodes).
 	if _ctx and _ctx.composer:
 		_ctx.composer.clear_all()
@@ -513,7 +513,8 @@ func _clear_composite_layers(parent: Sprite2D) -> void:
 ## Called on chapter transitions to clear the previous scene.
 func cleanup_display() -> void:
 	if _ctx and _ctx.prefab_loader:
-		_ctx.prefab_loader.destroy_all()
+		_ctx.prefab_loader.destroy_by_category(PrefabLoader.PrefabCategory.WORLD)
+		_ctx.prefab_loader.destroy_by_category(PrefabLoader.PrefabCategory.UI)
 	if _ctx and _ctx.composer:
 		_ctx.composer.clear_all()
 	if _ctx and _ctx.video_system:
