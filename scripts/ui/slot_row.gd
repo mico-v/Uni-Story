@@ -60,7 +60,7 @@ func _ready() -> void:
 	# Default font sizes for metadata labels.
 	for lbl in [chapter_label, position_label, time_label]:
 		if lbl:
-			lbl.add_theme_font_size_override("font_size", 14)
+			lbl.add_theme_font_size_override("font_size", ThemeManager.SIZE_CAPTION)
 
 
 func _apply_thumbnail(path: String) -> void:

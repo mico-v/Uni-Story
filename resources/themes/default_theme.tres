@@ -1,5 +1,6 @@
-[gd_resource type="Theme" load_steps=7 format=3 uid="uid://default_theme_unistory"]
+[gd_resource type="Theme" load_steps=8 format=3 uid="uid://default_theme_unistory"]
 
+[ext_resource type="Theme" uid="uid://btheme_base_unistory" path="res://resources/themes/base_theme.tres" id="2_base"]
 [ext_resource type="FontFile" path="res://resources/fonts/NotoSansSC-Regular.ttf" id="1_noto"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_normal"]
@@ -69,6 +70,7 @@ content_margin_right = 4.0
 content_margin_top = 4.0
 
 [resource]
+base_theme = ExtResource("2_base")
 default_font = ExtResource("1_noto")
 Button/colors/font_color = Color(0.95, 0.95, 0.97, 1)
 Button/colors/font_disabled_color = Color(0.7, 0.7, 0.75, 1)

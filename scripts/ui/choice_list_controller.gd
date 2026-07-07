@@ -31,7 +31,7 @@ func set_choices(options: Array) -> void:
 
 		if image_path != "" and ResourceLoader.exists(image_path):
 			var row := HBoxContainer.new()
-			row.add_theme_constant_override("separation", 12)
+			row.add_theme_constant_override("separation", ThemeManager.SEP_IMAGE_ROWS)
 			row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			row.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 			var thumb := TextureRect.new()

@@ -21,7 +21,7 @@ var _preview_texture: TextureRect = null
 func _ready() -> void:
 	btn_back.pressed.connect(func() -> void: back_requested.emit())
 	if title_label:
-		title_label.add_theme_font_size_override("font_size", 32)
+		title_label.add_theme_font_size_override("font_size", ThemeManager.SIZE_TITLE)
 		title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_create_preview_overlay()
 

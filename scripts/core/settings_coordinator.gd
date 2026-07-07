@@ -102,4 +102,8 @@ func _apply_font_size(font_size: int) -> void:
 		return
 	var story = dbox.get_node_or_null("Story")
 	if story is RichTextLabel:
-		story.add_theme_font_size_override("normal_font_size", font_size)
+		# Delegate to ThemeManager for consistent font-size application.
+		if _engine != null and _engine.theme_manager != null and _engine.theme_manager.has_method("set_dialogue_font_size"):
+			_engine.theme_manager.set_dialogue_font_size(story as RichTextLabel, font_size)
+		else:
+			story.add_theme_font_size_override("normal_font_size", font_size)

@@ -10,6 +10,7 @@ const CheckpointManagerScript := preload("res://scripts/core/checkpoint_manager.
 const EngineLogScript := preload("res://scripts/core/engine_log.gd")
 const MobileUiSupportScript := preload("res://scripts/ui/mobile_ui_support.gd")
 const InterruptManagerScript := preload("res://scripts/core/interrupt_manager.gd")
+const ThemeManagerScript := preload("res://scripts/core/theme_manager.gd")
 
 @export var scenario_files: Array[String] = [
 	"res://resources/scenarios/ch1.txt",
@@ -60,6 +61,9 @@ const InterruptManagerScript := preload("res://scripts/core/interrupt_manager.gd
 @export_group("Gallery")
 @export var cg_gallery_config: String = "res://resources/gallery/cg_gallery.txt"
 @export var music_gallery_config: String = "res://resources/gallery/music_gallery.txt"
+@export_group("Theme")
+@export var work_theme_path: String = "res://resources/themes/main_theme.tres"
+@export var base_theme_path: String = "res://resources/themes/base_theme.tres"
 @export_group("")
 
 # ── Subsystems (public, BaseBlock reaches them as nova.<name>) ───────
@@ -94,6 +98,7 @@ var gallery_coordinator: RefCounted
 var settings_coordinator: RefCounted
 var mobile_ui_support: MobileUiSupport
 var interrupt_manager: RefCounted
+var theme_manager: RefCounted
 
 # ── View management ─────────────────────────────────────────────────
 var view_manager: ViewManager
@@ -117,6 +122,7 @@ var _settings_return_to := "title"
 func _ready() -> void:
 	_configure_display()
 	_init_subsystems()
+	_apply_theme()
 	_setup_locale()
 
 	var sf := scenario_files.duplicate()
@@ -198,6 +204,8 @@ func _init_subsystems() -> void:
 	preload_system = PreloadSystem.new(self)
 	preload_system.configure(preload_cache_size)
 	interrupt_manager = InterruptManagerScript.new(self)
+	theme_manager = ThemeManagerScript.new(self)
+	theme_manager.configure(base_theme_path, work_theme_path)
 	gallery_coordinator = GalleryCoordinatorScript.new(self)
 	settings_coordinator = SettingsCoordinatorScript.new(self)
 	_register_restorables()
@@ -566,6 +574,11 @@ func _configure_display() -> void:
 		DisplayServer.screen_set_orientation(DisplayServer.SCREEN_LANDSCAPE)
 	if mobile_fullscreen and (OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios")):
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
+
+
+func _apply_theme() -> void:
+	if theme_manager and theme_manager.has_method("apply"):
+		theme_manager.apply()
 
 func _on_setting_changed(key: String, value: Variant) -> void:
 	if settings_coordinator:

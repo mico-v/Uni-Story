@@ -29,10 +29,10 @@ func _ready() -> void:
 	if btn_back:
 		btn_back.pressed.connect(func() -> void: back_requested.emit())
 	if title_label:
-		title_label.add_theme_font_size_override("font_size", 32)
+		title_label.add_theme_font_size_override("font_size", ThemeManager.SIZE_TITLE)
 		title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	if chapter_list:
-		chapter_list.add_theme_constant_override("separation", 10)
+		chapter_list.add_theme_constant_override("separation", ThemeManager.SEP_CHAPTER_LIST)
 
 
 func apply_i18n(i18n: Object) -> void:

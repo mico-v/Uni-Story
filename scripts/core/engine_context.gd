@@ -129,6 +129,10 @@ var settings_coordinator: RefCounted:
 	get:
 		return _owner.settings_coordinator if _owner else null
 
+var theme_manager: RefCounted:
+	get:
+		return _owner.theme_manager if _owner else null
+
 
 func validate_core() -> Array[String]:
 	var errors: Array[String] = []

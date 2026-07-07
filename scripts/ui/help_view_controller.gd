@@ -21,11 +21,11 @@ func _ready() -> void:
 	if close_button:
 		close_button.pressed.connect(func() -> void: back_requested.emit())
 	if title_label:
-		title_label.add_theme_font_size_override("font_size", 32)
+		title_label.add_theme_font_size_override("font_size", ThemeManager.SIZE_TITLE)
 		title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	for label in [intro_title, controls_title, save_title]:
 		if label is Label:
-			(label as Label).add_theme_font_size_override("font_size", 24)
+			(label as Label).add_theme_font_size_override("font_size", ThemeManager.SIZE_SECTION)
 	for label in [intro_text, controls_text, save_text]:
 		if label is Label:
 			(label as Label).autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

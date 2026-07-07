@@ -228,31 +228,31 @@ func _connect_layout_signals() -> void:
 
 func _apply_ui_defaults() -> void:
 	if _status_label:
-		_status_label.add_theme_font_size_override("font_size", 18)
+		_status_label.add_theme_font_size_override("font_size", ThemeManager.SIZE_BODY)
 	if _speaker_label:
-		_speaker_label.add_theme_font_size_override("font_size", 22)
+		_speaker_label.add_theme_font_size_override("font_size", ThemeManager.SIZE_SPEAKER)
 		_speaker_label.position = Vector2(24, 10)
 	if _story_label:
-		_story_label.add_theme_font_size_override("normal_font_size", 26)
+		_story_label.add_theme_font_size_override("normal_font_size", ThemeManager.SIZE_STORY)
 		_story_label.bbcode_enabled = true
 		_story_label.visible_ratio = 0.0
 	if _choice_list:
 		_choice_list.alignment = BoxContainer.ALIGNMENT_CENTER
-		_choice_list.add_theme_constant_override("separation", 10)
+		_choice_list.add_theme_constant_override("separation", ThemeManager.SEP_CHOICE_LIST)
 	if _controls:
-		_controls.add_theme_constant_override("separation", 10)
+		_controls.add_theme_constant_override("separation", ThemeManager.SEP_CONTROLS)
 	if _save_panel_title:
 		_save_panel_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		_save_panel_title.add_theme_font_size_override("font_size", 26)
+		_save_panel_title.add_theme_font_size_override("font_size", ThemeManager.SIZE_STORY)
 	if _save_slots:
-		_save_slots.add_theme_constant_override("separation", 6)
+		_save_slots.add_theme_constant_override("separation", ThemeManager.SEP_SAVE_SLOTS)
 	if _backlog_list:
-		_backlog_list.add_theme_constant_override("separation", 10)
+		_backlog_list.add_theme_constant_override("separation", ThemeManager.SEP_BACKLOG_LIST)
 	if _backlog_panel:
 		var bt := _backlog_panel.get_node_or_null("BacklogPanelContainer/Title")
 		if bt is Label:
 			bt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			bt.add_theme_font_size_override("font_size", 26)
+			bt.add_theme_font_size_override("font_size", ThemeManager.SIZE_STORY)
 
 
 func _connect_signals() -> void:

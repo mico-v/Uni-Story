@@ -41,7 +41,7 @@ func _ready() -> void:
 
 func _apply_style() -> void:
 	if logo_label:
-		logo_label.add_theme_font_size_override("font_size", 36)
+		logo_label.add_theme_font_size_override("font_size", ThemeManager.SIZE_LOGO)
 		logo_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 

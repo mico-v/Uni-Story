@@ -97,11 +97,11 @@ func _ready() -> void:
 	)
 
 	if title_label:
-		title_label.add_theme_font_size_override("font_size", 32)
+		title_label.add_theme_font_size_override("font_size", ThemeManager.SIZE_TITLE)
 		title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	for section in [section_text, section_volume, section_display, section_lang, section_shortcut, _section_gameplay]:
 		if section:
-			section.add_theme_font_size_override("font_size", 24)
+			section.add_theme_font_size_override("font_size", ThemeManager.SIZE_SECTION)
 
 
 func _apply_defaults() -> void:
@@ -299,7 +299,7 @@ func _open_key_recorder(action: String, btn: Button) -> void:
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	hint.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	hint.add_theme_font_size_override("font_size", 28)
+	hint.add_theme_font_size_override("font_size", ThemeManager.SIZE_HINT)
 	hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_recorder_overlay.add_child(hint)
 
@@ -310,7 +310,7 @@ func _open_key_recorder(action: String, btn: Button) -> void:
 	conflict_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
 	conflict_label.anchor_top = 0.55
 	conflict_label.offset_top = 40.0
-	conflict_label.add_theme_font_size_override("font_size", 20)
+	conflict_label.add_theme_font_size_override("font_size", ThemeManager.SIZE_CONFLICT)
 	conflict_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	conflict_label.visible = false
 	_recorder_overlay.add_child(conflict_label)

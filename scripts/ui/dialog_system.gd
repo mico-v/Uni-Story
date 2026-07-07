@@ -141,9 +141,9 @@ func _ensure_confirm() -> void:
 		_confirm_cancel.pressed.connect(func() -> void: answer_confirm(false))
 
 	if _confirm_title:
-		_confirm_title.add_theme_font_size_override("font_size", 24)
+		_confirm_title.add_theme_font_size_override("font_size", ThemeManager.SIZE_SECTION)
 	if _confirm_message:
-		_confirm_message.add_theme_font_size_override("font_size", 20)
+		_confirm_message.add_theme_font_size_override("font_size", ThemeManager.SIZE_MODE_LABEL)
 
 
 func _get_modal_parent() -> Node:
