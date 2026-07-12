@@ -18,6 +18,8 @@ var _pending_view := ""
 var _state: int = ViewState.TITLE
 var _alert_depth: int = 0
 var _input_blocker: Control = null
+var _transition_tween: Tween = null
+var _disposed: bool = false
 var transition_duration := 0.3
 
 
@@ -36,6 +38,8 @@ func register(view_name: String, control: Control, default_transition: int = Tra
 ## Switch to a named view.  Pass transition_override >= 0 to override the
 ## registered default; pass -1 to use the default.
 func switch_to(view_name: String, transition_override: int = -1) -> void:
+	if _disposed or _ctx == null or not is_instance_valid(_ctx):
+		return
 	if view_name == _current_view:
 		return
 	if _is_transitioning:
@@ -130,13 +134,16 @@ func _do_instant(old_ctrl: Control, new_ctrl: Control) -> void:
 func _do_fade(old_ctrl: Control, new_ctrl: Control) -> void:
 	new_ctrl.visible = true
 	new_ctrl.modulate.a = 0.0
-	var t := _ctx.get_tree().create_tween()
+	_transition_tween = _ctx.get_tree().create_tween()
+	var t: Tween = _transition_tween
 	t.set_parallel(true)
 	t.tween_property(new_ctrl, "modulate:a", 1.0, transition_duration)
 	if old_ctrl:
 		t.tween_property(old_ctrl, "modulate:a", 0.0, transition_duration)
 	t.chain().tween_callback(func() -> void:
-		if old_ctrl:
+		if _disposed:
+			return
+		if old_ctrl and is_instance_valid(old_ctrl):
 			old_ctrl.visible = false
 			old_ctrl.modulate.a = 1.0
 		_finish_transition()
@@ -149,13 +156,16 @@ func _do_slide(old_ctrl: Control, new_ctrl: Control, direction: Vector2) -> void
 	new_ctrl.visible = true
 	new_ctrl.position = offset
 	new_ctrl.modulate.a = 1.0
-	var t := _ctx.get_tree().create_tween()
+	_transition_tween = _ctx.get_tree().create_tween()
+	var t: Tween = _transition_tween
 	t.set_parallel(true)
 	t.tween_property(new_ctrl, "position", Vector2.ZERO, transition_duration).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
 	if old_ctrl:
 		t.tween_property(old_ctrl, "position", -offset, transition_duration).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_CUBIC)
 	t.chain().tween_callback(func() -> void:
-		if old_ctrl:
+		if _disposed:
+			return
+		if old_ctrl and is_instance_valid(old_ctrl):
 			old_ctrl.visible = false
 			old_ctrl.position = Vector2.ZERO
 		_finish_transition()
@@ -163,6 +173,9 @@ func _do_slide(old_ctrl: Control, new_ctrl: Control, direction: Vector2) -> void
 
 
 func _finish_transition() -> void:
+	if _disposed:
+		return
+	_transition_tween = null
 	_is_transitioning = false
 	_set_transition_blocker_active(false)
 	if _pending_view != "":
@@ -194,6 +207,8 @@ func _set_state(next_state: int) -> void:
 
 
 func _set_transition_blocker_active(active: bool) -> void:
+	if _disposed:
+		return
 	var blocker: Control = _ensure_input_blocker()
 	if blocker == null:
 		return
@@ -202,6 +217,8 @@ func _set_transition_blocker_active(active: bool) -> void:
 
 
 func _ensure_input_blocker() -> Control:
+	if _disposed or _ctx == null or not is_instance_valid(_ctx):
+		return null
 	if _input_blocker != null and is_instance_valid(_input_blocker):
 		return _input_blocker
 	var parent: Node = _ctx.get_node_or_null("GlobalUI")
@@ -220,6 +237,11 @@ func _ensure_input_blocker() -> Control:
 
 ## Force-reset transition state if stuck (e.g. after hot reload kills tweens).
 func force_reset() -> void:
+	if _disposed:
+		return
+	if _transition_tween != null and _transition_tween.is_valid():
+		_transition_tween.kill()
+	_transition_tween = null
 	_is_transitioning = false
 	_pending_view = ""
 	_alert_depth = 0
@@ -231,3 +253,20 @@ func force_reset() -> void:
 			ctrl.modulate.a = 1.0
 			ctrl.position = Vector2.ZERO
 	_set_state(_state_for_view(_current_view))
+
+
+## Stop SceneTree-owned transition tweens before the composition root exits.
+func dispose() -> void:
+	if _disposed:
+		return
+	if _transition_tween != null and _transition_tween.is_valid():
+		_transition_tween.kill()
+	_transition_tween = null
+	_is_transitioning = false
+	_pending_view = ""
+	_alert_depth = 0
+	if _input_blocker != null and is_instance_valid(_input_blocker):
+		_input_blocker.visible = false
+	_input_blocker = null
+	_disposed = true
+	_ctx = null
