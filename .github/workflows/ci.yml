@@ -23,9 +23,34 @@ env:
   PROJECT_NAME: "UniStory"
 
 jobs:
+  quality:
+    name: Scenario lint + headless regression
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          lfs: true
+
+      - name: Download Godot
+        run: |
+          wget -nv "https://github.com/godotengine/godot/releases/download/${{ env.GODOT_VERSION }}-stable/Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64.zip" -O godot.zip
+          unzip -o godot.zip
+          chmod +x Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64
+          mv Godot_v${{ env.GODOT_VERSION }}-stable_linux.x86_64 /usr/local/bin/godot
+
+      - name: Import project
+        run: godot --headless --import
+
+      - name: Lint scenarios
+        run: python3 scripts/tools/scenario_lint.py --godot godot --fail-on error
+
+      - name: Run headless regression suite
+        run: python3 scripts/tests/run_headless_suite.py --godot godot --timeout 180
+
   build-windows:
     name: Windows
     runs-on: ubuntu-latest
+    needs: quality
     steps:
       - uses: actions/checkout@v7
         with:
@@ -63,6 +88,7 @@ jobs:
   build-linux:
     name: Linux
     runs-on: ubuntu-latest
+    needs: quality
     steps:
       - uses: actions/checkout@v7
         with:
@@ -101,6 +127,7 @@ jobs:
   build-android:
     name: Android
     runs-on: ubuntu-latest
+    needs: quality
     steps:
       - uses: actions/checkout@v7
         with:
