@@ -39,10 +39,14 @@
 - `before_checkpoint`、default lazy、`after_dialogue` 的阶段语义不能随意调换；它们会影响 checkpoint 和 replay 的确定性。
 - `v_` 是当前存档变量，`gv_` 是全局变量；新增脚本 API 时不要破坏这个约定。
 - 解析或运行时错误要尽量保留脚本块类型、节点名和 Godot 编译错误，方便后续 lint 工具定位。
+- 新增或修改正式剧本后运行 `python scripts/tools/scenario_lint.py` 和 `python scripts/tools/scenario_stat.py --top 0`；默认 lint warning 记录内容/兼容债务但不阻断，准备清理 warning 时可用 `--fail-on warning`。若正式 corpus 的统计基线变化，要同步 smoke 断言和相关文档。
 
 ## 测试规则
 
 - 涉及 parser、GameState、SaveSystem、CheckpointManager、runtime 编译的改动，需要补或更新 headless smoke test。
+- 修改 Scenario lint 规则、报告格式或 CLI 时，必须运行 `scenario_linter_smoke_test.gd`，保持 rule ID、路径/行列、排序和 0/1/2 退出码稳定。
+- 修改 `scenario_analysis.gd`、`scenario_statistics.gd`、文本规范化、统计 schema/排序或 stat CLI 时，必须运行 `scenario_stat_smoke_test.gd`，保持 execution-free、稳定排序、schema version 和 0/2 退出码。
+- Scenario visualize 必须复用共享静态 IR，不能通过执行 eager code 来提取流程。
 - 窄改动跑对应测试；触及核心流程或存档格式时，至少跑 `game_state_smoke_test.gd`、`save_system_smoke_test.gd` 和相关兼容测试。
 - 测试资源优先写到 `user://tests/`，避免污染 `res://resources/`。
 - 如果本机 Godot 报缺少可选 autoload，但测试退出码为 0，要在总结中说明这是环境噪音，不把它当成本次失败。

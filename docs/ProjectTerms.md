@@ -47,6 +47,9 @@
 
 ## 资源 / 工具
 
-- `scenario resource scan`：头部分析剧本文件中的资源引用（图片、音频、视频、预制体），报告缺失资源的自动检查工具。实现于 `scripts/tests/scenario_resource_scan_test.gd`。
+- `scenario lint`：对 NovaScript 做结构/编译、流程图、资源、canonical speaker 与内容/兼容规则检查的静态工具。公共入口为 `python scripts/tools/scenario_lint.py`，诊断带稳定 rule ID 和路径/行列；默认 warning 不阻断。
+- `scenario analysis IR`：不执行 eager code 的共享静态表示，包含 blocks、nodes、entries、silent entries、edges 和 events；Scenario stat 已使用它，后续 visualize 也应直接复用。
+- `scenario stat`：对剧本源文件做对白/流程 inventory 的静态工具，公共入口为 `python scripts/tools/scenario_stat.py`。它按 rich tag/TODO/空格规范化文本，以 Unicode code point 计长，不等同于单次通关估算。
+- `scenario resource scan`：静态分析剧本中的背景/立绘/CG alias、branch image、音频与 `say()` voice、视频、Prefab、shader 参数和虚拟 RenderTarget 引用，并报告缺失资源。实现于 `scripts/tests/scenario_resource_scan_test.gd`。
 - `StandingProfile`：立绘合成配置文件（`.tres`），定义角色目录、pose、layer order 和 offset fallback。
 - `VisualProfile`：视觉资源 alias 配置文件（`.tres`），定义 CG 等资源的别名映射。
