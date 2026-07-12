@@ -16,6 +16,10 @@ export.cfg
 # IdeaJ
 .idea/*
 
+# Python tooling
+__pycache__/
+*.py[cod]
+
 #release
 release/
 
