@@ -1,11 +1,11 @@
 class_name VFXSystem extends RefCounted
 
-## Visual effects subsystem — manages per-object shaders, material stacking,
-## screen shake, screen capture, and full-screen post-processing.
+## Visual effects subsystem — manages per-object shader state, selective effect
+## clearing, screen shake, screen capture, and full-screen post-processing.
 ##
-## Effects can be stacked on a target node: when more than one effect is
-## applied, they are chained through the material stack so both render
-## simultaneously.  Use `clear_effect()` to remove a single effect.
+## Effects are tracked as an ordered stack for snapshot/restore and
+## `clear_effect()`. A CanvasItem currently renders only the top material;
+## true simultaneous multi-pass compositing remains future work.
 
 var _ctx: Node
 
@@ -104,8 +104,8 @@ func _make_material(effect_info: Dictionary) -> ShaderMaterial:
 
 # ── Per-object effects (with stacking) ──────────────────────────────
 
-## Apply a named effect to a target node.  If the target already has an
-## active effect, the new effect stacks on top (up to MAX_STACK_DEPTH).
+## Apply a named effect to a target node. If the target already has active
+## effects, the new effect is added to the tracked stack and becomes visible.
 func play(effect_name: String, target: Variant, duration: float = 0.5, params: Dictionary = {}) -> Tween:
 	effect_name = _normalize_effect_name(effect_name)
 	if _is_camera_target(target):
@@ -327,6 +327,10 @@ func shake(intensity: float = 10.0, duration: float = 0.5) -> void:
 ## Capture the current viewport to an ImageTexture.
 ## Useful for shader-based transitions that need the rendered scene.
 func capture_screen() -> ImageTexture:
+	# The dummy renderer used by --headless exposes a viewport texture object
+	# without a backing RID; asking it for an Image emits an engine error.
+	if DisplayServer.get_name() == "headless":
+		return null
 	var vp := _ctx.get_viewport()
 	if vp == null:
 		return null

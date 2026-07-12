@@ -88,8 +88,11 @@ func get_voice_path() -> String:
 
 
 func stop_voice() -> void:
+	var was_playing := _voice_player.playing
 	_voice_player.stop()
 	_voice_player.stream = null
+	if was_playing:
+		voice_finished.emit()
 
 
 func stop_se() -> void:
@@ -194,6 +197,7 @@ func restore(state: Dictionary) -> void:
 
 
 func stop_all() -> void:
+	var voice_was_playing := _voice_player.playing
 	_bgm_a.stop()
 	_bgm_b.stop()
 	_bgm_a.stream = null
@@ -203,6 +207,8 @@ func stop_all() -> void:
 	for p in _se_players:
 		p.stop()
 		p.stream = null
+	if voice_was_playing:
+		voice_finished.emit()
 
 
 func dispose() -> void:
@@ -311,10 +317,10 @@ func play_se(path: String, volume_db: float = 0.0) -> void:
 	_se_start_times[oldest_idx] = Time.get_ticks_msec()
 
 
-func play_voice(path: String):
+func play_voice(path: String) -> bool:
 	var stream := _load_stream(path)
 	if stream == null:
-		return
+		return false
 	_voice_player.stream = stream
 	_voice_player.play()
-	return
+	return true
