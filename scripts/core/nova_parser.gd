@@ -31,7 +31,9 @@ static func tokenize(source: String) -> Array:
 
 		if block_type != "":
 			var res := _read_block(lines, i, open_token)
-			var body := (res[0] as String).strip_edges()
+			var raw_body := res[0] as String
+			var body := raw_body.strip_edges()
+			var source_position := _body_source_position(raw_body, start_line, int(res[2]), body)
 			i = res[1] + 1
 			if not body.is_empty():
 				out.append({
@@ -39,6 +41,8 @@ static func tokenize(source: String) -> Array:
 					"content": body,
 					"attrs": attrs,
 					"line": start_line,
+					"content_line": int(source_position.get("line", start_line)),
+					"content_column": int(source_position.get("column", 1)),
 				})
 			continue
 
@@ -131,20 +135,22 @@ static func _parse_attrs(spec: String) -> Dictionary:
 
 
 ## Read a `<|`/`@<|` ... `|>` block possibly spanning multiple lines.
-## Returns [body_string, last_line_index].
+## Returns [raw_body_string, last_line_index, raw_body_start_column].
 static func _read_block(lines: PackedStringArray, start: int, open_token: String) -> Array:
-	var first := lines[start].strip_edges()
+	var first := str(lines[start])
 	var open_at := first.find(open_token) + open_token.length()
+	var body_start_column := open_at + 1
 
 	# Single-line block.
 	var close_at := first.rfind("|>")
 	if close_at != -1 and close_at >= open_at:
-		return [first.substr(open_at, close_at - open_at), start]
+		return [first.substr(open_at, close_at - open_at), start, body_start_column]
 
 	var collected: Array = []
 	var head := first.substr(open_at)
-	if not head.strip_edges().is_empty():
-		collected.append(head)
+	# Keep the opening-line tail, including an empty one, so source offsets in
+	# the joined raw body continue to map one-to-one to physical lines.
+	collected.append(head)
 
 	var i := start + 1
 	while i < lines.size():
@@ -152,8 +158,24 @@ static func _read_block(lines: PackedStringArray, start: int, open_token: String
 		var end_idx := part.find("|>")
 		if end_idx != -1:
 			collected.append(part.substr(0, end_idx))
-			return ["\n".join(collected), i]
+			return ["\n".join(collected), i, body_start_column]
 		collected.append(part)
 		i += 1
 	# Unterminated block: take what we have.
-	return ["\n".join(collected), lines.size() - 1]
+	return ["\n".join(collected), lines.size() - 1, body_start_column]
+
+
+## Map the stripped body back to its first physical source character.
+static func _body_source_position(raw_body: String, start_line: int, start_column: int, body: String) -> Dictionary:
+	var leading_offset := raw_body.find(body)
+	if leading_offset < 0:
+		leading_offset = 0
+	var prefix := raw_body.substr(0, leading_offset)
+	var newline_count := prefix.count("\n")
+	if newline_count == 0:
+		return {"line": start_line, "column": start_column + leading_offset}
+	var last_newline := prefix.rfind("\n")
+	return {
+		"line": start_line + newline_count,
+		"column": leading_offset - last_newline,
+	}

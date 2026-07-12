@@ -21,6 +21,7 @@ var load_ok: bool = true
 var _block_attrs: Dictionary = {}
 var _current_namespace: String = ""
 var _last_display_name: String = ""
+var _canonical_speaker_by_display: Dictionary = {}
 
 
 func _init(ctx: Node) -> void:
@@ -42,6 +43,7 @@ func load_all(file_paths: Array) -> void:
 		_block_attrs = {}
 		_current_namespace = NovaCompatScript.namespace_for_path(path)
 		_last_display_name = ""
+		_canonical_speaker_by_display = {}
 		_parse_file(FileAccess.get_file_as_string(path))
 	var errors := graph.sanity_check()
 	if not errors.is_empty():
@@ -87,8 +89,9 @@ func _append_text(line: String) -> void:
 	var entry := DialogueEntry.new()
 	_apply_pending_lazy(entry)
 	var parsed := _split_speaker(line)
-	entry.speaker = parsed[0]
-	entry.text = parsed[1]
+	entry.speaker = str(parsed[0])
+	entry.text = str(parsed[1])
+	entry.character_name = str(parsed[2])
 	_current_node.add_entry(entry)
 
 
@@ -138,22 +141,36 @@ func _join_source(a: Variant, b: String) -> String:
 
 
 func _split_speaker(line: String) -> Array:
-	var marker := line.find("：：")
-	var sep_len := 2
+	var marker: int = line.find("：：")
+	var sep_len: int = 2
 	if marker == -1:
 		marker = line.find("::")
 		sep_len = 2
 	if marker > 0:
-		var speaker := line.substr(0, marker).strip_edges()
-		var content := line.substr(marker + sep_len).strip_edges()
-		if not speaker.is_empty() and not content.is_empty():
-			return [speaker, content]
-	return ["", line]
+		var raw_speaker: String = line.substr(0, marker).strip_edges()
+		var content: String = line.substr(marker + sep_len).strip_edges()
+		var display_name: String = raw_speaker
+		var character_name: String = ""
+		var hidden_marker: int = raw_speaker.find("//")
+		if hidden_marker >= 0:
+			display_name = raw_speaker.substr(0, hidden_marker).strip_edges()
+			character_name = raw_speaker.substr(hidden_marker + 2).strip_edges()
+			if not display_name.is_empty() and not character_name.is_empty():
+				_canonical_speaker_by_display[display_name] = character_name
+		elif not display_name.is_empty():
+			character_name = str(_canonical_speaker_by_display.get(display_name, display_name))
+		if not display_name.is_empty() and not content.is_empty():
+			if character_name.is_empty():
+				character_name = display_name
+			return [display_name, content, character_name]
+	return ["", line, ""]
 
 
 # === API called from eager blocks (via BaseBlock) ============================
 
 func label(name: String, display_name = null) -> void:
+	# Hidden/canonical speaker aliases are scoped to one flow-chart node.
+	_canonical_speaker_by_display = {}
 	var resolved_name := _resolve_label_name(name)
 	var resolved_display := ""
 	if display_name == null:

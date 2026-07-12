@@ -8,6 +8,9 @@ class_name DialogueEntry extends RefCounted
 ## or loading re-runs the lazy blocks to rebuild presentation state.
 
 var speaker: String = ""
+## Stable internal speaker identity used by systems such as automatic voice.
+## This may differ from `speaker` when a scenario uses `display//internal`.
+var character_name: String = ""
 var text: String = ""
 
 ## GDScript source of the `<|...|>` block attached to this entry (may be empty).
