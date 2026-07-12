@@ -523,10 +523,20 @@ func _poll() -> void:
 
 	if not _is_all_pending_empty():
 		# Continue polling on next frame.
-		if _ctx and _ctx.get_tree():
-			_ctx.get_tree().process_frame.connect(_poll, CONNECT_ONE_SHOT)
+		if not _schedule_poll_next_frame():
+			_polling = false
 	else:
 		_polling = false
+
+
+func _schedule_poll_next_frame() -> bool:
+	if _ctx == null or not is_instance_valid(_ctx) or not _ctx.is_inside_tree():
+		return false
+	var tree: SceneTree = _ctx.get_tree()
+	if tree == null:
+		return false
+	tree.process_frame.connect(_poll, CONNECT_ONE_SHOT)
+	return true
 
 
 func _remove_stub(bucket: CacheBucket, path: String) -> void:
