@@ -299,7 +299,14 @@ func stop_bgm(fade: float = 0.0):
 func play_se(path: String, volume_db: float = 0.0) -> void:
 	_ctx.audio.play_se(path, volume_db)
 
-func play_voice(path: String):
+func play_voice(path: String, override_auto_voice: bool = true):
+	var system := _auto_voice_system()
+	if _is_runtime_voice_suppressed():
+		if override_auto_voice and system != null:
+			system.call("skip_next")
+		return false
+	if system != null and system.has_method("play_explicit_path"):
+		return system.call("play_explicit_path", path, override_auto_voice)
 	if _ctx.backlog and _ctx.backlog.has_method("note_voice"):
 		_ctx.backlog.note_voice(path)
 	return _ctx.audio.play_voice(path)
@@ -323,16 +330,38 @@ func sound(path: String, vol_db: Variant = null) -> void:
 	play_se(_audio_path("Sounds", path), _linear_volume_to_db(vol_db))
 
 
-func auto_voice_on(_speaker: String, _start_id: Variant = null) -> void:
-	pass
+func auto_voice_on(speaker: String, start_id: Variant = null) -> void:
+	var system := _auto_voice_system()
+	if system != null:
+		system.call("enable", speaker, start_id)
 
 
-func auto_voice_off(_speaker: String = "") -> void:
-	pass
+func auto_voice_off(speaker: String = "") -> void:
+	var system := _auto_voice_system()
+	if system == null:
+		return
+	if speaker.strip_edges().is_empty():
+		system.call("disable_all")
+	else:
+		system.call("disable", speaker)
 
 
-func set_auto_voice_delay(_seconds: Variant = 0.0) -> void:
-	pass
+func auto_voice_off_all() -> void:
+	var system := _auto_voice_system()
+	if system != null:
+		system.call("disable_all")
+
+
+func set_auto_voice_delay(seconds: Variant = 0.0) -> void:
+	var system := _auto_voice_system()
+	if system != null:
+		system.call("set_next_delay", seconds)
+
+
+func auto_voice_skip() -> void:
+	var system := _auto_voice_system()
+	if system != null:
+		system.call("skip_next")
 
 
 func box_hide_show(_seconds: Variant = 0.0) -> void:
@@ -356,13 +385,21 @@ func avatar_hide() -> void:
 	clear_avatar()
 
 
-func video_play(path: String = "Videos/Call.mp4") -> void:
-	play_video(path)
+func video_play(path: String = "") -> void:
+	var resolved_path := path.strip_edges()
+	if resolved_path.is_empty():
+		resolved_path = str(get_temp_var("_video_path", "Videos/Call.mp4"))
+	play_video(resolved_path)
 
 
 func video(path: String = "") -> void:
 	if not path.is_empty():
-		set_temp_var("_video_path", "Videos/%s.mp4" % path)
+		var resolved_path := path
+		if not resolved_path.contains("/"):
+			resolved_path = "Videos/" + resolved_path
+		if resolved_path.get_extension().is_empty():
+			resolved_path += ".mp4"
+		set_temp_var("_video_path", resolved_path)
 
 
 func video_hide() -> void:
@@ -427,7 +464,7 @@ func minigame(_loader: Variant = null, _name: Variant = null) -> void:
 
 
 func is_restoring() -> bool:
-	return false
+	return _ctx != null and _ctx.game_state != null and bool(_ctx.game_state.get("is_replaying"))
 
 
 func current_box() -> Object:
@@ -483,10 +520,18 @@ func stop(channel: Variant = null) -> void:
 		stop_bgm()
 
 
-func say(_speaker: Variant, voice_id: Variant = "") -> void:
+func say(speaker: Variant, voice_id: Variant = "", delay: Variant = 0.0, override_auto_voice: bool = true) -> void:
 	if str(voice_id).is_empty():
 		return
-	play_voice("Voices/%s.ogg" % str(voice_id))
+	var system := _auto_voice_system()
+	if system != null and system.has_method("prepare_manual"):
+		if _is_runtime_voice_suppressed():
+			if override_auto_voice:
+				system.call("skip_next")
+			return
+		system.call("prepare_manual", speaker, voice_id, delay, override_auto_voice)
+		return
+	play_voice("Voices/%s.ogg" % str(voice_id), override_auto_voice)
 
 
 # --- variables API -----------------------------------------------------------
@@ -667,12 +712,25 @@ func _composer() -> Object:
 	return _ctx.get("composer") as Object
 
 
+func _auto_voice_system() -> Object:
+	if _ctx == null:
+		return null
+	return _ctx.get("auto_voice") as Object
+
+
+func _is_runtime_voice_suppressed() -> bool:
+	return _ctx != null and _ctx.game_state != null and bool(_ctx.game_state.get("is_runtime_voice_suppressed"))
+
+
 func _nova_cg_pose(_obj_name: String, pose: String) -> String:
 	return pose
 
 # --- Interrupt / Minigame API -------------------------------------------------
 
 func begin_interrupt() -> int:
+	var system := _auto_voice_system()
+	if system != null and system.has_method("cancel_pending"):
+		system.call("cancel_pending", true, true)
 	if _ctx.interrupt_manager and _ctx.interrupt_manager.has_method("begin_interrupt"):
 		return _ctx.interrupt_manager.begin_interrupt()
 	return -1
