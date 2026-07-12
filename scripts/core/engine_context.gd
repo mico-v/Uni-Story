@@ -65,6 +65,10 @@ var audio: AudioSystem:
 	get:
 		return _owner.audio if _owner else null
 
+var auto_voice:
+	get:
+		return _owner.auto_voice if _owner else null
+
 var camera: CameraSystem:
 	get:
 		return _owner.camera if _owner else null
@@ -144,6 +148,7 @@ func validate_core() -> Array[String]:
 		"variables",
 		"i18n",
 		"save_system",
+		"auto_voice",
 		"restorables",
 		"checkpoint_manager",
 	]:

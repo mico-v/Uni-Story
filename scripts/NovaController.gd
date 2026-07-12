@@ -11,6 +11,7 @@ const EngineLogScript := preload("res://scripts/core/engine_log.gd")
 const MobileUiSupportScript := preload("res://scripts/ui/mobile_ui_support.gd")
 const InterruptManagerScript := preload("res://scripts/core/interrupt_manager.gd")
 const ThemeManagerScript := preload("res://scripts/core/theme_manager.gd")
+const AutoVoiceSystemScript := preload("res://scripts/runtime/auto_voice_system.gd")
 
 @export var scenario_files: Array[String] = [
 	"res://resources/scenarios/ch1.txt",
@@ -56,6 +57,7 @@ const ThemeManagerScript := preload("res://scripts/core/theme_manager.gd")
 @export var mobile_fullscreen: bool = true
 @export var standing_profile: Resource = preload("res://resources/standing_profile.tres")
 @export var visual_profile: Resource = preload("res://resources/visual_profile.tres")
+@export var auto_voice_profile: Resource = preload("res://resources/auto_voice_profile.tres")
 @export_group("Preload")
 @export_range(1, 1024, 1) var preload_cache_size: int = 128  # legacy total, kept for backward compat
 @export_range(1, 512, 1) var preload_image_cache: int = 60
@@ -84,6 +86,7 @@ var animation: AnimationSystem
 var composer: SpriteComposer
 var avatar: AvatarSystem
 var audio: AudioSystem
+var auto_voice
 var camera: CameraSystem
 var transition: TransitionSystem
 var dialogue_box: DialogueBoxSystem
@@ -159,8 +162,12 @@ func _ready() -> void:
 
 
 func _exit_tree() -> void:
+	if view_manager:
+		view_manager.dispose()
 	if hot_reload:
 		hot_reload.stop()
+	if auto_voice:
+		auto_voice.dispose()
 	if audio:
 		audio.dispose()
 	if vfx:
@@ -197,6 +204,8 @@ func _init_subsystems() -> void:
 	composer.configure(standing_profile)
 	avatar = AvatarSystem.new(self)
 	audio = AudioSystem.new(self)
+	auto_voice = AutoVoiceSystemScript.new(self)
+	auto_voice.configure(auto_voice_profile)
 	camera = CameraSystem.new(self)
 	transition = TransitionSystem.new(self)
 	dialogue_box = DialogueBoxSystem.new(self)
@@ -230,6 +239,7 @@ func _register_restorables() -> void:
 	restorables.register("prefab_loader", prefab_loader)
 	restorables.register("read_tracker", read_tracker)
 	restorables.register("backlog", backlog)
+	restorables.register("auto_voice", auto_voice)
 
 
 # ── Locale ───────────────────────────────────────────────────────────
@@ -349,6 +359,7 @@ func _connect_model_signals() -> void:
 	game_state.ending_reached.connect(_game_vc.on_ending_reached)
 	game_state.dialogue_advanced.connect(_auto_save)
 	avatar.avatar_changed.connect(_game_vc.on_avatar_changed)
+	interrupt_manager.interrupt_started.connect(_game_vc.on_interrupt_started)
 	# GameVC → NovaController routing.
 	_game_vc.title_requested.connect(_on_game_title_requested)
 	_game_vc.settings_requested.connect(func() -> void:
