@@ -4,6 +4,7 @@ class_name GameState extends RefCounted
 ## calls always produces the same state (replayable for save/load/skip/jump).
 
 signal dialogue_changed(speaker: String, text: String)
+signal dialogue_processed(character_name: String, speaker: String, text: String, audible: bool)
 signal dialogue_advanced()                 # fired after each dialogue display (for auto-save)
 signal branch_requested(options: Array)        # Array[{dest, text, mode, cond, image, enabled}]
 signal game_ended()
@@ -20,6 +21,8 @@ var is_waiting_branch: bool = false
 var is_waiting_input: bool = false
 var is_processing: bool = false
 var is_ended: bool = false
+var is_replaying: bool = false
+var is_runtime_voice_suppressed: bool = false
 
 ## Set by a lazy block calling jump_if/jump_to at runtime; consumed after the
 ## current entry's lazy code runs, redirecting the story immediately.
@@ -54,8 +57,9 @@ func snapshot() -> Dictionary:
 
 
 ## Restore a snapshot: set variables, jump to the node, and silently replay
-## lazy blocks of entries [0, index] to rebuild presentation, then show entry.
-## Note: subsystem restore is orchestrated by NovaController after this call.
+## entries [0, index] to rebuild presentation and automatic-voice indices.
+## The target line is presented later by present_restored_dialogue(), after all
+## secondary restorables have been restored.
 func restore(data: Dictionary) -> bool:
 	var node_name := StringName(data.get("node", ""))
 	if not _graph.has_node_named(node_name):
@@ -72,11 +76,14 @@ func restore(data: Dictionary) -> bool:
 	current_end_name = ""
 	_cond_cache.clear()
 	pending_jump = &""
+	_reset_auto_voice_transient(true)
 
 	var target: int = int(data.get("index", 0))
 	target = clampi(target, 0, current_node.entries.size() - 1)
 
-	# Replay lazy blocks up to and including target entry to rebuild state.
+	# Replay lazy blocks and consume dialogue-side state without producing sound.
+	is_replaying = true
+	is_runtime_voice_suppressed = true
 	for i in range(0, target + 1):
 		current_index = i
 		var entry = current_node.entries[i]
@@ -84,15 +91,38 @@ func restore(data: Dictionary) -> bool:
 			_ctx.runtime.run_block(entry.before_checkpoint_source)
 		if entry.has_lazy():
 			_ctx.runtime.run_block(entry.lazy_source)
+		if not entry.is_silent:
+			_prepare_dialogue(entry, false)
 		if entry.has_after_dialogue():
 			_ctx.runtime.run_block(entry.after_dialogue_source)
 		pending_jump = &""  # ignore mid-node jumps during replay
-
-	var e = current_node.entries[target]
-	_mark_dialogue_reached()
+	is_replaying = false
+	is_runtime_voice_suppressed = false
 	is_waiting_input = true
-	dialogue_changed.emit(_format_text(e.speaker), _format_text(e.text))
-	dialogue_advanced.emit()
+	return true
+
+
+## Present the target prepared by restore() after Audio/Backlog/AutoVoice have
+## all received their saved snapshots. This prevents dirty pre-restore state
+## from playing or being written into the restored backlog.
+func present_restored_dialogue() -> bool:
+	if current_node == null or current_index < 0 or current_index >= current_node.entries.size():
+		return false
+	var entry = current_node.entries[current_index]
+	if entry.is_silent:
+		return false
+	var cue: Dictionary = {}
+	var system := _auto_voice_system()
+	if system != null and system.has_method("current_cue_for_restore"):
+		var value = system.call("current_cue_for_restore")
+		if value is Dictionary:
+			cue = value
+	dialogue_processed.emit(_entry_character_name(entry), _format_text(entry.speaker), _format_text(entry.text), true)
+	is_waiting_input = true
+	dialogue_changed.emit(_format_text(entry.speaker), _format_text(entry.text))
+	_start_prepared_cue(cue)
+	if current_node.type == FlowChartNode.Type.CHAPTER:
+		chapter_started.emit()
 	return true
 
 
@@ -118,24 +148,36 @@ func replay_to_position(node_name: String, entry_index: int) -> bool:
 	is_processing = false
 	current_end_name = ""
 	pending_jump = &""
+	_reset_auto_voice_transient(true)
 
 	var start_index: int = max(current_index + 1, 0)
+	if start_index > target:
+		return present_restored_dialogue()
+	var target_cue: Dictionary = {}
+	is_replaying = true
 	for i in range(start_index, target + 1):
+		is_runtime_voice_suppressed = i != target
 		current_index = i
 		var entry = current_node.entries[i]
 		if entry.has_before_checkpoint():
 			_ctx.runtime.run_block(entry.before_checkpoint_source)
 		if entry.has_lazy():
 			_ctx.runtime.run_block(entry.lazy_source)
+		if not entry.is_silent:
+			var cue: Dictionary = _prepare_dialogue(entry, i == target)
+			if i == target:
+				target_cue = cue
 		if entry.has_after_dialogue():
 			_ctx.runtime.run_block(entry.after_dialogue_source)
 		pending_jump = &""
+	is_replaying = false
+	is_runtime_voice_suppressed = false
 
 	var e = current_node.entries[target]
 	_mark_dialogue_reached()
 	is_waiting_input = true
 	dialogue_changed.emit(_format_text(e.speaker), _format_text(e.text))
-	dialogue_advanced.emit()
+	_start_prepared_cue(target_cue)
 	return true
 
 
@@ -151,6 +193,9 @@ func start_node(name: StringName) -> void:
 	is_waiting_input = false
 	is_ended = false
 	is_processing = false
+	is_replaying = false
+	is_runtime_voice_suppressed = false
+	_reset_auto_voice_all(true)
 	advance()
 
 
@@ -166,13 +211,17 @@ func jump_to_position(node_name: String, entry_index: int) -> bool:
 	is_waiting_input = false
 	is_ended = false
 	is_processing = false
+	is_runtime_voice_suppressed = false
 	current_end_name = ""
 	pending_jump = &""
+	_reset_auto_voice_transient(true)
 	# Present the target entry directly.
 	if current_index >= 0 and current_index < current_node.entries.size():
 		var e = current_node.entries[current_index]
+		var cue: Dictionary = _prepare_dialogue(e, true) if not e.is_silent else {}
 		_mark_dialogue_reached()
 		dialogue_changed.emit(_format_text(e.speaker), _format_text(e.text))
+		_start_prepared_cue(cue)
 		is_waiting_input = true
 		return true
 	return false
@@ -216,11 +265,13 @@ func _continue_after_wait() -> void:
 		if entry.is_silent:
 			continue
 
+		var cue: Dictionary = _prepare_dialogue(entry, true)
 		is_waiting_input = true
 		if _ctx.read_tracker:
 			_ctx.read_tracker.mark_read(current_node.name, current_index)
 		_mark_dialogue_reached()
 		dialogue_changed.emit(_format_text(entry.speaker), _format_text(entry.text))
+		_start_prepared_cue(cue)
 		if current_node.type == FlowChartNode.Type.CHAPTER:
 			chapter_started.emit()
 		dialogue_advanced.emit()
@@ -393,6 +444,7 @@ func _goto(name: StringName) -> bool:
 		return false
 	current_node = _graph.get_node_named(name)
 	current_index = -1
+	_cancel_auto_voice(false)
 	# Reset display state when jumping to a different chapter (not local labels).
 	if not str(name).contains(":") and _ctx and _ctx.has_method("cleanup_display"):
 		_ctx.cleanup_display()
@@ -423,3 +475,56 @@ func _format_text(text: String) -> String:
 	if _ctx and _ctx.script_loader and _ctx.script_loader.has_method("interpolate_text"):
 		return _ctx.script_loader.interpolate_text(text)
 	return text
+
+
+func _prepare_dialogue(entry: DialogueEntry, audible: bool) -> Dictionary:
+	var character_name := _entry_character_name(entry)
+	dialogue_processed.emit(character_name, _format_text(entry.speaker), _format_text(entry.text), audible)
+	var system := _auto_voice_system()
+	if system == null or not system.has_method("prepare_dialogue"):
+		return {}
+	var value = system.call("prepare_dialogue", character_name, audible)
+	return value if value is Dictionary else {}
+
+
+func _start_prepared_cue(cue: Dictionary) -> void:
+	if cue.is_empty():
+		return
+	var system := _auto_voice_system()
+	if system != null and system.has_method("start_prepared_cue"):
+		system.call("start_prepared_cue", cue)
+
+
+func _cancel_auto_voice(stop_active_voice: bool) -> void:
+	var system := _auto_voice_system()
+	if system != null and system.has_method("cancel_pending"):
+		system.call("cancel_pending", stop_active_voice, true)
+
+
+func _reset_auto_voice_transient(stop_active_voice: bool) -> void:
+	var system := _auto_voice_system()
+	if system == null:
+		return
+	if system.has_method("reset_transient"):
+		system.call("reset_transient", stop_active_voice)
+	elif system.has_method("cancel_pending"):
+		system.call("cancel_pending", stop_active_voice, true)
+
+
+func _reset_auto_voice_all(stop_active_voice: bool) -> void:
+	var system := _auto_voice_system()
+	if system != null and system.has_method("reset_all"):
+		system.call("reset_all", stop_active_voice)
+	else:
+		_reset_auto_voice_transient(stop_active_voice)
+
+
+func _auto_voice_system() -> Object:
+	if _ctx == null:
+		return null
+	return _ctx.get("auto_voice") as Object
+
+
+func _entry_character_name(entry: DialogueEntry) -> String:
+	var name := entry.character_name.strip_edges()
+	return _format_text(name if not name.is_empty() else entry.speaker)
