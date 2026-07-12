@@ -17,6 +17,14 @@ func record(speaker: String, text: String, node_name: String = "", entry_index: 
 		return
 	var voice := _last_voice_path
 	_last_voice_path = ""
+	if entry_index >= 0 and not _entries.is_empty():
+		var last: Dictionary = _entries.back()
+		if str(last.get("node", "")) == node_name and int(last.get("index", -1)) == entry_index:
+			last["speaker"] = speaker
+			last["text"] = text
+			if not voice.is_empty():
+				last["voice"] = voice
+			return
 	_entries.append({
 		"speaker": speaker,
 		"text": text,
@@ -40,6 +48,7 @@ func entries() -> Array:
 
 func clear() -> void:
 	_entries.clear()
+	_last_voice_path = ""
 
 
 func snapshot() -> Array:
@@ -48,6 +57,7 @@ func snapshot() -> Array:
 
 func restore(data: Array) -> void:
 	_entries.clear()
+	_last_voice_path = ""
 	for entry in data:
 		if entry is Dictionary:
 			_entries.append(entry)
