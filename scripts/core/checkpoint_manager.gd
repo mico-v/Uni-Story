@@ -119,15 +119,15 @@ func create_bookmark(slot: int = -1) -> Dictionary:
 	}
 
 
-func restore_bookmark(data: Dictionary) -> bool:
+func restore_bookmark(data: Dictionary, present_dialogue: bool = true) -> bool:
 	var checkpoint = data.get("checkpoint", data)
 	if not (checkpoint is Dictionary):
 		EngineLogScript.error(EngineLogScript.Category.RESTORE, "CheckpointManager", "bookmark missing checkpoint data")
 		return false
-	return restore_checkpoint(checkpoint)
+	return restore_checkpoint(checkpoint, present_dialogue)
 
 
-func restore_checkpoint(checkpoint: Dictionary) -> bool:
+func restore_checkpoint(checkpoint: Dictionary, present_dialogue: bool = true) -> bool:
 	var state = checkpoint.get("state", {})
 	if not (state is Dictionary):
 		EngineLogScript.error(EngineLogScript.Category.RESTORE, "CheckpointManager", "checkpoint missing game state")
@@ -143,6 +143,8 @@ func restore_checkpoint(checkpoint: Dictionary) -> bool:
 	if checkpoint.has("position_checkpoints"):
 		_restore_position_checkpoints(checkpoint.get("position_checkpoints", {}))
 	_last_checkpoint = checkpoint.duplicate(true)
+	if present_dialogue:
+		_present_restored_dialogue()
 	return true
 
 
@@ -153,13 +155,13 @@ func restore_to_position(node_name: String, entry_index: int) -> bool:
 	var checkpoint = _nearest_position_checkpoint(node_name, entry_index)
 	if not (checkpoint is Dictionary) or checkpoint.is_empty():
 		checkpoint = latest_checkpoint()
-	var ok := restore_checkpoint(checkpoint)
+	var ok := restore_checkpoint(checkpoint, false)
 	if not ok:
 		return false
 	if _ctx.game_state == null:
 		return false
 	if _ctx.game_state.current_node != null and str(_ctx.game_state.current_node.name) == node_name and _ctx.game_state.current_index == entry_index:
-		return true
+		return _present_restored_dialogue()
 	if _ctx.game_state.has_method("replay_to_position"):
 		var replayed: bool = bool(_ctx.game_state.call("replay_to_position", node_name, entry_index))
 		if replayed:
@@ -215,7 +217,9 @@ func _snapshot_game_state() -> Dictionary:
 func _snapshot_restorables() -> Dictionary:
 	if _ctx.restorables == null:
 		return {}
-	return _ctx.restorables.snapshot_all(true)
+	# Empty snapshots are meaningful (for example, an empty Backlog must clear a
+	# later non-empty one when restoring an early position).
+	return _ctx.restorables.snapshot_all(false)
 
 
 func _restore_game_state(checkpoint: Dictionary) -> bool:
@@ -232,11 +236,21 @@ func _restore_secondary_state(checkpoint: Dictionary) -> void:
 	if not (restorable_data is Dictionary) or _ctx.restorables == null:
 		return
 	for name in restorable_data:
-		if str(name) == "game_state":
+		if str(name) == "game_state" or str(name) == "auto_voice":
 			continue
 		var target = _ctx.restorables.get_target(str(name))
 		if target != null and is_instance_valid(target):
 			target.call("restore", restorable_data[name])
+	# AutoVoice must restore last: it cancels replay-era pending work and depends
+	# on Audio/Backlog already containing their saved state.
+	if restorable_data.has("auto_voice"):
+		var auto_voice = _ctx.restorables.get_target("auto_voice")
+		if auto_voice != null and is_instance_valid(auto_voice):
+			auto_voice.call("restore", restorable_data["auto_voice"])
+
+
+func _present_restored_dialogue() -> bool:
+	return _ctx.game_state != null and _ctx.game_state.has_method("present_restored_dialogue") and bool(_ctx.game_state.call("present_restored_dialogue"))
 
 
 func _record_node(node_name: String, entry_index: int, display_name: String) -> void:
@@ -314,7 +328,7 @@ func _current_entry_hash() -> String:
 	if index < 0 or index >= _ctx.game_state.current_node.entries.size():
 		return ""
 	var entry = _ctx.game_state.current_node.entries[index]
-	var source := "%s\n%s\n%s\n%s\n%s" % [entry.speaker, entry.text, entry.before_checkpoint_source, entry.lazy_source, entry.after_dialogue_source]
+	var source := "%s\n%s\n%s\n%s\n%s\n%s" % [entry.speaker, entry.character_name, entry.text, entry.before_checkpoint_source, entry.lazy_source, entry.after_dialogue_source]
 	return str(hash(source))
 
 
@@ -323,7 +337,7 @@ func _current_node_hash() -> String:
 		return ""
 	var parts: Array[String] = []
 	for entry in _ctx.game_state.current_node.entries:
-		parts.append("%s\n%s\n%s\n%s\n%s" % [entry.speaker, entry.text, entry.before_checkpoint_source, entry.lazy_source, entry.after_dialogue_source])
+		parts.append("%s\n%s\n%s\n%s\n%s\n%s" % [entry.speaker, entry.character_name, entry.text, entry.before_checkpoint_source, entry.lazy_source, entry.after_dialogue_source])
 	return str(hash("\n---\n".join(parts)))
 
 

@@ -83,6 +83,7 @@ func load_slot(slot: int) -> bool:
 	if ok:
 		if not _is_bookmark_save(parsed):
 			_restore_secondary_state(parsed)
+			_present_restored_dialogue()
 	return ok
 
 
@@ -164,7 +165,7 @@ func _ensure_save_dir() -> void:
 
 func _snapshot_restorables() -> Dictionary:
 	if _ctx.restorables:
-		return _ctx.restorables.snapshot_all(true)
+		return _ctx.restorables.snapshot_all(false)
 	return {}
 
 
@@ -220,6 +221,7 @@ func _restore_checkpoint_fallback(checkpoint: Dictionary) -> bool:
 	var ok := _restore_game_state(snapshot)
 	if ok:
 		_restore_secondary_state(snapshot)
+		_present_restored_dialogue()
 	return ok
 
 
@@ -234,11 +236,15 @@ func _restore_secondary_state(parsed: Dictionary) -> void:
 	var restorable_data = parsed.get("restorables", {})
 	if restorable_data is Dictionary:
 		for name in restorable_data:
-			if str(name) == "game_state":
+			if str(name) == "game_state" or str(name) == "auto_voice":
 				continue
 			var target = _ctx.restorables.get_target(str(name)) if _ctx.restorables else null
 			if target != null and is_instance_valid(target):
 				target.call("restore", restorable_data[name])
+		if restorable_data.has("auto_voice") and _ctx.restorables:
+			var auto_voice = _ctx.restorables.get_target("auto_voice")
+			if auto_voice != null and is_instance_valid(auto_voice):
+				auto_voice.call("restore", restorable_data["auto_voice"])
 		return
 
 	# Backward compatibility for saves created before the restorable registry.
@@ -256,6 +262,11 @@ func _restore_secondary_state(parsed: Dictionary) -> void:
 		var bl_data = parsed["backlog"]
 		if bl_data is Array:
 			_ctx.backlog.restore(bl_data)
+
+
+func _present_restored_dialogue() -> void:
+	if _ctx.game_state and _ctx.game_state.has_method("present_restored_dialogue"):
+		_ctx.game_state.call("present_restored_dialogue")
 
 
 func _checkpoint_manager() -> Object:
