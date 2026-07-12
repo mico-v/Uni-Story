@@ -429,6 +429,7 @@ func capture_thumbnail(path: String, width: int = 320, height: int = 180) -> boo
 
 
 func reset_world() -> void:
+	_cancel_auto_voice(true)
 	# Clean up runtime-loaded world prefabs (persistent prefabs survive).
 	if _ctx and _ctx.prefab_loader:
 		_ctx.prefab_loader.destroy_by_category(PrefabLoader.PrefabCategory.WORLD)
@@ -739,6 +740,11 @@ func on_avatar_changed(shown: bool) -> void:
 		_story_label.offset_left = left
 
 
+func on_interrupt_started() -> void:
+	_deactivate_modes()
+	_cancel_auto_voice(true)
+
+
 # ── Typewriter ───────────────────────────────────────────────────────
 
 func _start_typewriter(text: String) -> void:
@@ -775,6 +781,14 @@ func _on_typewriter_done() -> void:
 
 func _check_auto_advance() -> void:
 	var gen := _auto_gen
+	# A delayed automatic cue is not visible through AudioSystem yet. Wait for
+	# that delay to either start or be cancelled before checking playback.
+	var auto_voice := _auto_voice_system()
+	if auto_voice != null:
+		while bool(auto_voice.call("has_pending_voice")):
+			await Signal(auto_voice, "pending_changed")
+			if gen != _auto_gen or not _is_auto:
+				return
 	# Wait for voice to finish if currently playing.
 	if _ctx.audio and _ctx.audio.is_voice_playing():
 		await _ctx.audio.voice_finished
@@ -829,7 +843,10 @@ func _on_next() -> void:
 			_deactivate_modes()
 		return
 	if click_stop_voice and _ctx.audio:
+		_cancel_auto_voice(false)
 		_ctx.audio.stop_voice()
+	else:
+		_cancel_auto_voice(false)
 	if _ctx.game_state and _ctx.game_state.is_waiting_input:
 		_deactivate_modes()
 		_ctx.game_state.continue_after_input()
@@ -877,6 +894,7 @@ func _on_skip_toggled() -> void:
 				can_skip = _ctx.read_tracker.is_read(_ctx.game_state.current_node.name, _ctx.game_state.current_index)
 			if can_skip:
 				_finish_typewriter()
+				_cancel_auto_voice(click_stop_voice)
 				if click_stop_voice and _ctx.audio:
 					_ctx.audio.stop_voice()
 				var gen := _skip_gen
@@ -914,6 +932,7 @@ func _on_skip_advance(gen: int) -> void:
 	if gen != _skip_gen or not _is_skip:
 		return
 	if _ctx.game_state and _ctx.game_state.is_waiting_input:
+		_cancel_auto_voice(true)
 		_ctx.game_state.continue_after_input()
 
 
@@ -921,6 +940,7 @@ func _on_skip_advance(gen: int) -> void:
 
 func _open_backlog() -> void:
 	_deactivate_modes()
+	_cancel_auto_voice(true)
 	_backlog_controller.open()
 
 
@@ -954,6 +974,7 @@ func _on_backlog_jump(node_name: String, entry_index: int) -> void:
 
 func _open_save_panel(save_mode: bool) -> void:
 	_deactivate_modes()
+	_cancel_auto_voice(true)
 	_save_mode = save_mode
 	_save_load_controller.open(save_mode)
 
@@ -1419,6 +1440,7 @@ func _is_backlog_panel_visible() -> bool:
 func pause_gameplay() -> void:
 	_kill_typewriter()
 	_deactivate_modes()
+	_cancel_auto_voice(true)
 	if click_stop_voice and _ctx and _ctx.audio:
 		_ctx.audio.stop_voice()
 
@@ -1427,3 +1449,15 @@ func pause_gameplay() -> void:
 ## Currently a no-op: the game is left in a clean stopped state.
 func resume_gameplay() -> void:
 	pass
+
+
+func _cancel_auto_voice(stop_active_voice: bool) -> void:
+	var auto_voice := _auto_voice_system()
+	if auto_voice != null:
+		auto_voice.call("cancel_pending", stop_active_voice, true)
+
+
+func _auto_voice_system() -> Object:
+	if _ctx == null:
+		return null
+	return _ctx.get("auto_voice") as Object
