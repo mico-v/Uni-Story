@@ -32,6 +32,21 @@ class NoopDialogueBox:
 		pass
 
 
+const CANONICAL_SPEAKER_FIXTURE_PATH := "user://tests/canonical_speaker_fixture.txt"
+const CANONICAL_SPEAKER_FIXTURE := """
+@<|
+label('canonical_speaker_a')
+is_debug()
+|>
+？？？//张浅野：：first
+？？？：：second
+@<|
+label('canonical_speaker_b')
+is_debug()
+|>
+？？？：：third
+"""
+
 var _failures: Array[String] = []
 
 
@@ -40,6 +55,7 @@ func _init() -> void:
 
 
 func _run() -> void:
+	_write_canonical_speaker_fixture()
 	var ctx := TestContext.new()
 	root.add_child(ctx)
 	ctx.setup()
@@ -47,9 +63,11 @@ func _run() -> void:
 	var nova := NovaController.new()
 	var files := nova.scenario_files.duplicate()
 	nova.free()
+	files.append(CANONICAL_SPEAKER_FIXTURE_PATH)
 
 	ctx.script_loader.load_all(files)
 	_expect(ctx.script_loader.load_ok, "default Nova scenarios should parse")
+	_check_canonical_speaker_fixture(ctx.script_loader.graph)
 
 	for node in ctx.script_loader.graph.nodes.values():
 		for i in range(node.entries.size()):
@@ -80,6 +98,29 @@ func _compile(ctx: TestContext, source: String, label: String) -> void:
 	var script := ctx.runtime.compile_block(source)
 	if script == null or ctx.runtime.had_error:
 		_failures.append("compile failed: %s\n%s" % [label, source])
+
+
+func _write_canonical_speaker_fixture() -> void:
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("user://tests"))
+	var file := FileAccess.open(CANONICAL_SPEAKER_FIXTURE_PATH, FileAccess.WRITE)
+	if file == null:
+		_failures.append("failed to write canonical speaker fixture")
+		return
+	file.store_string(CANONICAL_SPEAKER_FIXTURE)
+	file.close()
+
+
+func _check_canonical_speaker_fixture(graph: FlowChartGraph) -> void:
+	var first_node = graph.get_node_named(&"canonical_speaker_a")
+	var second_node = graph.get_node_named(&"canonical_speaker_b")
+	_expect(first_node != null and first_node.entries.size() == 2, "canonical speaker fixture first node should have two entries")
+	_expect(second_node != null and second_node.entries.size() == 1, "canonical speaker fixture second node should have one entry")
+	if first_node != null and first_node.entries.size() == 2:
+		_expect(first_node.entries[0].speaker == "？？？", "display speaker should omit hidden canonical marker")
+		_expect(first_node.entries[0].character_name == "张浅野", "explicit canonical speaker should be stored")
+		_expect(first_node.entries[1].character_name == "张浅野", "canonical speaker should be inherited inside the node")
+	if second_node != null and second_node.entries.size() == 1:
+		_expect(second_node.entries[0].character_name == "？？？", "canonical speaker aliases should reset at a new label")
 
 
 func _expect(condition: bool, message: String) -> void:

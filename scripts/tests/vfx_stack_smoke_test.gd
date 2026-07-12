@@ -1,6 +1,6 @@
 extends SceneTree
 
-## Headless smoke test for VFXSystem material stack and screen capture.
+## Headless smoke test for VFXSystem effect-stack bookkeeping and screen capture.
 ##
 ## Usage:
 ##   godot --headless --path . --script res://scripts/tests/vfx_stack_smoke_test.gd
@@ -35,12 +35,14 @@ func _run() -> void:
 	if vfx == null:
 		_expect(false, "VFXSystem should exist")
 	else:
-		_test_effect_stack(vfx, scene)
+		await _test_effect_stack(vfx, scene)
 		_test_screen_capture(vfx)
-		_test_snapshot_restore(vfx)
+		await _test_snapshot_restore(vfx, scene)
+		vfx.clear_all()
 
 	root.remove_child(scene)
 	scene.free()
+	await process_frame
 	await process_frame
 	_finish()
 
@@ -58,13 +60,13 @@ func _test_effect_stack(vfx: Variant, scene: Node) -> void:
 	_expect(vfx.MAX_STACK_DEPTH >= 2, "MAX_STACK_DEPTH should be at least 2")
 
 	# Try playing an effect on the world node (should exist).
-	var world := scene.get_node_or_null("GameView/World") as Node2D
+	var world: Node2D = scene.get_node_or_null("GameView/World") as Node2D
 	if world == null:
 		# World might be nested differently — skip stack test.
 		return
 
 	# Play blur on world.
-	var t := vfx.play("blur", world, 0.1)
+	var t: Variant = vfx.play("blur", world, 0.0)
 	_expect(t != null, "play() should return a Tween")
 
 	# Wait for tween to start.
@@ -74,19 +76,33 @@ func _test_effect_stack(vfx: Variant, scene: Node) -> void:
 	_expect(world.material != null, "world should have material after play()")
 
 	# Play grayscale on world — should stack.
-	var t2 := vfx.play("grayscale", world, 0.1)
+	var t2: Variant = vfx.play("grayscale", world, 0.0)
 	_expect(t2 != null, "second play() should return a Tween")
 
 	await process_frame
+	await process_frame
+
+	var stacked: Dictionary = vfx.snapshot()
+	var effects_map: Dictionary = stacked.get("effects", {})
+	var world_effects: Array = effects_map.get("world", [])
+	_expect(world_effects.size() == 2, "snapshot should retain both active world effects")
 
 	# Clear via name — should use clear_effect if it exists.
 	if vfx.has_method("clear_effect"):
-		var t3 := vfx.clear_effect("blur", world, 0.0)
+		var t3: Variant = vfx.clear_effect("blur", world, 0.0)
+		_expect(t3 != null, "clear_effect() should return a Tween")
 		# After clear_effect, world should still have material (grayscale remains).
 		_expect(world.material != null, "world should still have material after clear_effect")
+		var reduced: Dictionary = vfx.snapshot()
+		var reduced_map: Dictionary = reduced.get("effects", {})
+		var remaining: Array = reduced_map.get("world", [])
+		_expect(remaining.size() == 1, "clear_effect should remove only the named effect")
+		if remaining.size() == 1:
+			_expect(str(remaining[0].get("effect", "")) == "grayscale", "grayscale should remain active")
 
 	# Clear all effects.
 	vfx.clear(world, 0.0)
+	await process_frame
 	await process_frame
 
 	# Verify clear_effect and clear don't crash.
@@ -100,20 +116,28 @@ func _test_screen_capture(vfx: Variant) -> void:
 		_expect(false, "VFXSystem should have capture_screen")
 		return
 
-	var tex := vfx.capture_screen()
+	var tex: Variant = vfx.capture_screen()
 	# In headless mode, viewport texture may be empty.
 	_expect(tex is ImageTexture or tex == null, "capture_screen should return ImageTexture or null")
 
 
 # ── Snapshot / restore ──────────────────────────────────────────────
 
-func _test_snapshot_restore(vfx: Variant) -> void:
+func _test_snapshot_restore(vfx: Variant, scene: Node) -> void:
 	if not vfx.has_method("snapshot"):
 		_expect(false, "VFXSystem should have snapshot")
 		return
+	var world: Node2D = scene.get_node_or_null("GameView/World") as Node2D
+	if world == null:
+		return
+
+	vfx.play("grayscale", "world", 0.0, {"amount": 0.6})
+	await process_frame
+	await process_frame
 
 	var snap: Dictionary = vfx.snapshot()
 	_expect(snap is Dictionary, "snapshot should return Dictionary")
+	_expect(snap.has("effects"), "snapshot should contain active effects")
 
 	if snap.has("effects"):
 		# Should include per-target effect lists.
@@ -125,8 +149,18 @@ func _test_snapshot_restore(vfx: Variant) -> void:
 				_expect(ed.has("effect"), "snapshot entry should have effect name")
 				_expect(ed.has("params"), "snapshot entry should have params")
 
-	var ok: bool = vfx.restore(snap) if vfx.has_method("restore") else false
-	_expect(ok or true, "restore should handle snapshot")
+	vfx.clear(world, 0.0)
+	if vfx.has_method("restore"):
+		vfx.restore(snap)
+		await process_frame
+		await process_frame
+		var restored: Dictionary = vfx.snapshot()
+		var restored_map: Dictionary = restored.get("effects", {})
+		var restored_world: Array = restored_map.get("world", [])
+		_expect(restored_world.size() == 1, "restore should recreate the active effect list")
+	else:
+		_expect(false, "VFXSystem should have restore")
+	vfx.clear(world, 0.0)
 
 
 # ── Helpers ──────────────────────────────────────────────────────────

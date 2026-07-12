@@ -34,6 +34,12 @@ func _run() -> void:
 	nova.game_state.start_node(&"ch1")
 	await _wait_until(func() -> bool: return nova.game_state.is_waiting_input or nova.game_state.is_ended)
 	_expect(not nova.runtime.had_error, "starting ch1 should not produce runtime compile errors")
+	_expect(nova.auto_voice != null and nova.auto_voice.next_index("王二宫") == 1002, "ch1 first dialogue should consume automatic voice 001001")
+	if nova.auto_voice:
+		var voice_state: Dictionary = nova.auto_voice.snapshot()
+		var current_cue = voice_state.get("current_cue", {})
+		_expect(current_cue is Dictionary and str(current_cue.get("path", "")) == "Voices/Ergong/001001.ogg", "ch1 should resolve the first real automatic voice path")
+		_expect(nova.auto_voice.has_pending_voice(), "ch1 first voice should honor its two-second delay")
 
 	var advanced := 0
 	while advanced < STEPS and not nova.game_state.is_ended:

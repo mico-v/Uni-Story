@@ -53,6 +53,7 @@ func _init() -> void:
 
 	ctx.script_loader.load_all(files)
 	var errors := ctx.script_loader.graph.sanity_check()
+	errors.append_array(_canonical_speaker_errors(ctx.script_loader.graph))
 	if not errors.is_empty():
 		for err in errors:
 			push_error(str(err))
@@ -109,3 +110,26 @@ func _collect_txt_files(path: String, out: Array[String]) -> void:
 			out.append(path.path_join(entry))
 		entry = dir.get_next()
 	dir.list_dir_end()
+
+
+func _canonical_speaker_errors(graph: FlowChartGraph) -> Array[String]:
+	var errors: Array[String] = []
+	for node in graph.nodes.values():
+		for entry in node.entries:
+			if entry.speaker.contains("//"):
+				errors.append("canonical speaker marker leaked into display name: %s" % entry.speaker)
+
+	if not graph.has_node_named(&"ch2"):
+		return errors
+
+	var ch2 = graph.get_node_named(&"ch2")
+	var disguised_count: int = 0
+	for entry in ch2.entries:
+		if entry.speaker != "？？？":
+			continue
+		disguised_count += 1
+		if entry.character_name != "张浅野":
+			errors.append("ch2 disguised speaker should inherit canonical 张浅野, got %s" % entry.character_name)
+	if disguised_count < 2:
+		errors.append("ch2 should contain inherited disguised speaker entries")
+	return errors

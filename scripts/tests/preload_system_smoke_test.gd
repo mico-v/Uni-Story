@@ -9,7 +9,6 @@ extends SceneTree
 const MAIN_SCENE := "res://scene/game.tscn"
 
 var _failures: Array[String] = []
-var _test_file_count: int = 0
 
 
 func _init() -> void:
@@ -18,19 +17,25 @@ func _init() -> void:
 
 func _run() -> void:
 	# Create a mock ctx for standalone PreloadSystem tests.
-	var mock_ctx := Node.new()
-	var ps := PreloadSystem.new(mock_ctx)
+	var mock_ctx: Node = Node.new()
+	root.add_child(mock_ctx)
+	var ps: PreloadSystem = PreloadSystem.new(mock_ctx)
 
 	_test_configure(ps)
 	_test_per_type_cache(ps)
-	_test_reference_counting(ps)
-	_test_progress_reporting(ps)
-	_test_snapshot_restore(ps)
-	_test_cancel_all(ps)
-	_test_clear_cache(ps)
+	await _test_reference_counting(ps)
+	await _test_progress_reporting(ps)
+	await _test_snapshot_restore(ps)
+	await _test_cancel_all(ps)
+	await _test_clear_cache(ps)
 
 	# Integration: verify NovaController has per-type config.
-	_test_nova_integration()
+	await _test_nova_integration()
+
+	ps.cancel_all()
+	root.remove_child(mock_ctx)
+	mock_ctx.free()
+	await process_frame
 
 	_finish()
 
@@ -187,7 +192,6 @@ func _test_clear_cache(ps: PreloadSystem) -> void:
 		await process_frame
 		ticks += 1
 
-	var size_before: int = ps.cache_size()
 	ps.clear_cache()
 	_expect(ps.cache_size() == 0, "cache should be empty after clear_cache")
 	_expect(ps.max_cache_size > 0, "max_cache_size should be preserved after clear_cache")
@@ -223,6 +227,7 @@ func _test_nova_integration() -> void:
 
 	root.remove_child(scene)
 	scene.free()
+	await process_frame
 	await process_frame
 
 

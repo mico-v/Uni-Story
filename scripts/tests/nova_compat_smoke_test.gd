@@ -16,6 +16,7 @@ class TestContext:
 	var graphics: NoopGraphics
 	var dialogue_box: NoopDialogueBox
 	var read_tracker: NoopReadTracker
+	var video_system: NoopVideoSystem
 
 	func setup() -> void:
 		object_manager = ObjectManager.new()
@@ -23,6 +24,7 @@ class TestContext:
 		graphics = NoopGraphics.new()
 		dialogue_box = NoopDialogueBox.new()
 		read_tracker = NoopReadTracker.new()
+		video_system = NoopVideoSystem.new()
 		runtime = GDRuntime.new(self)
 		script_loader = ScriptLoader.new(self)
 		game_state = GameState.new(self)
@@ -55,6 +57,19 @@ class NoopReadTracker:
 	extends RefCounted
 
 	func mark_read(_node_name: StringName, _index: int) -> void:
+		pass
+
+
+class NoopVideoSystem:
+	extends RefCounted
+
+	var last_path := ""
+
+	func play_video(path: String, _skippable: bool = true):
+		last_path = path
+		return null
+
+	func stop() -> void:
 		pass
 
 
@@ -93,6 +108,14 @@ func _run() -> void:
 	var ctx := TestContext.new()
 	root.add_child(ctx)
 	ctx.setup()
+	var compat_block := BaseBlock.new()
+	compat_block._ctx = ctx
+	compat_block.video("demo_video")
+	compat_block.video_play()
+	_expect(ctx.video_system.last_path == "Videos/demo_video.mp4", "video_play() should consume the path prepared by video()")
+	compat_block.video("Videos/demo_video.mp4")
+	compat_block.video_play()
+	_expect(ctx.video_system.last_path == "Videos/demo_video.mp4", "video() should preserve explicit directories and extensions")
 
 	ctx.game_state.dialogue_changed.connect(func(speaker: String, text: String) -> void:
 		_dialogues.append({"speaker": speaker, "text": text})

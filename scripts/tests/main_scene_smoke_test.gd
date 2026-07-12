@@ -48,6 +48,7 @@ func _run() -> void:
 		_expect(nova.view_manager != null and nova.view_manager.has_view("help"), "ViewManager should register help view")
 		_expect(nova.settings_coordinator != null, "SettingsCoordinator should be initialized")
 		_expect(nova.save_system != null and nova.save_system.slot_count == nova.save_slot_count, "SaveSystem should receive exported slot count")
+		_expect(nova.auto_voice != null and nova.restorables.has("auto_voice"), "AutoVoiceSystem should be configured and registered for restore")
 		_expect(nova.preload_system != null and nova.preload_system.max_cache_size == nova.preload_cache_size, "PreloadSystem should receive exported cache size")
 		_expect(nova.gallery_coordinator != null, "GalleryCoordinator should be initialized")
 		_expect(nova.mobile_ui_support is MobileUiSupport, "MobileUiSupport should be initialized")

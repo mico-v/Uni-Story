@@ -22,7 +22,7 @@ func _run() -> void:
 	_test_base_theme_structural()
 	_test_work_theme_colors()
 	_test_theme_manager_constants()
-	_test_theme_manager_in_main_scene()
+	await _test_theme_manager_in_main_scene()
 	_finish()
 
 
@@ -152,6 +152,7 @@ func _test_theme_manager_in_main_scene() -> void:
 
 	root.remove_child(scene)
 	scene.free()
+	await process_frame
 	await process_frame
 
 
