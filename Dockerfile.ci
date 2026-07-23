@@ -4,6 +4,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 ENV GODOT_VERSION=4.6
 ENV ANDROID_SDK_ROOT=/opt/android-sdk
 ENV ANDROID_HOME=/opt/android-sdk
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 
 # 基础工具 + JDK 17
 RUN apt-get update && apt-get install -y \
@@ -31,7 +32,6 @@ RUN yes | ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --sdk_root=${A
         "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
 # Godot Mono (.NET) 引擎
-# 注意：GodotSharp 目录必须和 godot 可执行文件在同一目录
 RUN wget -nv "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_mono_linux_x86_64.zip" \
         -O /tmp/godot.zip \
     && unzip -o /tmp/godot.zip -d /tmp \
@@ -41,12 +41,23 @@ RUN wget -nv "https://github.com/godotengine/godot/releases/download/${GODOT_VER
     && cp -r "${GODOT_DIR}/GodotSharp" /usr/local/bin/GodotSharp \
     && rm -rf /tmp/godot.zip "/tmp/Godot_v${GODOT_VERSION}-stable_mono_linux_x86_64"
 
-# Godot Mono (.NET) 导出模板（含 Android 构建模板）
+# Godot Mono (.NET) 导出模板
 RUN wget -nv "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_mono_export_templates.tpz" \
         -O /tmp/templates.tpz \
     && mkdir -p "/root/.local/share/godot/export_templates/${GODOT_VERSION}.stable.mono" \
     && unzip -q /tmp/templates.tpz -d /tmp/tpl \
     && mv /tmp/tpl/templates/* "/root/.local/share/godot/export_templates/${GODOT_VERSION}.stable.mono/" \
     && rm -rf /tmp/templates.tpz /tmp/tpl
+
+# 从导出模板中提取 Android 构建模板
+RUN mkdir -p "/root/.local/share/godot/build_templates/android" \
+    && unzip -q "/root/.local/share/godot/export_templates/${GODOT_VERSION}.stable.mono/android_source.zip" \
+        -d "/root/.local/share/godot/build_templates/android"
+
+# Godot Editor Settings（配置 JDK 和 Android SDK 路径）
+RUN mkdir -p /root/.config/godot \
+    && printf '[gd_resource type="EditorSettings" format=3]\n\n[resource]\nexport/android/android_sdk_path = "%s"\nexport/android/jdk_path = "%s"\n' \
+        "${ANDROID_SDK_ROOT}" "${JAVA_HOME}" \
+        > /root/.config/godot/editor_settings-4.tres
 
 WORKDIR /workspace
