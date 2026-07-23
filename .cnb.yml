@@ -26,6 +26,9 @@
 .import-project: &import-project
   name: import-project
   script: |
+    # 提前解压 Android 构建模板到项目目录，确保 Godot import 时能检测到 .template_version
+    mkdir -p android/build
+    unzip -qo /root/.local/share/godot/export_templates/4.6.stable.mono/android_source.zip -d android/build
     godot --headless --import
 
 .build-windows: &build-windows
@@ -44,18 +47,14 @@
 .build-android-debug: &build-android-debug
   name: Build Android Debug
   script: |
-    mkdir -p release/android android/build
-    # 安装 Android 构建模板到项目目录（Godot 4.x Mono 要求）
-    unzip -qo /root/.local/share/godot/export_templates/4.6.stable.mono/android_source.zip -d android/build
+    mkdir -p release/android
     # Debug 导出使用 Godot 内置 debug keystore，自动签名
     godot --headless --export-debug "Android" "release/android/$PROJECT_NAME-debug.apk"
 
 .build-android-release: &build-android-release
   name: Build Android Release
   script: |
-    mkdir -p release/android android/build
-    # 安装 Android 构建模板到项目目录（Godot 4.x Mono 要求）
-    unzip -qo /root/.local/share/godot/export_templates/4.6.stable.mono/android_source.zip -d android/build
+    mkdir -p release/android
     # Release 导出需要配置 keystore（见下方签名说明）
     # 如果未配置 release keystore，Godot 会使用 debug keystore
     godot --headless --export-release "Android" "release/android/$PROJECT_NAME.apk"
