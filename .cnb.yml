@@ -52,13 +52,18 @@
   name: Build Android Debug
   script: |
     mkdir -p release/android
+    # Must import first to generate .sln for C# (before template extraction
+    # to avoid Godot creating .import files in android/build/res/)
+    godot --headless --import
     # Extract Android build template to project dir (required by Godot's gradle build)
     mkdir -p android/build
     unzip -qo /root/.local/share/godot/export_templates/4.6.stable.mono/android_source.zip -d android/build
     # Godot requires this file to know the template version
     echo "4.6.stable.mono" > android/.build_version
-    # Each job has isolated workspace; must import to generate .sln for C#
-    godot --headless --import
+    # Prevent Godot from scanning/corrupting Android template resources during export
+    touch android/build/.gdignore
+    # Clean any stale .import files that Godot may create in the template dir
+    find android/build -name "*.import" -delete 2>/dev/null || true
     # Debug 导出使用 Godot 内置 debug keystore，自动签名
     godot --headless --export-debug "Android" "release/android/$PROJECT_NAME-debug.apk"
 
@@ -66,13 +71,18 @@
   name: Build Android Release
   script: |
     mkdir -p release/android
+    # Must import first to generate .sln for C# (before template extraction
+    # to avoid Godot creating .import files in android/build/res/)
+    godot --headless --import
     # Extract Android build template to project dir (required by Godot's gradle build)
     mkdir -p android/build
     unzip -qo /root/.local/share/godot/export_templates/4.6.stable.mono/android_source.zip -d android/build
     # Godot requires this file to know the template version
     echo "4.6.stable.mono" > android/.build_version
-    # Each job has isolated workspace; must import to generate .sln for C#
-    godot --headless --import
+    # Prevent Godot from scanning/corrupting Android template resources during export
+    touch android/build/.gdignore
+    # Clean any stale .import files that Godot may create in the template dir
+    find android/build -name "*.import" -delete 2>/dev/null || true
     # Android Release: 使用 debug keystore 作为 fallback（未配置 release keystore 时）
     # 如需 release 签名，请参考文件末尾的签名配置说明
     godot --headless --export-release "Android" "release/android/$PROJECT_NAME.apk" || \
