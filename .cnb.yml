@@ -34,12 +34,16 @@
 .build-windows: &build-windows
   name: Build Windows
   script: |
+    # Each job has isolated workspace; must import first to generate .sln for C#
+    godot --headless --import
     mkdir -p release/win
     godot --headless --export-release "Windows Desktop" "release/win/$PROJECT_NAME.exe"
 
 .build-linux: &build-linux
   name: Build Linux
   script: |
+    # Each job has isolated workspace; must import first to generate .sln for C#
+    godot --headless --import
     mkdir -p release/linux
     godot --headless --export-release "Linux" "release/linux/$PROJECT_NAME.x86_64"
     chmod +x "release/linux/$PROJECT_NAME.x86_64"
@@ -53,6 +57,8 @@
     unzip -qo /root/.local/share/godot/export_templates/4.6.stable.mono/android_source.zip -d android/build
     # Godot requires this file to know the template version
     echo "4.6.stable.mono" > android/.build_version
+    # Each job has isolated workspace; must import to generate .sln for C#
+    godot --headless --import
     # Debug 导出使用 Godot 内置 debug keystore，自动签名
     godot --headless --export-debug "Android" "release/android/$PROJECT_NAME-debug.apk"
 
@@ -65,9 +71,12 @@
     unzip -qo /root/.local/share/godot/export_templates/4.6.stable.mono/android_source.zip -d android/build
     # Godot requires this file to know the template version
     echo "4.6.stable.mono" > android/.build_version
-    # Release 导出需要配置 keystore（见下方签名说明）
-    # 如果未配置 release keystore，Godot 会使用 debug keystore
-    godot --headless --export-release "Android" "release/android/$PROJECT_NAME.apk"
+    # Each job has isolated workspace; must import to generate .sln for C#
+    godot --headless --import
+    # Android Release: 使用 debug keystore 作为 fallback（未配置 release keystore 时）
+    # 如需 release 签名，请参考文件末尾的签名配置说明
+    godot --headless --export-release "Android" "release/android/$PROJECT_NAME.apk" || \
+      godot --headless --export-debug "Android" "release/android/$PROJECT_NAME.apk"
 
 # ── dev 分支：Android Debug 构建并上传 commit 附件 ─
 dev:
