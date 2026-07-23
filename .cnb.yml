@@ -1,0 +1,92 @@
+# UniStory Godot 4.6 构建配置
+# 支持：Windows / Linux / Android 三平台导出
+
+# ── 公共构建环境 ──────────────────────────────────
+.build-env: &build-env
+  docker:
+    build:
+      dockerfile: Dockerfile.ci
+      by:
+        - Dockerfile.ci
+      versionBy:
+        - Dockerfile.ci
+  env:
+    PROJECT_NAME: UniStory
+  services:
+    - docker
+
+# ── 平台构建步骤 ──────────────────────────────────
+.import-project: &import-project
+  name: import-project
+  script: |
+    godot --headless --import
+
+.build-windows: &build-windows
+  name: Build Windows
+  script: |
+    mkdir -p release/win
+    godot --headless --export-release "Windows Desktop" "release/win/$PROJECT_NAME.exe"
+
+.build-linux: &build-linux
+  name: Build Linux
+  script: |
+    mkdir -p release/linux
+    godot --headless --export-release "Linux" "release/linux/$PROJECT_NAME.x86_64"
+    chmod +x "release/linux/$PROJECT_NAME.x86_64"
+
+.build-android: &build-android
+  name: Build Android
+  script: |
+    mkdir -p release/android
+    godot --headless --export-release "Android" "release/android/$PROJECT_NAME.apk"
+
+# ── 兜底分支（仓库级事件） ────────────────────────
+$:
+  # Tag 推送：自动构建并发布 Release
+  tag_push:
+    build-and-release:
+      <<: *build-env
+      stages:
+        - *import-project
+        - name: build-all-platforms
+          jobs:
+            windows: *build-windows
+            linux: *build-linux
+            android: *build-android
+        - name: package-artifacts
+          script: |
+            TAG="$CNB_BRANCH"
+            cd release/win && zip -r "../../$PROJECT_NAME-$TAG-windows-x64.zip" . && cd ../..
+            cd release/linux && tar czf "../../$PROJECT_NAME-$TAG-linux-x64.tar.gz" . && cd ../..
+            cp release/android/*.apk "$PROJECT_NAME-$TAG-android.apk" 2>/dev/null || true
+            echo "=== 打包完成 ==="
+            ls -lah *.zip *.tar.gz *.apk 2>/dev/null || true
+        - name: create-release
+          type: git:release
+          options:
+            descriptionFromFile: CHANGELOG.md
+      failStages:
+        - name: notify-failure
+          script: |
+            echo "Build failed: $CNB_BUILD_ID"
+
+  # Web 手动触发：只构建不发布
+  web_trigger:
+    manual-build:
+      <<: *build-env
+      stages:
+        - *import-project
+        - name: build-all-platforms
+          jobs:
+            windows: *build-windows
+            linux: *build-linux
+            android: *build-android
+        - name: show-artifacts
+          script: |
+            echo "=== 构建产物 ==="
+            find release/ -type f | sort
+            du -sh release/*/
+      failStages:
+        - name: notify-failure
+          script: |
+            echo "Build failed: $CNB_BUILD_ID"

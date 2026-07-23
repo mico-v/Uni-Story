@@ -1,0 +1,52 @@
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV GODOT_VERSION=4.6
+ENV ANDROID_SDK_ROOT=/opt/android-sdk
+
+# 基础工具 + JDK 17
+RUN apt-get update && apt-get install -y \
+    wget unzip curl ca-certificates zip openjdk-17-jdk-headless \
+    && rm -rf /var/lib/apt/lists/*
+
+# .NET SDK 8.0
+RUN wget -q https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb -O /tmp/ms.deb \
+    && dpkg -i /tmp/ms.deb \
+    && rm /tmp/ms.deb \
+    && apt-get update \
+    && apt-get install -y dotnet-sdk-8.0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Android SDK cmdline-tools
+RUN mkdir -p ${ANDROID_SDK_ROOT}/cmdline-tools \
+    && wget -nv https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O /tmp/cmdline-tools.zip \
+    && unzip /tmp/cmdline-tools.zip -d ${ANDROID_SDK_ROOT}/cmdline-tools \
+    && mv ${ANDROID_SDK_ROOT}/cmdline-tools/cmdline-tools ${ANDROID_SDK_ROOT}/cmdline-tools/latest \
+    && rm /tmp/cmdline-tools.zip
+
+# 接受 Android 许可并安装 SDK 组件
+RUN yes | ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --sdk_root=${ANDROID_SDK_ROOT} --licenses \
+    && ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --sdk_root=${ANDROID_SDK_ROOT} \
+        "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+
+# Godot 引擎
+RUN wget -nv "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip" -O /tmp/godot.zip \
+    && unzip -o /tmp/godot.zip -d /tmp/godot \
+    && chmod +x /tmp/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64 \
+    && mv /tmp/godot/Godot_v${GODOT_VERSION}-stable_linux.x86_64 /usr/local/bin/godot \
+    && rm -rf /tmp/godot.zip /tmp/godot
+
+# Godot 导出模板
+RUN wget -nv "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz" -O /tmp/templates.tpz \
+    && mkdir -p /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable \
+    && unzip -q /tmp/templates.tpz -d /tmp/tpl \
+    && mv /tmp/tpl/templates/* /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable/ \
+    && rm -rf /tmp/templates.tpz /tmp/tpl
+
+# Godot Android 构建模板
+RUN wget -nv "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_android_source.zip" -O /tmp/android_src.zip \
+    && mkdir -p /root/.local/share/godot/build_templates/android \
+    && unzip -q /tmp/android_src.zip -d /root/.local/share/godot/build_templates/android \
+    && rm /tmp/android_src.zip
+
+WORKDIR /workspace
