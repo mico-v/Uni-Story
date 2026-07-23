@@ -1,5 +1,12 @@
 # UniStory Godot 4.6 构建配置
 # 支持：Windows / Linux / Android 三平台导出
+#
+# 分支策略：
+#   dev  - push: 构建 Android Debug APK（自动 debug 签名）
+#   main - push: 全平台 CI 检查（不发布）
+#   tag_push ($): 全平台构建 + Release 签名 + 创建 Release + 上传产物附件
+#
+# Android 签名说明见文件末尾注释和 README
 
 # ── 公共构建环境 ──────────────────────────────────
 .build-env: &build-env
@@ -34,15 +41,61 @@
     godot --headless --export-release "Linux" "release/linux/$PROJECT_NAME.x86_64"
     chmod +x "release/linux/$PROJECT_NAME.x86_64"
 
-.build-android: &build-android
-  name: Build Android
+.build-android-debug: &build-android-debug
+  name: Build Android Debug
   script: |
     mkdir -p release/android
-    godot --headless --export-release "Android" "release/android/$PROJECT_NAME.apk" || echo "Android build skipped (may need project-level config)"
+    # Debug 导出使用 Godot 内置 debug keystore，自动签名
+    godot --headless --export-debug "Android" "release/android/$PROJECT_NAME-debug.apk"
+
+.build-android-release: &build-android-release
+  name: Build Android Release
+  script: |
+    mkdir -p release/android
+    # Release 导出需要配置 keystore（见下方签名说明）
+    # 如果未配置 release keystore，Godot 会使用 debug keystore
+    godot --headless --export-release "Android" "release/android/$PROJECT_NAME.apk"
+
+# ── dev 分支：Android Debug 构建并上传 commit 附件 ─
+dev:
+  push:
+    - <<: *build-env
+      name: android-debug-build
+      stages:
+        - *import-project
+        - *build-android-debug
+        - name: package-android-debug
+          script: |
+            COMMIT_SHORT=$(echo "$CNB_COMMIT" | cut -c1-7)
+            cp release/android/*.apk "$PROJECT_NAME-debug-$COMMIT_SHORT.apk" 2>/dev/null || true
+            echo "=== 打包完成 ==="
+            ls -lah *.apk 2>/dev/null || true
+        - name: upload-debug-apk
+          image: cnbcool/attachments:latest
+          settings:
+            attachments:
+              - "./*.apk"
+      failStages:
+        - name: notify-failure
+          script: |
+            echo "Dev Android build failed: $CNB_BUILD_ID"
+
+# ── main 分支：全平台 CI 检查（不发布） ───────────
+main:
+  push:
+    - <<: *build-env
+      name: ci-check
+      stages:
+        - *import-project
+        - name: build-all-platforms
+          jobs:
+            windows: *build-windows
+            linux: *build-linux
+            android: *build-android-release
 
 # ── 兜底分支（仓库级事件） ────────────────────────
 $:
-  # Tag 推送：自动构建并发布 Release
+  # Tag 推送：全平台构建 + 签名 + 发布 Release + 上传产物
   tag_push:
     build-and-release:
       <<: *build-env
@@ -52,7 +105,7 @@ $:
           jobs:
             windows: *build-windows
             linux: *build-linux
-            android: *build-android
+            android: *build-android-release
         - name: package-artifacts
           script: |
             TAG="$CNB_BRANCH"
@@ -65,6 +118,13 @@ $:
           type: git:release
           options:
             descriptionFromFile: CHANGELOG.md
+        - name: upload-release-assets
+          image: cnbcool/attachments:latest
+          settings:
+            attachments:
+              - "./*.zip"
+              - "./*.tar.gz"
+              - "./*.apk"
       failStages:
         - name: notify-failure
           script: |
@@ -80,7 +140,7 @@ $:
           jobs:
             windows: *build-windows
             linux: *build-linux
-            android: *build-android
+            android: *build-android-release
         - name: show-artifacts
           script: |
             echo "=== 构建产物 ==="
@@ -90,3 +150,51 @@ $:
         - name: notify-failure
           script: |
             echo "Build failed: $CNB_BUILD_ID"
+
+# ═══════════════════════════════════════════════════════════════
+# Android 签名配置说明
+# ═══════════════════════════════════════════════════════════════
+#
+# 【Debug 签名（dev 分支）】
+#   Godot 内置 debug keystore，自动处理，无需额外配置。
+#   使用 --export-debug 即可，生成的 APK 可直接安装测试。
+#
+# 【Release 签名（tag_push 发布）】
+#   需要准备 Release Keystore，按以下步骤操作：
+#
+#   1. 生成 Keystore：
+#      keytool -genkey -v -keystore release.keystore \
+#        -alias release -keyalg RSA -keysize 2048 -validity 10000 \
+#        -storepass YOUR_STORE_PASS -keypass YOUR_KEY_PASS \
+#        -dname "CN=YourName, OU=YourOrg, O=YourOrg, L=City, S=State, C=CN"
+#
+#   2. 将 keystore 文件上传到 CNB 密钥仓库
+#      （或转为 base64 存入密钥仓库的环境变量）
+#
+#   3. 在密钥仓库 secrets.yml 中配置：
+#      ANDROID_KEYSTORE_B64: <base64编码的keystore文件内容>
+#      ANDROID_KEYSTORE_PASS: your_store_password
+#      ANDROID_KEYSTORE_ALIAS: release
+#      ANDROID_KEYSTORE_KEY_PASS: your_key_password
+#
+#   4. 在 .cnb.yml 的 build-env 中添加 imports：
+#      imports:
+#        - https://cnb.cool/<org>/<secret-repo>/-/blob/main/secrets.yml
+#
+#   5. 在 Dockerfile.ci 末尾或 CI 脚本中添加 keystore 注入：
+#      echo "$ANDROID_KEYSTORE_B64" | base64 -d > /root/release.keystore
+#
+#      # 更新 Godot 编辑器设置（配置 keystore 路径和密码）
+#      cat >> /root/.config/godot/editor_settings-4.tres << 'GODOT_EOF'
+#      export/android/keystore_release = "/root/release.keystore"
+#      export/android/keystore_release_user = "release"
+#      export/android/keystore_release_password = "YOUR_STORE_PASS"
+#      GODOT_EOF
+#
+#   6. 或者直接在 export_presets.cfg 的 Android preset 中添加：
+#      keystore/release="/root/release.keystore"
+#      keystore/release_user="release"
+#      keystore/release_password="YOUR_STORE_PASS"
+#
+#   【简化方案】：如果不发布到 Google Play，可以复用 debug keystore，
+#   只需使用 --export-debug 导出 debug 版本即可分发测试。
