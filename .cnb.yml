@@ -40,28 +40,6 @@
     mkdir -p release/android
     godot --headless --export-release "Android" "release/android/$PROJECT_NAME.apk" || echo "Android build skipped (may need project-level config)"
 
-# ── 具体分支 ──────────────────────────────────
-"feat/cnb-pipeline":
-  push:
-    test-build:
-      <<: *build-env
-      stages:
-        - *import-project
-        - name: build-all-platforms
-          jobs:
-            windows: *build-windows
-            linux: *build-linux
-            android: *build-android
-        - name: show-artifacts
-          script: |
-            echo "=== 构建产物 ==="
-            find release/ -type f | sort
-            du -sh release/*/
-      failStages:
-        - name: notify-failure
-          script: |
-            echo "Build failed: $CNB_BUILD_ID"
-
 # ── 兜底分支（仓库级事件） ────────────────────────
 $:
   # Tag 推送：自动构建并发布 Release
