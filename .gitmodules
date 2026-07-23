@@ -1,0 +1,3 @@
+[submodule "Nova"]
+	path = Nova
+	url = https://github.com/Lunatic-Works/Nova.git

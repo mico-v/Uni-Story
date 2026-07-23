@@ -16,8 +16,8 @@ class_name GalleryConfigLoader extends RefCounted
 const RESOURCE_PREFIX := "res://resources/"
 
 
-static func load_cg(path: String) -> Array:
-	var entries: Array = []
+static func load_cg(path: String) -> Array[Dictionary]:
+	var entries: Array[Dictionary] = []
 	var sections := _parse_sections(path)
 	for sec in sections:
 		var file: String = sec.get("file", "").strip_edges()
@@ -32,8 +32,8 @@ static func load_cg(path: String) -> Array:
 	return entries
 
 
-static func load_music(path: String) -> Array:
-	var entries: Array = []
+static func load_music(path: String) -> Array[Dictionary]:
+	var entries: Array[Dictionary] = []
 	var sections := _parse_sections(path)
 	for sec in sections:
 		var file: String = sec.get("file", "").strip_edges()

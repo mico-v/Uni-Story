@@ -17,7 +17,7 @@ class_name HotReload extends RefCounted
 var _ctx: Node
 
 ## Scenario file paths to watch (resolved, post-localization).
-var _files: Array = []
+var _files: Array[String] = []
 
 ## Stored modification times for change detection.
 var _file_times: Dictionary = {}
@@ -99,14 +99,14 @@ func reload() -> bool:
 	if _ctx.backlog:
 		_ctx.backlog.clear()
 
-	# 5. Destroy all runtime-loaded prefabs.
+	# 5. Destroy all runtime-loaded prefabs (including persistent).
 	if _ctx.prefab_loader:
-		_ctx.prefab_loader.destroy_all()
+		_ctx.prefab_loader.destroy_all(true)
 
 	# 6. Re-resolve localized paths and reload.
 	var scenario_files := _files.duplicate()
 	if _ctx.has_method("_localized_scenario_files"):
-		scenario_files = _ctx._localized_scenario_files(_ctx.SCENARIO_FILES.duplicate())
+		scenario_files = _ctx._localized_scenario_files(_ctx.scenario_files.duplicate())
 
 	_ctx.script_loader.load_all(scenario_files)
 	if not _ctx.script_loader.load_ok:
@@ -117,8 +117,6 @@ func reload() -> bool:
 	_ctx.game_state.setup(_ctx.script_loader.graph)
 
 	# 8. Refresh UI.
-	if _ctx.has_method("_refresh_chapters"):
-		_ctx._refresh_chapters()
 	if _ctx.view_manager:
 		_ctx.view_manager.switch_to("title")
 

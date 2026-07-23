@@ -90,6 +90,17 @@ func get_all_actions() -> Array:
 	return actions
 
 
+## Find which action (if any) is already bound to the given keycode.
+## Returns the action name or empty string if the key is free.
+func find_action_by_key(keycode: int) -> String:
+	var defaults := _get_defaults()
+	for action in defaults:
+		var kc := get_keycode(action)
+		if kc == keycode:
+			return action
+	return ""
+
+
 # ── Persistence ─────────────────────────────────────────────────────────
 
 func save_bindings() -> void:
@@ -139,8 +150,7 @@ func _get_defaults() -> Dictionary:
 	d["ui_fullscreen"] = KEY_F11
 	d["ui_settings"] = KEY_F1
 	d["ui_leave"] = KEY_ESCAPE
-	d["debug_reload"] = KEY_F5
-	d["debug_unlock"] = KEY_U
+	d["debug_reload"] = KEY_F9
 	return d
 
 

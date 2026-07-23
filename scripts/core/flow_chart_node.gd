@@ -13,6 +13,7 @@ var type: int = Type.NORMAL
 var is_start: bool = false
 var is_unlocked_start: bool = false
 var is_debug: bool = false
+var is_save_point: bool = false
 
 ## Array[DialogueEntry]
 var entries: Array = []
@@ -28,6 +29,9 @@ var jump_target: StringName = &""
 ##   "image": String
 ## } Set by branch().
 var branches: Array = []
+
+## Ending name set by is_end(name). Empty if unnamed or not an end node.
+var end_name: String = ""
 
 
 func add_entry(entry) -> void:

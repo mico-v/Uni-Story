@@ -1,0 +1,40 @@
+[gd_scene format=3 uid="uid://slotrow_unistory"]
+
+[node name="SlotRow" type="HBoxContainer"]
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+
+[node name="Thumbnail" type="TextureRect" parent="."]
+custom_minimum_size = Vector2(120, 68)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Info" type="VBoxContainer" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ChapterLabel" type="Label" parent="Info"]
+layout_mode = 2
+clip_text = true
+mouse_filter = 2
+
+[node name="PositionLabel" type="Label" parent="Info"]
+layout_mode = 2
+clip_text = true
+mouse_filter = 2
+
+[node name="TimeLabel" type="Label" parent="Info"]
+layout_mode = 2
+clip_text = true
+mouse_filter = 2
+
+[node name="MainButton" type="Button" parent="."]
+custom_minimum_size = Vector2(80, 68)
+layout_mode = 2
+
+[node name="DeleteButton" type="Button" parent="."]
+custom_minimum_size = Vector2(60, 68)
+layout_mode = 2
+text = "删除"

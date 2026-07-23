@@ -4,10 +4,15 @@ class_name Graphics extends RefCounted
 ## An object can be passed by node reference (`o.fg`) or by name (`"fg"`).
 
 var _ctx: Node
+var _visual_profile: Resource = null
 
 
 func _init(ctx: Node) -> void:
 	_ctx = ctx
+
+
+func configure(profile: Resource) -> void:
+	_visual_profile = profile
 
 
 func _resolve(obj: Variant) -> CanvasItem:
@@ -26,29 +31,152 @@ func show(obj: Variant, image_path: String, coord = null, color = null) -> void:
 	var node := _resolve(obj)
 	if node == null:
 		return
+	var obj_name: String = str(obj)
+	var image_name := _resolve_image_name(str(obj), image_path)
+	if image_name.find("+") != -1:
+		_show_composite(node, image_name, coord, color)
+		return
 
 	var root: String = _ctx.object_manager.constants.get("resource_root", "res://resources/")
 	var folder := ""
 	if node.has_meta("folder"):
 		folder = str(node.get_meta("folder")) + "/"
-	var path := root + folder + image_path + ".png"
+	var path := root + folder + image_name + ".png"
 
 	var tex := _load_texture(path)
+	if tex == null:
+		return
 	if tex != null and node is TextureRect:
 		(node as TextureRect).texture = tex
 	elif tex != null and node is Sprite2D:
+		_hide_composite_layers(node as Sprite2D)
 		(node as Sprite2D).texture = tex
 
-	if coord != null:
+	if _should_auto_fit_fullscreen(obj_name, coord):
+		_fit_cover(node, tex)
+		node.set_meta("graphics_auto_fit_fullscreen", true)
+	elif coord != null:
+		node.set_meta("graphics_auto_fit_fullscreen", false)
 		move(node, coord)
+	else:
+		node.set_meta("graphics_auto_fit_fullscreen", false)
 	if color != null:
 		tint(node, color)
+	else:
+		node.modulate = Color.WHITE
 	node.visible = true
+	# Auto-unlock CG gallery entry if this image matches a gallery CG.
+	if _ctx.has_method("unlock_cg_by_path"):
+		_ctx.unlock_cg_by_path(path)
+
+
+func _resolve_image_name(obj_name: String, image_path: String) -> String:
+	if obj_name == "cg":
+		var pose := image_path.strip_edges()
+		if pose.begins_with("cg/"):
+			pose = pose.substr(3)
+		pose = _resolve_visual_alias(obj_name, pose)
+		return _prefix_composite_parts("cg", pose)
+	return image_path.strip_edges()
+
+
+func _resolve_visual_alias(obj_name: String, image_name: String) -> String:
+	if _visual_profile != null and _visual_profile.has_method("resolve_image_alias"):
+		return str(_visual_profile.call("resolve_image_alias", obj_name, image_name))
+	return image_name
+
+
+func _prefix_composite_parts(folder: String, image_name: String) -> String:
+	var out: Array[String] = []
+	for raw_part in image_name.split("+", false):
+		var part := str(raw_part).strip_edges()
+		if part.is_empty():
+			continue
+		if part.begins_with("res://") or part.find("/") != -1:
+			out.append(part)
+		else:
+			out.append("%s/%s" % [folder, part])
+	var joined := ""
+	for part in out:
+		if not joined.is_empty():
+			joined += "+"
+		joined += part
+	return joined
+
+
+func _show_composite(node: CanvasItem, image_name: String, coord = null, color = null) -> void:
+	if node is Sprite2D:
+		var spr := node as Sprite2D
+		var parts: PackedStringArray = image_name.split("+", false)
+		if parts.is_empty():
+			return
+		var root: String = _ctx.object_manager.constants.get("resource_root", "res://resources/")
+		var folder := ""
+		if node.has_meta("folder"):
+			folder = str(node.get_meta("folder")) + "/"
+		var base_path := root + folder + str(parts[0]) + ".png"
+		var base_tex := _load_texture(base_path)
+		if base_tex:
+			spr.texture = base_tex
+		else:
+			return
+		var base_size: Vector2 = base_tex.get_size()
+		var overlay_origin: Vector2 = base_size * 0.5
+		if spr.centered:
+			overlay_origin = Vector2.ZERO
+		var used_overlay_count: int = maxi(0, parts.size() - 1)
+		for i in range(1, parts.size()):
+			var overlay_path := root + folder + str(parts[i]) + ".png"
+			var overlay_tex := _load_texture(overlay_path)
+			var overlay := _ensure_composite_layer(spr, i - 1)
+			overlay.texture = overlay_tex
+			overlay.position = overlay_origin
+			overlay.visible = overlay_tex != null
+		_hide_composite_layers(spr, used_overlay_count)
+		if coord != null:
+			node.set_meta("graphics_auto_fit_fullscreen", false)
+			move(node, coord)
+		elif str(node.name).to_lower() == "foreground" and image_name.begins_with("cg/"):
+			_fit_cover(node, base_tex)
+			node.set_meta("graphics_auto_fit_fullscreen", true)
+		if color != null:
+			tint(node, color)
+		else:
+			node.modulate = Color.WHITE
+		node.visible = true
+		if _ctx.has_method("unlock_cg_by_path"):
+			_ctx.unlock_cg_by_path(base_path)
+
+
+func _ensure_composite_layer(parent: Sprite2D, layer_index: int) -> Sprite2D:
+	var child_name := "CompositeLayer%d" % layer_index
+	var existing := parent.get_node_or_null(child_name)
+	if existing is Sprite2D:
+		return existing as Sprite2D
+	var layer := Sprite2D.new()
+	layer.name = child_name
+	layer.centered = true
+	layer.z_index = layer_index + 1
+	layer.set_meta("graphics_composite_layer", layer_index)
+	parent.add_child(layer)
+	return layer
+
+
+func _hide_composite_layers(parent: Sprite2D, used_count: int = 0) -> void:
+	for child in parent.get_children():
+		if child is Sprite2D and child.has_meta("graphics_composite_layer"):
+			var layer_index := int(child.get_meta("graphics_composite_layer"))
+			if layer_index >= used_count:
+				var layer := child as Sprite2D
+				layer.texture = null
+				layer.visible = false
 
 
 func hide(obj: Variant) -> void:
 	var node := _resolve(obj)
 	if node:
+		if node is Sprite2D:
+			_hide_composite_layers(node as Sprite2D)
 		node.visible = false
 
 
@@ -92,6 +220,19 @@ func tint(obj: Variant, color: Variant) -> void:
 	node.modulate = _to_color(color)
 
 
+func fit_fullscreen_objects() -> void:
+	var objects: Dictionary = _ctx.object_manager.objects
+	for key in objects:
+		var node = objects[key]
+		if not (node is CanvasItem):
+			continue
+		if not bool((node as CanvasItem).get_meta("graphics_auto_fit_fullscreen", false)):
+			continue
+		var tex: Texture2D = _texture_for_node(node as CanvasItem)
+		if tex != null:
+			_fit_cover(node as CanvasItem, tex)
+
+
 static func _to_color(color: Variant) -> Color:
 	if color is Color:
 		return color
@@ -107,6 +248,44 @@ static func _to_color(color: Variant) -> Color:
 
 static func _is_num(v: Variant) -> bool:
 	return v is int or v is float
+
+
+func _should_auto_fit_fullscreen(obj_name: String, coord: Variant) -> bool:
+	if coord != null:
+		return false
+	return obj_name == "bg" or obj_name == "cg"
+
+
+func _fit_cover(node: CanvasItem, texture: Texture2D) -> void:
+	if texture == null:
+		return
+	var viewport_size: Vector2 = _ctx.get_viewport().get_visible_rect().size
+	var texture_size: Vector2 = texture.get_size()
+	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0 or texture_size.x <= 0.0 or texture_size.y <= 0.0:
+		return
+	var fit_scale: float = maxf(viewport_size.x / texture_size.x, viewport_size.y / texture_size.y)
+	if node is Sprite2D:
+		var sprite: Sprite2D = node as Sprite2D
+		sprite.centered = false
+		sprite.scale = Vector2(fit_scale, fit_scale)
+		sprite.position = (viewport_size - texture_size * fit_scale) * 0.5
+	elif node is TextureRect:
+		var rect: TextureRect = node as TextureRect
+		rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+		rect.offset_left = 0.0
+		rect.offset_top = 0.0
+		rect.offset_right = 0.0
+		rect.offset_bottom = 0.0
+		rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+
+
+func _texture_for_node(node: CanvasItem) -> Texture2D:
+	if node is Sprite2D:
+		return (node as Sprite2D).texture
+	if node is TextureRect:
+		return (node as TextureRect).texture
+	return null
 
 
 func _load_texture(path: String) -> Texture2D:
@@ -168,6 +347,15 @@ func restore(data: Dictionary) -> void:
 			var m = obj_state["modulate"]
 			if m is Array and m.size() >= 4:
 				node.modulate = Color(float(m[0]), float(m[1]), float(m[2]), float(m[3]))
+		if obj_state.has("texture_path"):
+			var tp := str(obj_state["texture_path"])
+			if not tp.is_empty():
+				var tex := _load_texture(tp)
+				if tex:
+					if node is Sprite2D:
+						(node as Sprite2D).texture = tex
+					elif node is TextureRect:
+						(node as TextureRect).texture = tex
 
 
 func _get_texture_path(node: CanvasItem) -> String:

@@ -9,13 +9,22 @@ class_name SpriteComposer extends RefCounted
 ## base name: characters/renna/body.png (or body_<key> if a key is given).
 
 const CHAR_ROOT := "characters/"
+const StandingProfileScript = preload("res://scripts/runtime/standing_profile.gd")
 
 var _ctx: Node
 var _chars: Dictionary = {}  # name -> CompositeSprite
+var _profile = StandingProfileScript.new()
+var _layer_offsets: Dictionary = {}  # "char/layer" -> Vector2
 
 
 func _init(ctx: Node) -> void:
 	_ctx = ctx
+
+
+func configure(profile: Resource) -> void:
+	if profile != null:
+		_profile = profile
+		_layer_offsets.clear()
 
 
 func _world() -> Node2D:
@@ -24,7 +33,13 @@ func _world() -> Node2D:
 
 func _char_dir(char_name: String) -> String:
 	var root: String = _ctx.object_manager.constants.get("resource_root", "res://resources/")
+	if has_character_profile(char_name):
+		return root.path_join(_profile.character_directory(char_name))
 	return root + CHAR_ROOT + char_name + "/"
+
+
+func has_character_profile(char_name: String) -> bool:
+	return _profile != null and _profile.has_character(char_name)
 
 
 func _load_layer_texture(char_name: String, layer: String, key: Variant) -> Texture2D:
@@ -41,6 +56,19 @@ func _load_layer_texture(char_name: String, layer: String, key: Variant) -> Text
 			return ImageTexture.create_from_image(img)
 	push_warning("SpriteComposer: missing layer '%s'" % path)
 	return null
+
+
+
+func _layer_offset(char_name: String, layer: String) -> Vector2:
+	if not has_character_profile(char_name):
+		return Vector2.ZERO
+	var key := "%s/%s" % [char_name.to_lower(), layer]
+	if _layer_offsets.has(key):
+		return _layer_offsets[key]
+	var root: String = _ctx.object_manager.constants.get("resource_root", "res://resources/")
+	var offset: Vector2 = _profile.layer_offset(root, char_name, layer)
+	_layer_offsets[key] = offset
+	return offset
 
 
 func _get_or_create(char_name: String) -> CompositeSprite:
@@ -61,19 +89,42 @@ func _get_or_create(char_name: String) -> CompositeSprite:
 ##         or a String treated as { body=<that key> }.
 func show_char(char_name: String, layers: Variant = {}, coord = null, color = null) -> void:
 	var cs := _get_or_create(char_name)
+	if has_character_profile(char_name):
+		cs.set_layer_order(_profile.layer_order(char_name))
 
 	var layer_map: Dictionary = {}
-	if layers is Dictionary:
-		layer_map = layers
-	elif layers is String:
-		layer_map = {"body": layers}
+	if has_character_profile(char_name):
+		var pose_layers: Array[String] = []
+		if layers is Dictionary:
+			for layer in layers:
+				var layer_name := str(layer)
+				if str(layers[layer]) == "":
+					pose_layers.append(layer_name)
+				else:
+					pose_layers.append(layer_name + "_" + str(layers[layer]))
+		elif layers is String:
+			pose_layers = _profile.resolve_pose_layers(char_name, layers)
+		elif layers is Array:
+			for item in layers:
+				pose_layers.append(str(item))
+		else:
+			pose_layers = _profile.resolve_pose_layers(char_name, "normal")
+		var normalized_layers: Array[String] = _profile.normalize_layers(char_name, pose_layers)
+		cs.hide_layers_except(normalized_layers)
+		for layer_name in normalized_layers:
+			var tex: Texture2D = _load_layer_texture(char_name, layer_name, null)
+			cs.set_layer(layer_name, tex, _layer_offset(char_name, layer_name))
+	else:
+		if layers is Dictionary:
+			layer_map = layers
+		elif layers is String:
+			layer_map = {"body": layers}
 
-	if layer_map.is_empty():
-		layer_map = {"body": ""}
-
-	for layer in layer_map:
-		var tex := _load_layer_texture(char_name, str(layer), layer_map[layer])
-		cs.set_layer(str(layer), tex)
+		if layer_map.is_empty():
+			layer_map = {"body": ""}
+		for layer in layer_map:
+			var tex := _load_layer_texture(char_name, str(layer), layer_map[layer])
+			cs.set_layer(str(layer), tex)
 
 	if coord != null:
 		_ctx.graphics.move(cs, coord)
@@ -82,13 +133,65 @@ func show_char(char_name: String, layers: Variant = {}, coord = null, color = nu
 	cs.visible = true
 
 
+func move_char(char_name: String, coord: Variant, scale = null, angle = null) -> void:
+	var cs := _get_or_create(char_name)
+	_ctx.graphics.move(cs, coord, scale, angle)
+
+
+func tint_char(char_name: String, color: Variant) -> void:
+	var cs := _get_or_create(char_name)
+	_ctx.graphics.tint(cs, color)
+
+
 ## Swap a single layer (e.g. expression / mouth) on an existing character.
 func set_layer(char_name: String, layer: String, key: Variant = "") -> void:
 	var cs := _get_or_create(char_name)
 	var tex := _load_layer_texture(char_name, layer, key)
-	cs.set_layer(layer, tex)
+	var layer_name := layer if key == null or str(key).is_empty() else layer + "_" + str(key)
+	var target_layer := layer_name if has_character_profile(char_name) else layer
+	if has_character_profile(char_name):
+		cs.hide_layer_group(_profile.layer_group(char_name, target_layer))
+	var offset := _layer_offset(char_name, target_layer)
+	cs.set_layer(target_layer, tex, offset)
 
 
 func hide_char(char_name: String) -> void:
 	if _chars.has(char_name):
 		_chars[char_name].visible = false
+
+
+## Free all character nodes and clear internal references.
+## Called during reset_world() to prevent dangling references.
+func clear_all() -> void:
+	for char_name in _chars:
+		var cs: CompositeSprite = _chars[char_name]
+		if is_instance_valid(cs):
+			cs.clear_layers()
+			cs.queue_free()
+		if _ctx.object_manager:
+			_ctx.object_manager.unbind_object_runtime(char_name)
+	_chars.clear()
+
+
+func snapshot() -> Dictionary:
+	var data := {}
+	for char_name in _chars:
+		var cs: CompositeSprite = _chars[char_name]
+		if is_instance_valid(cs) and cs.visible:
+			var state := cs.layer_state()
+			if not state.is_empty():
+				data[char_name] = state
+	return data
+
+
+func restore(data: Dictionary) -> void:
+	for char_name in data:
+		var layer_map: Dictionary = data[char_name]
+		if layer_map.is_empty():
+			continue
+		var cs := _get_or_create(char_name)
+		for layer in layer_map:
+			var tex_path: String = str(layer_map[layer])
+			if ResourceLoader.exists(tex_path):
+				cs.set_layer(layer, load(tex_path), _layer_offset(char_name, str(layer)))
+		cs.visible = true

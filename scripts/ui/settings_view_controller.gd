@@ -44,6 +44,17 @@ var _ctx: Node  # NovaController reference
 var _key_buttons: Dictionary = {}  # action_name -> Button
 var _recorder_overlay: ColorRect = null
 
+# Scene-defined controls for extended gameplay settings.
+@onready var _slider_dialogue_opacity: HSlider = $HBox/Content/Scroll/SettingsList/RowDialogueOpacity/Slider
+@onready var _check_click_stop_anim: CheckButton = $HBox/Content/Scroll/SettingsList/RowClickStopAnim/Check
+@onready var _check_click_stop_voice: CheckButton = $HBox/Content/Scroll/SettingsList/RowClickStopVoice/Check
+@onready var _check_skip_unread: CheckButton = $HBox/Content/Scroll/SettingsList/RowSkipUnread/Check
+@onready var _lbl_dialogue_opacity: Label = $HBox/Content/Scroll/SettingsList/RowDialogueOpacity/Label
+@onready var _lbl_click_stop_anim: Label = $HBox/Content/Scroll/SettingsList/RowClickStopAnim/Label
+@onready var _lbl_click_stop_voice: Label = $HBox/Content/Scroll/SettingsList/RowClickStopVoice/Label
+@onready var _lbl_skip_unread: Label = $HBox/Content/Scroll/SettingsList/RowSkipUnread/Label
+@onready var _section_gameplay: Label = $HBox/Content/Scroll/SettingsList/SectionGameplay
+
 # Action-to-i18n key mapping (excludes debug actions).
 const ACTION_I18N := {
 	"ui_step_forward": "config.key.StepForward",
@@ -76,17 +87,21 @@ func _ready() -> void:
 	slider_vol_voice.value_changed.connect(func(v: float) -> void: setting_changed.emit("vol_voice", v))
 	check_fullscreen.toggled.connect(func(on: bool) -> void: setting_changed.emit("fullscreen", on))
 	slider_font_size.value_changed.connect(func(v: float) -> void: setting_changed.emit("font_size", v))
+	_slider_dialogue_opacity.value_changed.connect(func(v: float) -> void: setting_changed.emit("dialogue_opacity", v))
+	_check_click_stop_anim.toggled.connect(func(on: bool) -> void: setting_changed.emit("click_stop_anim", on))
+	_check_click_stop_voice.toggled.connect(func(on: bool) -> void: setting_changed.emit("click_stop_voice", on))
+	_check_skip_unread.toggled.connect(func(on: bool) -> void: setting_changed.emit("skip_unread", on))
 	option_language.item_selected.connect(func(idx: int) -> void:
 		var lang := "zh" if idx == 0 else "en"
 		setting_changed.emit("language", lang)
 	)
 
 	if title_label:
-		title_label.add_theme_font_size_override("font_size", 32)
+		title_label.add_theme_font_size_override("font_size", ThemeManager.SIZE_TITLE)
 		title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	for section in [section_text, section_volume, section_display, section_lang, section_shortcut]:
+	for section in [section_text, section_volume, section_display, section_lang, section_shortcut, _section_gameplay]:
 		if section:
-			section.add_theme_font_size_override("font_size", 24)
+			section.add_theme_font_size_override("font_size", ThemeManager.SIZE_SECTION)
 
 
 func _apply_defaults() -> void:
@@ -98,6 +113,10 @@ func _apply_defaults() -> void:
 	slider_vol_voice.value = 100.0
 	check_fullscreen.button_pressed = false
 	slider_font_size.value = 26.0
+	_slider_dialogue_opacity.value = 100.0
+	_check_click_stop_anim.button_pressed = true
+	_check_click_stop_voice.button_pressed = true
+	_check_skip_unread.button_pressed = false
 
 
 func apply_settings(data: Dictionary) -> void:
@@ -119,6 +138,14 @@ func apply_settings(data: Dictionary) -> void:
 		slider_font_size.value = float(data["font_size"])
 	if data.has("language"):
 		option_language.selected = 0 if str(data["language"]) == "zh" else 1
+	if data.has("dialogue_opacity"):
+		_slider_dialogue_opacity.value = float(data["dialogue_opacity"])
+	if data.has("click_stop_anim"):
+		_check_click_stop_anim.button_pressed = bool(data["click_stop_anim"])
+	if data.has("click_stop_voice"):
+		_check_click_stop_voice.button_pressed = bool(data["click_stop_voice"])
+	if data.has("skip_unread"):
+		_check_skip_unread.button_pressed = bool(data["skip_unread"])
 
 
 func apply_i18n(i18n: I18n) -> void:
@@ -158,6 +185,12 @@ func apply_i18n(i18n: I18n) -> void:
 		btn_reset.text = i18n.t("config.resetdefault", "重置默认设置")
 	if section_shortcut:
 		section_shortcut.text = i18n.t("config.title.shortcuts", "快捷键")
+	# Gameplay section labels.
+	_section_gameplay.text = i18n.t("config.title.gameplay", "游戏")
+	_lbl_dialogue_opacity.text = i18n.t("config.item.dialogueopacity", "对话框透明度")
+	_lbl_click_stop_anim.text = i18n.t("config.item.clickstopanimation", "点击停止动画")
+	_lbl_click_stop_voice.text = i18n.t("config.item.clickstopvoice", "点击停止语音")
+	_lbl_skip_unread.text = i18n.t("config.item.fastforwardunread", "快进未读文本")
 	# Refresh shortcut action labels and key buttons.
 	if _ctx and _ctx.shortcut_manager:
 		for action in ACTION_I18N:
@@ -175,6 +208,10 @@ func _emit_all() -> void:
 	setting_changed.emit("vol_voice", slider_vol_voice.value)
 	setting_changed.emit("fullscreen", check_fullscreen.button_pressed)
 	setting_changed.emit("font_size", slider_font_size.value)
+	setting_changed.emit("dialogue_opacity", _slider_dialogue_opacity.value)
+	setting_changed.emit("click_stop_anim", _check_click_stop_anim.button_pressed)
+	setting_changed.emit("click_stop_voice", _check_click_stop_voice.button_pressed)
+	setting_changed.emit("skip_unread", _check_skip_unread.button_pressed)
 
 
 func snapshot() -> Dictionary:
@@ -188,6 +225,10 @@ func snapshot() -> Dictionary:
 		"fullscreen": check_fullscreen.button_pressed,
 		"font_size": slider_font_size.value,
 		"language": "zh" if option_language.selected == 0 else "en",
+		"dialogue_opacity": _slider_dialogue_opacity.value,
+		"click_stop_anim": _check_click_stop_anim.button_pressed,
+		"click_stop_voice": _check_click_stop_voice.button_pressed,
+		"skip_unread": _check_skip_unread.button_pressed,
 	}
 
 
@@ -253,22 +294,60 @@ func _open_key_recorder(action: String, btn: Button) -> void:
 	_recorder_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_recorder_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	var hint := Label.new()
+	hint.name = "RecorderHint"
 	hint.text = _t("config.recorderpopup", "按下新的快捷键")
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	hint.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	hint.add_theme_font_size_override("font_size", 28)
+	hint.add_theme_font_size_override("font_size", ThemeManager.SIZE_HINT)
 	hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_recorder_overlay.add_child(hint)
+
+	var conflict_label := Label.new()
+	conflict_label.name = "ConflictLabel"
+	conflict_label.text = ""
+	conflict_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	conflict_label.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	conflict_label.anchor_top = 0.55
+	conflict_label.offset_top = 40.0
+	conflict_label.add_theme_font_size_override("font_size", ThemeManager.SIZE_CONFLICT)
+	conflict_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	conflict_label.visible = false
+	_recorder_overlay.add_child(conflict_label)
+
+	var _pending_action := action  # Captured for conflict confirm step.
+	var pending_key: Array = [0]  # Mutable container for conflict stage.
+
 	_recorder_overlay.gui_input.connect(func(event: InputEvent) -> void:
 		if event is InputEventKey and event.pressed and not event.is_echo():
 			var key_event := event as InputEventKey
 			if key_event.keycode == KEY_ESCAPE:
 				_close_key_recorder()
 				return
-			if _ctx and _ctx.shortcut_manager:
-				_ctx.shortcut_manager.remap(action, key_event.keycode)
-				btn.text = _ctx.shortcut_manager.get_key_label(action)
+			if _ctx == null or _ctx.shortcut_manager == null:
+				_close_key_recorder()
+				return
+			var sm: ShortcutManager = _ctx.shortcut_manager
+			var new_key := key_event.keycode
+			# Find if this key is already used by another action.
+			var existing := sm.find_action_by_key(new_key)
+			if existing == _pending_action:
+				# Same action — nothing to conflict with.
+				existing = ""
+			if not existing.is_empty() and not conflict_label.visible:
+				# First conflict: show warning, wait for confirm or cancel.
+				var conflict_name := _t(ACTION_I18N.get(existing, ""), existing)
+				conflict_label.text = _t("config.key.conflict", "与 %s 冲突，再按一次覆盖，Esc 取消") % conflict_name
+				conflict_label.visible = true
+				# Store the pending key for second-stage confirm.
+				pending_key[0] = new_key
+				return
+			if not existing.is_empty() and conflict_label.visible:
+				# Second press on conflict: confirm override.
+				sm.remap(existing, sm.get_keycode(existing))  # Will be overwritten below
+			# Apply the new binding.
+			sm.remap(_pending_action, new_key)
+			btn.text = sm.get_key_label(_pending_action)
 			_close_key_recorder()
 	)
 	if _ctx:

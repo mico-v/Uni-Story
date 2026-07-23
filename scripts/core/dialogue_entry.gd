@@ -8,10 +8,15 @@ class_name DialogueEntry extends RefCounted
 ## or loading re-runs the lazy blocks to rebuild presentation state.
 
 var speaker: String = ""
+## Stable internal speaker identity used by systems such as automatic voice.
+## This may differ from `speaker` when a scenario uses `display//internal`.
+var character_name: String = ""
 var text: String = ""
 
 ## GDScript source of the `<|...|>` block attached to this entry (may be empty).
 var lazy_source: String = ""
+var before_checkpoint_source: String = ""
+var after_dialogue_source: String = ""
 
 ## True when this entry exists only to carry presentation/flow code and has no
 ## displayable text (e.g. a lone `<| show(...) |>` or a branch trigger).
@@ -20,3 +25,11 @@ var is_silent: bool = false
 
 func has_lazy() -> bool:
 	return not lazy_source.strip_edges().is_empty()
+
+
+func has_before_checkpoint() -> bool:
+	return not before_checkpoint_source.strip_edges().is_empty()
+
+
+func has_after_dialogue() -> bool:
+	return not after_dialogue_source.strip_edges().is_empty()

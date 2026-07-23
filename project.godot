@@ -15,10 +15,6 @@ run/main_scene="res://scene/game.tscn"
 config/features=PackedStringArray("4.6", "Mobile")
 config/icon="res://resources/icon.svg"
 
-[autoload]
-
-MCPRuntime="*res://addons/godot_mcp/runtime/mcp_runtime.gd"
-
 [display]
 
 window/size/viewport_width=1280
@@ -26,18 +22,12 @@ window/size/viewport_height=720
 window/size/window_width_override=1280
 window/size/window_height_override=720
 window/stretch/mode="canvas_items"
-
-[dotnet]
-
-project/assembly_name="Nova2Rewrite"
-
-[editor_plugins]
-
-enabled=PackedStringArray("res://addons/godot_mcp/plugin.cfg")
+window/stretch/aspect="expand"
 
 [gui]
 
 theme/custom="res://resources/themes/main_theme.tres"
+theme/custom_font="res://resources/fonts/NotoSansSC-Regular.ttf"
 
 [input]
 
@@ -103,12 +93,7 @@ ui_leave={
 }
 debug_reload={
 "deadzone": 0.5,
-"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":4194368,"physical_keycode":0,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
-]
-}
-debug_unlock={
-"deadzone": 0.5,
-"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":85,"physical_keycode":0,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":4194340,"physical_keycode":0,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
 ]
 }
 

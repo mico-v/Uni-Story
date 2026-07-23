@@ -11,6 +11,7 @@ signal title_requested()
 signal settings_requested()
 
 const ButtonRingScene: PackedScene = preload("res://scene/ui/button_ring.tscn")
+const SlotRowScene: PackedScene = preload("res://scene/ui/slot_row.tscn")
 
 # ── Context ──────────────────────────────────────────────────────────
 var _ctx: Node  # NovaController
@@ -22,6 +23,9 @@ var _fg: Sprite2D
 
 # ── HUD nodes ────────────────────────────────────────────────────────
 var _hud: Control
+var _dialogue_layer: Control
+var _control_layer: Control
+var _modal_layer: Control
 var _status_label: Label
 var _dbox: Panel
 var _speaker_label: Label
@@ -38,7 +42,9 @@ var _auto_btn: Button
 var _skip_btn: Button
 var _overlay: ColorRect
 var _post_fx_rect: ColorRect
-var _continue_icon: Label
+var _confirm_overlay: ColorRect
+var _confirm_panel: PanelContainer
+var _continue_icon: TextureRect
 var _avatar_rect: TextureRect
 
 # ── Save/load panel ──────────────────────────────────────────────────
@@ -47,29 +53,47 @@ var _save_panel_title: Label
 var _save_slots: VBoxContainer
 var _save_close_btn: Button
 var _save_mode := true
+var _save_load_controller: SaveLoadPanelController = SaveLoadPanelController.new()
 
 # ── Backlog panel ────────────────────────────────────────────────────
 var _backlog_panel: Panel
 var _backlog_list: VBoxContainer
 var _backlog_scroll: ScrollContainer
 var _backlog_close_btn: Button
+var _backlog_controller: BacklogPanelController = BacklogPanelController.new()
 
 # ── Mouse menu (right-click context menu) ────────────────────────────
 var _mouse_menu: PanelContainer
 var _mouse_menu_items: VBoxContainer
+@export var touch_menu_hold_seconds: float = 0.55
+@export var touch_menu_deadzone: float = 18.0
+var _touch_menu_active := false
+var _touch_menu_opened := false
+var _touch_menu_moved := false
+var _touch_menu_can_advance := false
+var _touch_menu_token := 0
+var _touch_menu_origin := Vector2.ZERO
 
 # ── Typewriter state ─────────────────────────────────────────────────
-var type_cps := 30.0
 var _type_tween: Tween = null
 var _is_typing := false
+@export var type_cps: float = 30.0
 
 # ── Auto/Skip mode state ─────────────────────────────────────────────
-var auto_delay := 0.10  # seconds per character for auto-play delay
-const SKIP_DELAY := 0.05
 var _is_auto := false
 var _is_skip := false
 var _auto_gen := 0
 var _skip_gen := 0
+@export var auto_delay: float = 0.10  # seconds per character for auto-play delay
+@export var skip_delay: float = 0.05
+
+# ── Chapter auto-advance timer ───────────────────────────────────────
+var _chapter_timer: SceneTreeTimer = null
+
+# ── Gameplay settings (set by SettingsViewController) ─────────────────
+var click_stop_anim := true
+var click_stop_voice := true
+var skip_unread := false
 
 
 # ── Lifecycle ────────────────────────────────────────────────────────
@@ -78,8 +102,12 @@ func setup(ctx: Node) -> void:
 	_ctx = ctx
 	_bind_nodes()
 	_apply_ui_defaults()
+	_connect_layout_signals()
+	apply_responsive_layout()
 	_connect_signals()
 	_create_mouse_menu()
+	_save_load_controller.setup(ctx)
+	_backlog_controller.setup(ctx)
 
 
 func _bind_nodes() -> void:
@@ -88,33 +116,50 @@ func _bind_nodes() -> void:
 	_fg = get_node_or_null("World/Foreground") as Sprite2D
 	_hud = get_node_or_null("Hud") as Control
 	if _hud:
-		_status_label = _hud.get_node_or_null("Status") as Label
-		_dbox = _hud.get_node_or_null("DialogueBox") as Panel
-		_speaker_label = _hud.get_node_or_null("DialogueBox/Speaker") as Label
-		_story_label = _hud.get_node_or_null("DialogueBox/Story") as RichTextLabel
-		_continue_icon = _hud.get_node_or_null("DialogueBox/ContinueIcon") as Label
-		_avatar_rect = _hud.get_node_or_null("DialogueBox/Avatar") as TextureRect
-		_choice_list = _hud.get_node_or_null("ChoiceList") as VBoxContainer
+		_dialogue_layer = _hud.get_node_or_null("DialogueLayer") as Control
+		_control_layer = _hud.get_node_or_null("ControlLayer") as Control
+		_modal_layer = _hud.get_node_or_null("ModalLayer") as Control
+		if _dialogue_layer == null:
+			_dialogue_layer = _hud
+		if _control_layer == null:
+			_control_layer = _hud
+		if _modal_layer == null:
+			_modal_layer = _hud
+		_status_label = _dialogue_layer.get_node_or_null("Status") as Label
+		_dbox = _dialogue_layer.get_node_or_null("DialogueBox") as Panel
+		_speaker_label = _dialogue_layer.get_node_or_null("DialogueBox/Speaker") as Label
+		_story_label = _dialogue_layer.get_node_or_null("DialogueBox/Story") as RichTextLabel
+		_continue_icon = _dialogue_layer.get_node_or_null("DialogueBox/ContinueIcon") as TextureRect
+		_avatar_rect = _dialogue_layer.get_node_or_null("DialogueBox/Avatar") as TextureRect
+		_choice_list = _dialogue_layer.get_node_or_null("ChoiceList") as VBoxContainer
 		if _choice_list is ChoiceListController:
 			_choice_list_controller = _choice_list as ChoiceListController
-		_controls = _hud.get_node_or_null("Controls") as HBoxContainer
-		_restart_btn = _hud.get_node_or_null("Controls/Restart") as Button
-		_save_btn = _hud.get_node_or_null("Controls/Save") as Button
-		_load_btn = _hud.get_node_or_null("Controls/Load") as Button
-		_backlog_btn = _hud.get_node_or_null("Controls/Backlog") as Button
-		_auto_btn = _hud.get_node_or_null("Controls/Auto") as Button
-		_skip_btn = _hud.get_node_or_null("Controls/Skip") as Button
-		_quit_btn = _hud.get_node_or_null("Controls/Quit") as Button
-		_overlay = _hud.get_node_or_null("TransitionOverlay") as ColorRect
-		_save_panel = _hud.get_node_or_null("SavePanel") as Panel
-		_save_panel_title = _hud.get_node_or_null("SavePanel/SavePanelContainer/Title") as Label
-		_save_slots = _hud.get_node_or_null("SavePanel/SavePanelContainer/Slots") as VBoxContainer
-		_save_close_btn = _hud.get_node_or_null("SavePanel/SavePanelContainer/CloseButton") as Button
-		_backlog_panel = _hud.get_node_or_null("BacklogPanel") as Panel
-		_backlog_list = _hud.get_node_or_null("BacklogPanel/BacklogPanelContainer/BacklogScroll/BacklogList") as VBoxContainer
-		_backlog_scroll = _hud.get_node_or_null("BacklogPanel/BacklogPanelContainer/BacklogScroll") as ScrollContainer
-		_backlog_close_btn = _hud.get_node_or_null("BacklogPanel/BacklogPanelContainer/CloseButton") as Button
+		_controls = _control_layer.get_node_or_null("Controls") as HBoxContainer
+		_restart_btn = _controls.get_node_or_null("Restart") as Button if _controls else null
+		_save_btn = _controls.get_node_or_null("Save") as Button if _controls else null
+		_load_btn = _controls.get_node_or_null("Load") as Button if _controls else null
+		_backlog_btn = _controls.get_node_or_null("Backlog") as Button if _controls else null
+		_auto_btn = _controls.get_node_or_null("Auto") as Button if _controls else null
+		_skip_btn = _controls.get_node_or_null("Skip") as Button if _controls else null
+		_quit_btn = _controls.get_node_or_null("Quit") as Button if _controls else null
+		_overlay = _modal_layer.get_node_or_null("TransitionOverlay") as ColorRect
+		_save_panel = _modal_layer.get_node_or_null("SavePanel") as Panel
+		if _save_panel:
+			_save_panel_title = _save_panel.get_node_or_null("SavePanelContainer/Title") as Label
+			_save_slots = _save_panel.get_node_or_null("SavePanelContainer/Slots") as VBoxContainer
+			_save_close_btn = _save_panel.get_node_or_null("SavePanelContainer/CloseButton") as Button
+		_backlog_panel = _modal_layer.get_node_or_null("BacklogPanel") as Panel
+		if _backlog_panel:
+			_backlog_list = _backlog_panel.get_node_or_null("BacklogPanelContainer/BacklogScroll/BacklogList") as VBoxContainer
+			_backlog_scroll = _backlog_panel.get_node_or_null("BacklogPanelContainer/BacklogScroll") as ScrollContainer
+			_backlog_close_btn = _backlog_panel.get_node_or_null("BacklogPanelContainer/CloseButton") as Button
+		_confirm_overlay = _modal_layer.get_node_or_null("ConfirmOverlay") as ColorRect
+		_confirm_panel = _modal_layer.get_node_or_null("ConfirmPanel") as PanelContainer
 	_post_fx_rect = get_node_or_null("PostFXRect") as ColorRect
+	_apply_canvas_layers()
+
+	_save_load_controller.bind_nodes(_save_panel, _save_panel_title, _save_slots, _save_close_btn)
+	_backlog_controller.bind_nodes(_backlog_panel, _backlog_list, _backlog_scroll, _backlog_close_btn)
 
 	# Initial visibility.
 	visible = false
@@ -128,6 +173,10 @@ func _bind_nodes() -> void:
 		_dbox.visible = false
 	if _overlay:
 		_overlay.visible = false
+	if _confirm_overlay:
+		_confirm_overlay.visible = false
+	if _confirm_panel:
+		_confirm_panel.visible = false
 	if _dbox:
 		_dbox.gui_input.connect(_on_dbox_click)
 	# Let clicks on dbox children pass through to the Panel (which has gui_input signal).
@@ -136,6 +185,17 @@ func _bind_nodes() -> void:
 	for child in [_speaker_label, _story_label, _continue_icon, _avatar_rect]:
 		if child is Control:
 			child.mouse_filter = MOUSE_FILTER_IGNORE
+	# Create a small downward-pointing triangle texture for ContinueIcon.
+	if _continue_icon:
+		var img := Image.create(16, 10, false, Image.FORMAT_RGBA8)
+		img.fill(Color(0, 0, 0, 0))
+		var tri_color := Color(0.55, 0.38, 0.65, 0.9)
+		for row in 8:
+			@warning_ignore("integer_division")
+			var half := row / 2
+			img.fill_rect(Rect2i(8 - half - 1, row + 1, half * 2 + 2, 1), tri_color)
+		var tex := ImageTexture.create_from_image(img)
+		_continue_icon.texture = tex
 	if _restart_btn:
 		_restart_btn.visible = false
 	if _save_btn:
@@ -146,33 +206,53 @@ func _bind_nodes() -> void:
 		_backlog_scroll.mouse_filter = Control.MOUSE_FILTER_STOP
 
 
+func _apply_canvas_layers() -> void:
+	if _world:
+		_world.z_index = 0
+	if _post_fx_rect:
+		_post_fx_rect.z_index = 10
+	if _hud:
+		_hud.z_index = 20
+	if _dialogue_layer:
+		_dialogue_layer.z_index = 0
+	if _control_layer:
+		_control_layer.z_index = 10
+	if _modal_layer:
+		_modal_layer.z_index = 20
+
+
+func _connect_layout_signals() -> void:
+	if not resized.is_connected(apply_responsive_layout):
+		resized.connect(apply_responsive_layout)
+
+
 func _apply_ui_defaults() -> void:
 	if _status_label:
-		_status_label.add_theme_font_size_override("font_size", 18)
+		_status_label.add_theme_font_size_override("font_size", ThemeManager.SIZE_BODY)
 	if _speaker_label:
-		_speaker_label.add_theme_font_size_override("font_size", 22)
+		_speaker_label.add_theme_font_size_override("font_size", ThemeManager.SIZE_SPEAKER)
 		_speaker_label.position = Vector2(24, 10)
 	if _story_label:
-		_story_label.add_theme_font_size_override("normal_font_size", 26)
+		_story_label.add_theme_font_size_override("normal_font_size", ThemeManager.SIZE_STORY)
 		_story_label.bbcode_enabled = true
 		_story_label.visible_ratio = 0.0
 	if _choice_list:
 		_choice_list.alignment = BoxContainer.ALIGNMENT_CENTER
-		_choice_list.add_theme_constant_override("separation", 10)
+		_choice_list.add_theme_constant_override("separation", ThemeManager.SEP_CHOICE_LIST)
 	if _controls:
-		_controls.add_theme_constant_override("separation", 10)
+		_controls.add_theme_constant_override("separation", ThemeManager.SEP_CONTROLS)
 	if _save_panel_title:
 		_save_panel_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		_save_panel_title.add_theme_font_size_override("font_size", 26)
+		_save_panel_title.add_theme_font_size_override("font_size", ThemeManager.SIZE_STORY)
 	if _save_slots:
-		_save_slots.add_theme_constant_override("separation", 6)
+		_save_slots.add_theme_constant_override("separation", ThemeManager.SEP_SAVE_SLOTS)
 	if _backlog_list:
-		_backlog_list.add_theme_constant_override("separation", 10)
+		_backlog_list.add_theme_constant_override("separation", ThemeManager.SEP_BACKLOG_LIST)
 	if _backlog_panel:
 		var bt := _backlog_panel.get_node_or_null("BacklogPanelContainer/Title")
 		if bt is Label:
 			bt.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			bt.add_theme_font_size_override("font_size", 26)
+			bt.add_theme_font_size_override("font_size", ThemeManager.SIZE_STORY)
 
 
 func _connect_signals() -> void:
@@ -184,6 +264,7 @@ func _connect_signals() -> void:
 		_load_btn.pressed.connect(func() -> void: _open_save_panel(false))
 	if _backlog_btn:
 		_backlog_btn.pressed.connect(_open_backlog)
+	_save_load_controller.slot_pressed.connect(_on_save_slot_pressed)
 	if _auto_btn:
 		_auto_btn.pressed.connect(_on_auto_toggled)
 	if _skip_btn:
@@ -191,7 +272,7 @@ func _connect_signals() -> void:
 	if _quit_btn:
 		_quit_btn.pressed.connect(_request_title)
 	if _save_close_btn:
-		_save_close_btn.pressed.connect(_close_save_panel)
+		_save_close_btn.pressed.connect(func() -> void: _save_load_controller.close())
 	if _backlog_close_btn:
 		_backlog_close_btn.pressed.connect(func() -> void:
 			_backlog_panel.visible = false
@@ -199,6 +280,9 @@ func _connect_signals() -> void:
 	if _choice_list_controller:
 		if not _choice_list_controller.choice_chosen.is_connected(_on_choice):
 			_choice_list_controller.choice_chosen.connect(_on_choice)
+	if _ctx.backlog:
+		if not _ctx.backlog.jump_requested.is_connected(_on_backlog_jump):
+			_ctx.backlog.jump_requested.connect(_on_backlog_jump)
 
 
 # ── Keyboard shortcuts ───────────────────────────────────────────────
@@ -208,12 +292,15 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if _ctx == null or _ctx.shortcut_manager == null:
 		return
+	if _ctx.view_manager and _ctx.view_manager.has_method("is_input_blocked") and _ctx.view_manager.is_input_blocked():
+		get_viewport().set_input_as_handled()
+		return
 	var sm: ShortcutManager = _ctx.shortcut_manager
 	var panels_open := _is_save_panel_visible() or _is_backlog_panel_visible()
 	# Step forward works even with panels open (closes them first).
 	if sm.is_action_pressed("ui_step_forward"):
 		if panels_open:
-			_close_save_panel()
+			_save_load_controller.close()
 			if _backlog_panel:
 				_backlog_panel.visible = false
 		_on_next()
@@ -222,7 +309,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	# Block other shortcuts when panels are open.
 	if panels_open:
 		if sm.is_action_pressed("ui_leave"):
-			_close_save_panel()
+			_save_load_controller.close()
 			if _backlog_panel:
 				_backlog_panel.visible = false
 			get_viewport().set_input_as_handled()
@@ -259,9 +346,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		_toggle_fullscreen()
 		get_viewport().set_input_as_handled()
 	elif sm.is_action_pressed("ui_settings"):
-		_close_save_panel()
+		_save_load_controller.close()
 		if _backlog_panel:
 			_backlog_panel.visible = false
+		settings_requested.emit()
 		get_viewport().set_input_as_handled()
 	elif sm.is_action_pressed("ui_leave"):
 		if _ctx.dialog_system:
@@ -322,21 +410,57 @@ func load_game() -> void:
 		_status_label.text = _t("ui.status.loaded", "状态：已读档")
 
 
+func capture_thumbnail(path: String, width: int = 320, height: int = 180) -> bool:
+	var target: String = path.strip_edges()
+	if target.is_empty() or get_viewport() == null:
+		return false
+	if DisplayServer.get_name().to_lower() == "headless":
+		return false
+	var tex: ViewportTexture = get_viewport().get_texture()
+	if tex == null:
+		return false
+	var image: Image = tex.get_image()
+	if image == null or image.is_empty():
+		return false
+	image.resize(maxi(width, 1), maxi(height, 1), Image.INTERPOLATE_LANCZOS)
+	var absolute: String = ProjectSettings.globalize_path(target)
+	DirAccess.make_dir_recursive_absolute(absolute.get_base_dir())
+	return image.save_png(absolute) == OK
+
+
 func reset_world() -> void:
-	# Clean up runtime-loaded prefabs.
+	_cancel_auto_voice(true)
+	# Clean up runtime-loaded world prefabs (persistent prefabs survive).
 	if _ctx and _ctx.prefab_loader:
-		_ctx.prefab_loader.destroy_all()
+		_ctx.prefab_loader.destroy_by_category(PrefabLoader.PrefabCategory.WORLD)
+	# Clean up character sprites (CompositeSprite nodes).
+	if _ctx and _ctx.composer:
+		_ctx.composer.clear_all()
 	# Stop any playing video.
 	if _ctx and _ctx.video_system:
 		_ctx.video_system.stop()
 	# Stop all audio (BGM, SE, voice).
 	if _ctx and _ctx.audio:
 		_ctx.audio.stop_all()
+	if _ctx and _ctx.vfx:
+		_ctx.vfx.clear_all()
 	_hide_mouse_menu()
 	if _bg:
 		_bg.visible = false
+		_bg.texture = null
+		_bg.position = Vector2.ZERO
+		_bg.scale = Vector2.ONE
+		_bg.rotation_degrees = 0.0
+		_bg.modulate = Color.WHITE
+		_clear_composite_layers(_bg)
 	if _fg:
 		_fg.visible = false
+		_fg.texture = null
+		_fg.position = Vector2.ZERO
+		_fg.scale = Vector2.ONE
+		_fg.rotation_degrees = 0.0
+		_fg.modulate = Color.WHITE
+		_clear_composite_layers(_fg)
 	if _world:
 		_world.visible = true
 		_world.position = Vector2.ZERO
@@ -346,7 +470,10 @@ func reset_world() -> void:
 		_dbox.visible = false
 	if _choice_list:
 		_choice_list.visible = false
-		_clear_children(_choice_list)
+		if _choice_list_controller:
+			_choice_list_controller.clear()
+		else:
+			_clear_children(_choice_list)
 	if _save_panel:
 		_save_panel.visible = false
 	if _backlog_panel:
@@ -370,6 +497,61 @@ func reset_world() -> void:
 	_story_label_clear()
 	_kill_typewriter()
 	_deactivate_modes()
+
+
+## Remove composite overlay Sprite2D children created by Graphics._show_composite().
+func _clear_composite_layers(parent: Sprite2D) -> void:
+	if parent == null:
+		return
+	for child in parent.get_children():
+		if child is Sprite2D and child.has_meta("graphics_composite_layer"):
+			child.texture = null
+			child.visible = false
+			child.queue_free()
+
+
+## Reset display state (bg/fg/characters/VFX) without touching UI buttons.
+## Called on chapter transitions to clear the previous scene.
+func cleanup_display() -> void:
+	if _ctx and _ctx.prefab_loader:
+		_ctx.prefab_loader.destroy_by_category(PrefabLoader.PrefabCategory.WORLD)
+		_ctx.prefab_loader.destroy_by_category(PrefabLoader.PrefabCategory.UI)
+	if _ctx and _ctx.composer:
+		_ctx.composer.clear_all()
+	if _ctx and _ctx.video_system:
+		_ctx.video_system.stop()
+	if _ctx and _ctx.audio:
+		_ctx.audio.stop_all()
+	if _ctx and _ctx.vfx:
+		_ctx.vfx.clear_all()
+	if _bg:
+		_bg.visible = false
+		_bg.texture = null
+		_bg.position = Vector2.ZERO
+		_bg.scale = Vector2.ONE
+		_bg.rotation_degrees = 0.0
+		_bg.modulate = Color.WHITE
+		_clear_composite_layers(_bg)
+	if _fg:
+		_fg.visible = false
+		_fg.texture = null
+		_fg.position = Vector2.ZERO
+		_fg.scale = Vector2.ONE
+		_fg.rotation_degrees = 0.0
+		_fg.modulate = Color.WHITE
+		_clear_composite_layers(_fg)
+	if _world:
+		_world.visible = true
+		_world.position = Vector2.ZERO
+		_world.scale = Vector2.ONE
+		_world.rotation_degrees = 0.0
+	if _overlay:
+		_overlay.visible = false
+		var col := _overlay.color
+		col.a = 0.0
+		_overlay.color = col
+	if _post_fx_rect:
+		_post_fx_rect.visible = false
 
 
 func get_world() -> Node2D:
@@ -428,6 +610,53 @@ func apply_i18n() -> void:
 		_backlog_close_btn.text = i.t("help.close", "关闭")
 
 
+func apply_responsive_layout() -> void:
+	var viewport_size: Vector2 = get_viewport_rect().size
+	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
+		return
+	var safe_margins := _display_safe_area_margins(viewport_size)
+	var content_size := Vector2(
+		maxf(viewport_size.x - safe_margins.x - safe_margins.z, 1.0),
+		maxf(viewport_size.y - safe_margins.y - safe_margins.w, 1.0)
+	)
+	var aspect: float = content_size.x / content_size.y
+	var wide: bool = aspect >= 1.65
+	var margin_x: float = clampf(content_size.x * 0.045, 24.0, 96.0)
+	var margin_y: float = clampf(content_size.y * 0.045, 18.0, 54.0)
+	_apply_layer_bounds(_dialogue_layer, safe_margins)
+	_apply_layer_bounds(_control_layer, safe_margins)
+	_fit_full_rect(_modal_layer)
+	if _ctx and _ctx.dialogue_box and _ctx.dialogue_box.has_method("reflow"):
+		_ctx.dialogue_box.reflow()
+	if _controls:
+		var controls_metrics := _apply_controls_metrics(content_size, margin_x)
+		var toolbar_width: float = controls_metrics.x
+		var toolbar_height: float = controls_metrics.y
+		_controls.anchor_left = 1.0
+		_controls.anchor_top = 1.0
+		_controls.anchor_right = 1.0
+		_controls.anchor_bottom = 1.0
+		_controls.offset_left = -toolbar_width - margin_x
+		_controls.offset_top = -margin_y * 0.35 - toolbar_height
+		_controls.offset_right = -margin_x
+		_controls.offset_bottom = -margin_y * 0.35
+		_controls.alignment = BoxContainer.ALIGNMENT_END
+	if _save_panel:
+		_set_panel_anchors(_save_panel, 0.22 if wide else 0.06, 0.10, 0.78 if wide else 0.94, 0.90, safe_margins)
+	if _backlog_panel:
+		_set_panel_anchors(_backlog_panel, 0.12 if wide else 0.04, 0.08, 0.88 if wide else 0.96, 0.92, safe_margins)
+	if _confirm_panel:
+		_center_modal_panel(_confirm_panel, Vector2(400.0, 200.0), safe_margins)
+	if _confirm_overlay:
+		_fit_full_rect(_confirm_overlay)
+	if _overlay:
+		_fit_full_rect(_overlay)
+	if _post_fx_rect:
+		_fit_full_rect(_post_fx_rect)
+	if _ctx and _ctx.graphics and _ctx.graphics.has_method("fit_fullscreen_objects"):
+		_ctx.graphics.fit_fullscreen_objects()
+
+
 # ── Model signal handlers (connected by NovaController) ─────────────
 
 func on_dialogue_changed(speaker: String, text: String) -> void:
@@ -438,14 +667,19 @@ func on_dialogue_changed(speaker: String, text: String) -> void:
 	if _choice_list:
 		_choice_list.visible = false
 	if _ctx.backlog:
-		_ctx.backlog.record(speaker, text)
+		var node_name := ""
+		var entry_idx := -1
+		if _ctx.game_state and _ctx.game_state.current_node:
+			node_name = str(_ctx.game_state.current_node.name)
+			entry_idx = _ctx.game_state.current_index
+		_ctx.backlog.record(speaker, text, node_name, entry_idx)
 	_start_typewriter(text)
 	# Skip mode: fast-forward read entries, stop at unread.
 	if _is_skip and _ctx.game_state and _ctx.game_state.current_node:
 		if _ctx.read_tracker and _ctx.read_tracker.is_read(_ctx.game_state.current_node.name, _ctx.game_state.current_index):
 			_finish_typewriter()
 			var gen := _skip_gen
-			get_tree().create_timer(SKIP_DELAY).timeout.connect(_on_skip_advance.bind(gen))
+			get_tree().create_timer(skip_delay).timeout.connect(_on_skip_advance.bind(gen))
 		else:
 			_deactivate_modes()
 
@@ -475,6 +709,7 @@ func on_game_ended() -> void:
 	_deactivate_modes()
 	_finish_typewriter()
 	_continue_icon_visible(false)
+	_chapter_timer = null
 	# Reset transition overlay — trans("fade") may have left it opaque.
 	if _overlay:
 		_overlay.visible = false
@@ -487,12 +722,27 @@ func on_game_ended() -> void:
 		_restart_btn.visible = true
 
 
+func on_chapter_started() -> void:
+	_continue_icon_visible(false)
+	_chapter_timer = null
+
+
+func on_ending_reached(ending_name: String) -> void:
+	if _status_label and ending_name != "":
+		_status_label.text = _t("ui.status.ending", "状态：结局 — ") + ending_name
+
+
 func on_avatar_changed(shown: bool) -> void:
 	var left := 124.0 if shown else 24.0
 	if _speaker_label:
 		_speaker_label.position.x = left
 	if _story_label:
 		_story_label.offset_left = left
+
+
+func on_interrupt_started() -> void:
+	_deactivate_modes()
+	_cancel_auto_voice(true)
 
 
 # ── Typewriter ───────────────────────────────────────────────────────
@@ -531,6 +781,14 @@ func _on_typewriter_done() -> void:
 
 func _check_auto_advance() -> void:
 	var gen := _auto_gen
+	# A delayed automatic cue is not visible through AudioSystem yet. Wait for
+	# that delay to either start or be cancelled before checking playback.
+	var auto_voice := _auto_voice_system()
+	if auto_voice != null:
+		while bool(auto_voice.call("has_pending_voice")):
+			await Signal(auto_voice, "pending_changed")
+			if gen != _auto_gen or not _is_auto:
+				return
 	# Wait for voice to finish if currently playing.
 	if _ctx.audio and _ctx.audio.is_voice_playing():
 		await _ctx.audio.voice_finished
@@ -563,18 +821,32 @@ func _finish_typewriter() -> void:
 # ── Next / Choice ────────────────────────────────────────────────────
 
 func _on_dbox_click(event: InputEvent) -> void:
+	if _handle_touch_menu_event(event, _dbox, true):
+		return
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
-		if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT and not mb.is_echo():
+		if mb.pressed and mb.button_index == MOUSE_BUTTON_RIGHT:
+			_toggle_mouse_menu_at(_event_global_position(_dbox, mb.position))
+			accept_event()
+		elif mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT and not mb.is_echo():
 			_on_next()
 			accept_event()
 
 
 func _on_next() -> void:
-	if _is_typing:
-		_finish_typewriter()
-		_deactivate_modes()
+	# Block advance if an interrupt (minigame) is active.
+	if _ctx.interrupt_manager and _ctx.interrupt_manager.has_method("is_active") and _ctx.interrupt_manager.is_active():
 		return
+	if _is_typing:
+		if click_stop_anim:
+			_finish_typewriter()
+			_deactivate_modes()
+		return
+	if click_stop_voice and _ctx.audio:
+		_cancel_auto_voice(false)
+		_ctx.audio.stop_voice()
+	else:
+		_cancel_auto_voice(false)
 	if _ctx.game_state and _ctx.game_state.is_waiting_input:
 		_deactivate_modes()
 		_ctx.game_state.continue_after_input()
@@ -616,11 +888,17 @@ func _on_skip_toggled() -> void:
 		_is_auto = false
 		if _auto_btn:
 			_auto_btn.button_pressed = false
-		if _ctx.game_state and _ctx.game_state.is_waiting_input and _ctx.game_state.current_node and _ctx.read_tracker:
-			if _ctx.read_tracker.is_read(_ctx.game_state.current_node.name, _ctx.game_state.current_index):
+		if _ctx.game_state and _ctx.game_state.is_waiting_input:
+			var can_skip := skip_unread
+			if not can_skip and _ctx.game_state.current_node and _ctx.read_tracker:
+				can_skip = _ctx.read_tracker.is_read(_ctx.game_state.current_node.name, _ctx.game_state.current_index)
+			if can_skip:
 				_finish_typewriter()
+				_cancel_auto_voice(click_stop_voice)
+				if click_stop_voice and _ctx.audio:
+					_ctx.audio.stop_voice()
 				var gen := _skip_gen
-				get_tree().create_timer(SKIP_DELAY).timeout.connect(_on_skip_advance.bind(gen))
+				get_tree().create_timer(skip_delay).timeout.connect(_on_skip_advance.bind(gen))
 			else:
 				_deactivate_modes()
 				return
@@ -654,6 +932,7 @@ func _on_skip_advance(gen: int) -> void:
 	if gen != _skip_gen or not _is_skip:
 		return
 	if _ctx.game_state and _ctx.game_state.is_waiting_input:
+		_cancel_auto_voice(true)
 		_ctx.game_state.continue_after_input()
 
 
@@ -661,89 +940,74 @@ func _on_skip_advance(gen: int) -> void:
 
 func _open_backlog() -> void:
 	_deactivate_modes()
-	var backlog_title := _backlog_panel_title_node()
-	if backlog_title:
-		backlog_title.text = _t("ui.label.backlog", "文本回顾")
-	_clear_children(_backlog_list)
-	# Show panel first so the container tree is laid out with correct widths.
+	_cancel_auto_voice(true)
+	_backlog_controller.open()
+
+
+func _on_backlog_entry_click(event: InputEvent, entry_index: int, _lbl: RichTextLabel) -> void:
+	if event is InputEventMouseButton:
+		var mb := event as InputEventMouseButton
+		if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT and not mb.is_echo():
+			if _ctx.backlog:
+				_ctx.backlog.request_jump(entry_index)
+
+
+func _on_backlog_jump(node_name: String, entry_index: int) -> void:
+	if _ctx.dialog_system:
+		var msg := _t("log.moveback.confirm", "要跳回到这个位置吗？")
+		var sig: Signal = _ctx.dialog_system.show_confirm(_t("ui.label.backlog", "文本回顾"), msg)
+		var confirmed: bool = await sig
+		if not confirmed:
+			return
 	if _backlog_panel:
-		_backlog_panel.visible = true
-	await get_tree().process_frame
-	if _ctx.backlog:
-		for entry in _ctx.backlog.entries():
-			var lbl := RichTextLabel.new()
-			lbl.bbcode_enabled = true
-			lbl.fit_content = true
-			lbl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			lbl.size_flags_vertical = Control.SIZE_FILL
-			var speaker := str(entry["speaker"])
-			var text := str(entry["text"])
-			if speaker.is_empty():
-				lbl.text = text
-			else:
-				lbl.text = "[b]%s[/b]：%s" % [speaker, text]
-			_backlog_list.add_child(lbl)
-	await get_tree().process_frame
-	# Lock in measured heights so fit_content never recomputes to zero.
-	for child in _backlog_list.get_children():
-		if child is RichTextLabel:
-			child.custom_minimum_size.y = child.size.y
-	if _backlog_scroll:
-		_backlog_scroll.scroll_vertical = int(_backlog_scroll.get_v_scroll_bar().max_value)
+		_backlog_panel.visible = false
+	reset_world()
+	var restored := false
+	if _ctx.checkpoint_manager and _ctx.checkpoint_manager.has_method("restore_to_position"):
+		restored = bool(_ctx.checkpoint_manager.restore_to_position(node_name, entry_index))
+	if not restored and _ctx.game_state:
+		_ctx.game_state.jump_to_position(node_name, entry_index)
+	load_game()
 
 
 # ── Save/load panel ──────────────────────────────────────────────────
 
 func _open_save_panel(save_mode: bool) -> void:
 	_deactivate_modes()
+	_cancel_auto_voice(true)
 	_save_mode = save_mode
-	if _save_panel_title:
-		_save_panel_title.text = _t("ingame.save.button", "存档") if save_mode else _t("ingame.load.button", "读档")
-	_clear_children(_save_slots)
-	if _ctx.save_system == null:
-		return
-	for slot in _ctx.save_system.SLOT_COUNT:
-		var label := _t("ui.save.slot_format", "存档位 %d：%s") % [slot + 1, _ctx.save_system.slot_label(slot)]
-		var b := _make_button(label)
-		b.custom_minimum_size = Vector2(360, 40)
-		if not save_mode and not _ctx.save_system.has_save(slot):
-			b.disabled = true
-		b.pressed.connect(_on_slot_pressed.bind(slot))
-		_save_slots.add_child(b)
-	if _save_panel:
-		_save_panel.visible = true
+	_save_load_controller.open(save_mode)
 
 
-func _close_save_panel() -> void:
-	if _save_panel:
-		_save_panel.visible = false
+func _refresh_save_slots() -> void:
+	_save_load_controller.refresh()
 
 
-func _on_slot_pressed(slot: int) -> void:
-	if _ctx.save_system == null:
-		return
-	if _save_mode:
-		if _ctx.save_system.save(slot):
-			if _status_label:
-				_status_label.text = _t("ui.status.saved", "状态：已存档到位 %d") % (slot + 1)
-		_close_save_panel()
+func _on_save_slot_pressed(slot: int, save_mode: bool) -> void:
+	if save_mode:
+		if _ctx.save_system:
+			_ctx.save_system.save(slot)
+			_refresh_save_slots()
 	else:
-		_close_save_panel()
-		if _ctx.save_system.load_slot(slot):
+		if _ctx.save_system and _ctx.save_system.load_slot(slot):
 			load_game()
+
+
+func _on_slot_delete(slot: int) -> void:
+	if _ctx.save_system:
+		_ctx.save_system.delete_slot(slot)
+		_refresh_save_slots()
 
 
 # ── Mouse menu (right-click context menu) ────────────────────────────
 
 func _create_mouse_menu() -> void:
-	_mouse_menu = PanelContainer.new()
+	_mouse_menu = preload("res://scene/ui/context_menu.tscn").instantiate()
 	_mouse_menu.visible = false
-	_mouse_menu.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	_mouse_menu.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
-	_mouse_menu_items = VBoxContainer.new()
-	_mouse_menu_items.add_theme_constant_override("separation", 2)
-	_mouse_menu.add_child(_mouse_menu_items)
-	if _hud:
+	_mouse_menu_items = _mouse_menu.get_node("VBox")
+	if _modal_layer:
+		_modal_layer.add_child(_mouse_menu)
+	elif _hud:
 		_hud.add_child(_mouse_menu)
 
 
@@ -751,17 +1015,128 @@ func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
 		if mb.pressed and mb.button_index == MOUSE_BUTTON_RIGHT:
-			if _mouse_menu and _mouse_menu.visible:
-				_hide_mouse_menu()
-			else:
-				_show_mouse_menu(mb.position)
+			_toggle_mouse_menu_at(_event_global_position(self, mb.position))
 			accept_event()
-		elif mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT and not mb.is_echo():
+			return
+	if _handle_touch_menu_event(event, self, _dbox == null or not _dbox.visible):
+		return
+	if event is InputEventMouseButton:
+		var mb := event as InputEventMouseButton
+		if mb.pressed and mb.button_index == MOUSE_BUTTON_LEFT and not mb.is_echo():
 			if _mouse_menu and _mouse_menu.visible:
 				_hide_mouse_menu()
 			elif _dbox == null or not _dbox.visible:
 				_on_next()
 				accept_event()
+
+
+func _handle_touch_menu_event(event: InputEvent, source: Control, can_advance: bool) -> bool:
+	if source == null:
+		return false
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		var global_pos := _event_global_position(source, touch.position)
+		if touch.pressed:
+			if _mouse_menu and _mouse_menu.visible:
+				_begin_consumed_touch_sequence()
+				_hide_mouse_menu()
+			else:
+				_begin_touch_menu(global_pos, can_advance)
+			source.accept_event()
+			return true
+		if _finish_touch_menu() and _touch_menu_can_advance:
+			_on_next()
+		source.accept_event()
+		return true
+	if event is InputEventScreenDrag:
+		var drag := event as InputEventScreenDrag
+		_update_touch_menu(_event_global_position(source, drag.position))
+		if _touch_menu_moved:
+			source.accept_event()
+		return _touch_menu_active
+	if _uses_display_safe_area() and event is InputEventMouseButton:
+		var mb := event as InputEventMouseButton
+		if mb.button_index != MOUSE_BUTTON_LEFT:
+			return false
+		var global_pos := _event_global_position(source, mb.position)
+		if mb.pressed:
+			if _mouse_menu and _mouse_menu.visible:
+				_begin_consumed_touch_sequence()
+				_hide_mouse_menu()
+			else:
+				_begin_touch_menu(global_pos, can_advance)
+			source.accept_event()
+			return true
+		if _finish_touch_menu() and _touch_menu_can_advance:
+			_on_next()
+		source.accept_event()
+		return true
+	if _uses_display_safe_area() and event is InputEventMouseMotion:
+		var motion := event as InputEventMouseMotion
+		if (motion.button_mask & MOUSE_BUTTON_MASK_LEFT) == 0:
+			return false
+		_update_touch_menu(_event_global_position(source, motion.position))
+		if _touch_menu_moved:
+			source.accept_event()
+		return _touch_menu_active
+	return false
+
+
+func _begin_touch_menu(global_pos: Vector2, can_advance: bool) -> void:
+	_touch_menu_token += 1
+	_touch_menu_active = true
+	_touch_menu_opened = false
+	_touch_menu_moved = false
+	_touch_menu_can_advance = can_advance
+	_touch_menu_origin = global_pos
+	var token := _touch_menu_token
+	get_tree().create_timer(touch_menu_hold_seconds).timeout.connect(_on_touch_menu_timeout.bind(token))
+
+
+func _begin_consumed_touch_sequence() -> void:
+	_touch_menu_token += 1
+	_touch_menu_active = true
+	_touch_menu_opened = true
+	_touch_menu_moved = false
+	_touch_menu_can_advance = false
+
+
+func _update_touch_menu(global_pos: Vector2) -> void:
+	if not _touch_menu_active or _touch_menu_opened:
+		return
+	if _touch_menu_origin.distance_to(global_pos) > touch_menu_deadzone:
+		_touch_menu_moved = true
+		_touch_menu_token += 1
+
+
+func _finish_touch_menu() -> bool:
+	var should_advance := _touch_menu_active and not _touch_menu_opened and not _touch_menu_moved
+	_touch_menu_token += 1
+	_touch_menu_active = false
+	_touch_menu_opened = false
+	_touch_menu_moved = false
+	return should_advance
+
+
+func _on_touch_menu_timeout(token: int) -> void:
+	if token != _touch_menu_token or not _touch_menu_active or _touch_menu_moved:
+		return
+	_touch_menu_opened = true
+	_touch_menu_can_advance = false
+	_show_mouse_menu(_touch_menu_origin)
+
+
+func _toggle_mouse_menu_at(global_pos: Vector2) -> void:
+	if _mouse_menu and _mouse_menu.visible:
+		_hide_mouse_menu()
+	else:
+		_show_mouse_menu(global_pos)
+
+
+func _event_global_position(source: Control, local_pos: Vector2) -> Vector2:
+	if source == null:
+		return local_pos
+	return source.get_global_transform_with_canvas() * local_pos
 
 
 func _show_mouse_menu(at_pos: Vector2) -> void:
@@ -772,6 +1147,8 @@ func _show_mouse_menu(at_pos: Vector2) -> void:
 	var items := [
 		[_t("ingame.save.button", "存档"), _on_mouse_save],
 		[_t("ingame.load.button", "读档"), _on_mouse_load],
+		[_t("config.key.QuickSave", "快速存档"), _on_mouse_quick_save],
+		[_t("config.key.QuickLoad", "快速读档"), _on_mouse_quick_load],
 		[_t("ingame.log.button", "回顾"), _on_mouse_backlog],
 		[_t("ingame.config.button", "设置"), _on_mouse_settings],
 		[_t("ingame.auto.button", "自动"), _on_mouse_auto],
@@ -784,13 +1161,19 @@ func _show_mouse_menu(at_pos: Vector2) -> void:
 		b.pressed.connect(item[1])
 		_mouse_menu_items.add_child(b)
 	# Clamp to viewport.
-	var vp_size := get_viewport().get_visible_rect().size
-	var menu_size := Vector2(180, items.size() * 36.0)
+	var parent_control := _mouse_menu.get_parent() as Control
 	var pos := at_pos
+	var vp_size := get_viewport().get_visible_rect().size
+	if parent_control:
+		pos = parent_control.get_global_transform_with_canvas().affine_inverse() * at_pos
+		vp_size = parent_control.size
+	var menu_size := Vector2(180, items.size() * 36.0)
 	if pos.x + menu_size.x > vp_size.x:
 		pos.x = vp_size.x - menu_size.x
 	if pos.y + menu_size.y > vp_size.y:
 		pos.y = vp_size.y - menu_size.y
+	pos.x = maxf(pos.x, 0.0)
+	pos.y = maxf(pos.y, 0.0)
 	_mouse_menu.position = pos
 	_mouse_menu.visible = true
 
@@ -808,6 +1191,16 @@ func _on_mouse_save() -> void:
 func _on_mouse_load() -> void:
 	_hide_mouse_menu()
 	_open_save_panel(false)
+
+
+func _on_mouse_quick_save() -> void:
+	_hide_mouse_menu()
+	_quick_save()
+
+
+func _on_mouse_quick_load() -> void:
+	_hide_mouse_menu()
+	_quick_load()
 
 
 func _on_mouse_backlog() -> void:
@@ -890,6 +1283,94 @@ func _clear_children(node: Node) -> void:
 		c.queue_free()
 
 
+func _set_panel_anchors(panel: Control, left: float, top: float, right: float, bottom: float, margins: Vector4 = Vector4.ZERO) -> void:
+	if panel == null:
+		return
+	panel.anchor_left = left
+	panel.anchor_top = top
+	panel.anchor_right = right
+	panel.anchor_bottom = bottom
+	panel.offset_left = margins.x
+	panel.offset_top = margins.y
+	panel.offset_right = -margins.z
+	panel.offset_bottom = -margins.w
+
+
+func _apply_layer_bounds(layer: Control, margins: Vector4) -> void:
+	if layer == null:
+		return
+	layer.set_anchors_preset(Control.PRESET_FULL_RECT)
+	layer.offset_left = margins.x
+	layer.offset_top = margins.y
+	layer.offset_right = -margins.z
+	layer.offset_bottom = -margins.w
+
+
+func _fit_full_rect(control: Control) -> void:
+	if control == null:
+		return
+	control.set_anchors_preset(Control.PRESET_FULL_RECT)
+	control.offset_left = 0.0
+	control.offset_top = 0.0
+	control.offset_right = 0.0
+	control.offset_bottom = 0.0
+
+
+func _center_modal_panel(panel: Control, panel_size: Vector2, margins: Vector4) -> void:
+	if panel == null:
+		return
+	var shift := Vector2((margins.x - margins.z) * 0.5, (margins.y - margins.w) * 0.5)
+	panel.anchor_left = 0.5
+	panel.anchor_top = 0.5
+	panel.anchor_right = 0.5
+	panel.anchor_bottom = 0.5
+	panel.offset_left = -panel_size.x * 0.5 + shift.x
+	panel.offset_top = -panel_size.y * 0.5 + shift.y
+	panel.offset_right = panel_size.x * 0.5 + shift.x
+	panel.offset_bottom = panel_size.y * 0.5 + shift.y
+
+
+func _apply_controls_metrics(content_size: Vector2, margin_x: float) -> Vector2:
+	if _controls == null:
+		return Vector2.ZERO
+	var buttons: Array[Button] = []
+	for child in _controls.get_children():
+		if child is Button:
+			buttons.append(child as Button)
+	var count := maxi(buttons.size(), 1)
+	var available_width := maxf(content_size.x - margin_x * 2.0, 1.0)
+	var separation := 8.0 if content_size.x < 720.0 else 10.0
+	var button_height := 40.0 if content_size.y < 420.0 else 44.0
+	var button_width := clampf((available_width - separation * float(count - 1)) / float(count), 64.0, 100.0)
+	for button in buttons:
+		button.custom_minimum_size = Vector2(button_width, button_height)
+	_controls.add_theme_constant_override("separation", int(separation))
+	var toolbar_width := minf(available_width, button_width * float(count) + separation * float(maxi(count - 1, 0)))
+	return Vector2(toolbar_width, button_height)
+
+
+func _display_safe_area_margins(viewport_size: Vector2) -> Vector4:
+	if not _uses_display_safe_area():
+		return Vector4.ZERO
+	var window_size := DisplayServer.window_get_size()
+	if window_size.x <= 0 or window_size.y <= 0:
+		return Vector4.ZERO
+	var safe_area := DisplayServer.get_display_safe_area()
+	if safe_area.size.x <= 0 or safe_area.size.y <= 0:
+		return Vector4.ZERO
+	var scale_x := viewport_size.x / float(window_size.x)
+	var scale_y := viewport_size.y / float(window_size.y)
+	var left := clampf(float(safe_area.position.x) * scale_x, 0.0, viewport_size.x)
+	var top := clampf(float(safe_area.position.y) * scale_y, 0.0, viewport_size.y)
+	var right := clampf(float(window_size.x - safe_area.position.x - safe_area.size.x) * scale_x, 0.0, viewport_size.x)
+	var bottom := clampf(float(window_size.y - safe_area.position.y - safe_area.size.y) * scale_y, 0.0, viewport_size.y)
+	return Vector4(left, top, right, bottom)
+
+
+func _uses_display_safe_area() -> bool:
+	return OS.has_feature("mobile") or OS.has_feature("android") or OS.has_feature("ios")
+
+
 func _t(key: String, fallback: String = "") -> String:
 	if _ctx == null or _ctx.i18n == null:
 		return fallback
@@ -909,6 +1390,7 @@ func _quick_save() -> void:
 
 
 func _quick_load() -> void:
+	reset_world()
 	if _ctx.save_system and _ctx.save_system.load_slot(QUICK_SAVE_SLOT):
 		load_game()
 
@@ -951,3 +1433,31 @@ func _is_save_panel_visible() -> bool:
 
 func _is_backlog_panel_visible() -> bool:
 	return _backlog_panel != null and _backlog_panel.visible
+
+
+## Pause gameplay when switching away from GameView.
+## Stops typewriter, voice, and deactivates auto/skip to prevent leaks.
+func pause_gameplay() -> void:
+	_kill_typewriter()
+	_deactivate_modes()
+	_cancel_auto_voice(true)
+	if click_stop_voice and _ctx and _ctx.audio:
+		_ctx.audio.stop_voice()
+
+
+## Resume gameplay when switching back to GameView.
+## Currently a no-op: the game is left in a clean stopped state.
+func resume_gameplay() -> void:
+	pass
+
+
+func _cancel_auto_voice(stop_active_voice: bool) -> void:
+	var auto_voice := _auto_voice_system()
+	if auto_voice != null:
+		auto_voice.call("cancel_pending", stop_active_voice, true)
+
+
+func _auto_voice_system() -> Object:
+	if _ctx == null:
+		return null
+	return _ctx.get("auto_voice") as Object

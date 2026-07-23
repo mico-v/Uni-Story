@@ -19,7 +19,7 @@ enum PlayMode { SEQUENTIAL, LOOP_SINGLE, RANDOM }
 @onready var btn_mode: Button = $HBox/Content/VBox/PlayerBar/BtnMode
 @onready var empty_label: Label = $HBox/Content/VBox/Scroll/TrackList/EmptyLabel
 
-var _tracks: Array = []  # [{name, display_name, path, unlocked}]
+var _tracks: Array[Dictionary] = []  # [{name, display_name, path, unlocked}]
 var _current_index := -1
 var _play_mode: int = PlayMode.SEQUENTIAL
 var _audio: AudioSystem = null  # optional reference for playback
@@ -32,13 +32,7 @@ func setup(ctx: Node) -> void:
 		_audio = ctx.audio as AudioSystem
 	# Connect BGM finished signal for auto-advance.
 	if _audio:
-		var bgm_player = null
-		for child in ctx.get_children():
-			if child.name == "BGMPlayer" and child is AudioStreamPlayer:
-				bgm_player = child
-				break
-		if bgm_player:
-			bgm_player.finished.connect(_on_bgm_finished)
+		_audio.bgm_finished.connect(_on_bgm_finished)
 
 
 func _ready() -> void:
@@ -47,7 +41,7 @@ func _ready() -> void:
 	btn_stop.pressed.connect(_stop_current)
 	btn_mode.pressed.connect(_cycle_mode)
 	if title_label:
-		title_label.add_theme_font_size_override("font_size", 32)
+		title_label.add_theme_font_size_override("font_size", ThemeManager.SIZE_TITLE)
 		title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 

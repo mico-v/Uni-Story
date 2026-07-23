@@ -1,18 +1,27 @@
 class_name PrefabLoader extends RefCounted
 
-## Runtime prefab loading subsystem.
+## Runtime prefab loading subsystem with category-based lifecycle.
 ##
 ## Loads `.tscn` scenes at scenario-author request, instantiates them into the
 ## scene tree, and registers them in ObjectManager by name so that existing APIs
 ## (move, tint, o.anim, vfx, hide, show) work transparently on loaded prefabs.
 ##
-## Design: idempotent loading (same name + same path reuses the instance),
-## world-space prefabs parent to o.world, UI prefabs parent to a lazy-created
-## Control under Hud.
+## Categories control lifecycle scope:
+##   WORLD      — game-world objects; destroyed on reset_world / chapter jump
+##   UI         — HUD-layer elements; destroyed on cleanup_display / exit GameView
+##   PERSISTENT — survives node transitions; only destroyed explicitly or with force
+##
+## Design: idempotent loading (same name + same path reuses the instance).
+
+enum PrefabCategory {
+	WORLD = 0,       # game-world objects
+	UI = 1,          # HUD-layer elements
+	PERSISTENT = 2,  # survives node transitions
+}
 
 var _ctx: Node
 
-## name → { "node": Node, "path": String, "ui": bool }
+## name → { "node": Node, "path": String, "category": int }
 var _prefabs: Dictionary = {}
 
 ## full resource path → PackedScene (avoids repeated disk reads)
@@ -25,7 +34,12 @@ func _init(ctx: Node) -> void:
 
 # ── Public API ──────────────────────────────────────────────────────────
 
-func load_prefab(name: String, path: String, coord = null, color = null, ui: bool = false) -> Node:
+## Load and instantiate a prefab.
+## @param category  PrefabCategory enum value. Accepts `true`/`false` for backward compat:
+##                   true → UI, false → WORLD.
+func load_prefab(name: String, path: String, coord = null, color = null, category = PrefabCategory.WORLD) -> Node:
+	# Backward compat: accept bool for category.
+	var cat: int = _normalize_category(category)
 	var full_path := _resolve_path(path)
 
 	# Idempotent: same name + same path → reuse.
@@ -55,7 +69,7 @@ func load_prefab(name: String, path: String, coord = null, color = null, ui: boo
 	instance.name = "Prefab_" + name
 
 	# Parent to world or UI container.
-	if ui:
+	if cat == PrefabCategory.UI:
 		var parent := _ui_parent()
 		if parent:
 			parent.add_child(instance)
@@ -67,7 +81,7 @@ func load_prefab(name: String, path: String, coord = null, color = null, ui: boo
 	# Register in ObjectManager so move/tint/o.anim/vfx can find it by name.
 	_ctx.object_manager.bind_object_runtime(name, instance)
 
-	_prefabs[name] = { "node": instance, "path": full_path, "ui": ui }
+	_prefabs[name] = { "node": instance, "path": full_path, "category": cat }
 
 	# Apply optional initial transform and color.
 	if coord != null:
@@ -82,33 +96,59 @@ func load_prefab(name: String, path: String, coord = null, color = null, ui: boo
 	return instance
 
 
+## Show a prefab by name.
 func show_prefab(name: String) -> void:
 	var node := get_prefab(name)
 	if node:
 		node.visible = true
 
 
+## Hide a prefab by name.
 func hide_prefab(name: String) -> void:
 	var node := get_prefab(name)
 	if node:
 		node.visible = false
 
 
+## Destroy a single prefab regardless of category.
 func destroy_prefab(name: String) -> void:
 	_destroy(name)
 
 
-func destroy_all() -> void:
+## Destroy all prefabs. By default, PERSISTENT prefabs are preserved.
+## Pass force=true to destroy everything (e.g., hot reload, shutdown).
+func destroy_all(force: bool = false) -> void:
+	var to_destroy: Array[String] = []
 	for name in _prefabs.keys():
+		var data: Dictionary = _prefabs[name]
+		var cat: int = int(data.get("category", PrefabCategory.WORLD))
+		if cat == PrefabCategory.PERSISTENT and not force:
+			continue
+		to_destroy.append(name)
+	for name in to_destroy:
 		_destroy(name)
 
 
+## Destroy all prefabs in a specific category.
+func destroy_by_category(category: int) -> void:
+	var cat: int = _normalize_category(category)
+	var to_destroy: Array[String] = []
+	for name in _prefabs.keys():
+		var data: Dictionary = _prefabs[name]
+		if int(data.get("category", PrefabCategory.WORLD)) == cat:
+			to_destroy.append(name)
+	for name in to_destroy:
+		_destroy(name)
+
+
+## Check if a prefab is loaded.
 func has_prefab(name: String) -> bool:
 	if not _prefabs.has(name):
 		return false
 	return is_instance_valid(_prefabs[name]["node"])
 
 
+## Get a loaded prefab node by name.
 func get_prefab(name: String) -> Node:
 	if not _prefabs.has(name):
 		return null
@@ -118,6 +158,24 @@ func get_prefab(name: String) -> Node:
 	# Stale reference → clean up.
 	_prefabs.erase(name)
 	return null
+
+
+## Get all prefab names in a given category.
+func get_prefabs_by_category(category: int) -> Array[String]:
+	var cat: int = _normalize_category(category)
+	var result: Array[String] = []
+	for name in _prefabs.keys():
+		var data: Dictionary = _prefabs[name]
+		if int(data.get("category", PrefabCategory.WORLD)) == cat:
+			result.append(name)
+	return result
+
+
+## Get the category of a loaded prefab.
+func get_prefab_category(name: String) -> int:
+	if not _prefabs.has(name):
+		return -1
+	return int(_prefabs[name].get("category", PrefabCategory.WORLD))
 
 
 # ── Save/Load ───────────────────────────────────────────────────────────
@@ -131,7 +189,7 @@ func snapshot() -> Dictionary:
 			continue
 		var entry := {
 			"path": str(data["path"]),
-			"ui": bool(data["ui"]),
+			"category": int(data.get("category", PrefabCategory.WORLD)),
 			"visible": node.visible if node is CanvasItem else true,
 		}
 		if node is CanvasItem:
@@ -178,12 +236,25 @@ func restore(state: Dictionary) -> void:
 
 # ── Internal ────────────────────────────────────────────────────────────
 
+func _normalize_category(value) -> int:
+	# Backward compat: bool → category
+	if value is bool:
+		return PrefabCategory.UI if value else PrefabCategory.WORLD
+	if value is int:
+		if value == PrefabCategory.UI or value == PrefabCategory.WORLD or value == PrefabCategory.PERSISTENT:
+			return value
+	return PrefabCategory.WORLD
+
+
 func _destroy(name: String) -> void:
 	if not _prefabs.has(name):
 		return
 	var data: Dictionary = _prefabs[name]
 	var node = data["node"]
 	if is_instance_valid(node):
+		# Call teardown hook if available.
+		if node.has_method("teardown_prefab"):
+			node.teardown_prefab(_ctx)
 		node.queue_free()
 	_prefabs.erase(name)
 	# Remove from ObjectManager so stale names don't linger.
@@ -223,15 +294,10 @@ func _ui_parent() -> Control:
 	if _ctx == null:
 		return null
 	var game_vc = _ctx.get_node_or_null("GameView")
-	if game_vc == null:
-		# Try through the game view controller reference.
-		if _ctx.has_method("get_game_vc"):
-			var vc = _ctx.get_game_vc()
-			if vc and vc.has_method("get_hud"):
-				var hud = vc.get_hud()
-				if hud is Control:
-					return _ensure_prefab_ui(hud)
-		return null
+	if game_vc != null and game_vc.has_method("get_hud"):
+		var hud = game_vc.get_hud()
+		if hud is Control:
+			return _ensure_prefab_ui(hud)
 	return null
 
 
