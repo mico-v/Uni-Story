@@ -152,9 +152,22 @@ dev:
           script: |
             echo "Dev Android build failed: $CNB_BUILD_ID"
 
-# ── main 分支：全平台 CI 检查（不发布） ───────────
+# ── main 分支：全平台 CI 检查（不发布）+ 知识库构建 ───────────
 main:
   push:
+    - <<: *build-env
+      name: knowledge-base
+      stages:
+        - name: build knowledge base
+          type: knowledge:update
+          options:
+            include: "**/**.md"
+            exclude:
+              - ".cnb/**"
+              - "node_modules/**"
+              - "*.import"
+            chunkSize: 1500
+            issueSyncEnabled: true
     - <<: *build-env
       name: ci-check
       stages:
