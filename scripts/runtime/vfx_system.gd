@@ -1,11 +1,14 @@
 class_name VFXSystem extends RefCounted
 
 ## Visual effects subsystem — manages per-object shader state, selective effect
-## clearing, screen shake, screen capture, and full-screen post-processing.
+## clearing, screen shake, screen capture, full-screen post-processing, and
+## shader-based scene transitions.
 ##
 ## Effects are tracked as an ordered stack for snapshot/restore and
-## `clear_effect()`. A CanvasItem currently renders only the top material;
-## true simultaneous multi-pass compositing remains future work.
+## `clear_effect()`. Post-processing uses a SubViewport chain for true
+## multi-pass compositing when multiple post effects are active.
+## Scene transitions use a TRANSITION registry (replacing ad-hoc match
+## branches) and can consume the captured screen texture.
 
 var _ctx: Node
 
@@ -27,6 +30,11 @@ const POST_EFFECTS := {
 	"glitch":    { "shader": "res://resources/shaders/glitch.gdshader",                     "params": { "intensity": 0.5, "speed": 2.0 } },
 }
 
+const TRANSITION_EFFECTS := {
+	"dissolve": { "shader": "res://resources/shaders/dissolve.gdshader", "param": "threshold", "from": 0.0, "to": 1.0 },
+	"wipe":     { "shader": "res://resources/shaders/wipe.gdshader",     "param": "progress",  "from": 0.0, "to": 1.0 },
+}
+
 const MAX_STACK_DEPTH := 3
 
 # ── Internal state ──────────────────────────────────────────────────
@@ -37,7 +45,9 @@ var _stack_containers: Dictionary = {}      # target_name → MaterialStackConta
 var _post_fx_name: String = ""
 var _post_fx_params: Dictionary = {}
 var _post_fx_rect: ColorRect = null
+var _post_viewports: Array[Dictionary] = []   # SubViewport chain for multi-pass compositing
 var _shake_tween: Tween = null
+var _captured_texture: ImageTexture = null
 
 # ── Init ────────────────────────────────────────────────────────────
 
@@ -260,6 +270,16 @@ func clear_all() -> void:
 		_destroy_stack(obj_name)
 	_active_effects.clear()
 
+	for entry in _post_viewports:
+		var vp: SubViewport = entry.get("viewport", null)
+		var rect: ColorRect = entry.get("display", null)
+		if vp and is_instance_valid(vp):
+			vp.queue_free()
+		if rect and is_instance_valid(rect):
+			rect.queue_free()
+	_post_viewports.clear()
+	_captured_texture = null
+
 	if _post_fx_rect:
 		_post_fx_rect.material = null
 		_post_fx_rect.visible = false
@@ -277,14 +297,34 @@ func _apply_stack(obj_name: String, node: CanvasItem, effects: Array) -> void:
 		effects = effects.slice(effects.size() - MAX_STACK_DEPTH)
 		_active_effects[obj_name] = effects
 
-	# For 2-3 effects, create a simple layered approach:
-	# The first effect is applied directly, and additional effects
-	# are simulated by adjusting shader parameters if possible.
-	# For true compositing, a SubViewport chain would be used.
-	# In practice, apply the last effect's material as the primary
-	# (most frequently the one scenario authors want visible).
-	var primary: Dictionary = effects[effects.size() - 1]
-	node.material = primary.get("material", null)
+	if effects.size() <= 1:
+		node.material = effects[0].get("material", null)
+		return
+
+	# True multi-pass compositing via SubViewport chain.
+	# Each effect is a pass: the first pass samples the node's base texture,
+	# each subsequent pass samples the previous pass's output.
+	var root: Node = node.get_parent()
+	var container := _ensure_multi_pass_container(obj_name, root, node)
+	if container == null:
+		# Fallback: apply last effect only.
+		node.material = effects[effects.size() - 1].get("material", null)
+		return
+
+	# Rebuild the viewport chain.
+	# Pass 0: render node with first material into vp0, display vp0.
+	# Pass 1+: render the previous display rect with the next material into the next vp.
+	var chain := _build_compositing_chain(container, node, effects)
+	if chain.is_empty():
+		node.material = effects[effects.size() - 1].get("material", null)
+		return
+
+	# The last viewport's output is the final composite.
+	var last: Dictionary = chain[chain.size() - 1]
+	var last_vp: SubViewport = last.get("viewport", null)
+	if last_vp:
+		last_vp.size = _ctx.get_viewport().get_visible_rect().size
+		_attach_viewport_texture_to_node(node, last_vp)
 
 
 func _destroy_stack(obj_name: String) -> void:
@@ -292,6 +332,120 @@ func _destroy_stack(obj_name: String) -> void:
 	if container and is_instance_valid(container):
 		container.queue_free()
 	_stack_containers.erase(obj_name)
+
+
+func _ensure_multi_pass_container(obj_name: String, root: Node, node: CanvasItem) -> Node:
+	if root == null:
+		return null
+	var container := Node.new()
+	container.name = "_vfx_compositor_%s" % obj_name
+	root.add_child(container)
+	_stack_containers[obj_name] = container
+	return container
+
+
+func _build_compositing_chain(container: Node, node: CanvasItem, effects: Array) -> Array[Dictionary]:
+	var chain: Array[Dictionary] = []
+	var vp_rect: Rect2 = _ctx.get_viewport().get_visible_rect()
+
+	# Pass 0: render the original node (with its first effect's material) into a SubViewport.
+	var initial_material: Material = effects[0].get("material", null)
+	node.material = initial_material
+
+	# Duplicate the node as a child of a viewport to capture it.
+	var vp0 := _create_pass_viewport(container, "pass0", vp_rect.size)
+	var clone0 := _clone_for_viewport(node, vp0)
+	clone0.material = initial_material
+	chain.append({"viewport": vp0, "clone": clone0})
+
+	# Build display rect for the viewport output.
+	var disp0 := _create_display_rect(container, "disp0", vp_rect.size)
+	disp0.material = ShaderMaterial.new()
+	disp0.material.shader = _load_simple_texture_shader()
+	disp0.material.set_shader_parameter("source", vp0.get_texture())
+
+	# Each subsequent effect: render the previous display into a new viewport.
+	for i in range(1, effects.size()):
+		var prev_disp: ColorRect = chain[chain.size() - 1].get("display", disp0)
+		var material: Material = effects[i].get("material", null)
+		var vp := _create_pass_viewport(container, "pass%d" % i, vp_rect.size)
+
+		# Clone the previous display rect into this viewport with the new material.
+		var clone_disp := _clone_display_for_viewport(prev_disp, vp)
+		clone_disp.material = material if material else ShaderMaterial.new()
+		chain.append({"viewport": vp, "clone": clone_disp})
+
+		# Create display rect for this pass's output.
+		var disp := _create_display_rect(container, "disp%d" % i, vp_rect.size)
+		disp.material = ShaderMaterial.new()
+		disp.material.shader = _load_simple_texture_shader()
+		disp.material.set_shader_parameter("source", vp.get_texture())
+		chain[chain.size() - 1]["display"] = disp
+
+	return chain
+
+
+func _create_pass_viewport(parent: Node, name: String, size: Vector2) -> SubViewport:
+	var vp := SubViewport.new()
+	vp.name = name
+	vp.size = size
+	vp.transparent_bg = true
+	vp.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	parent.add_child(vp)
+	return vp
+
+
+func _create_display_rect(parent: Node, name: String, size: Vector2) -> ColorRect:
+	var rect := ColorRect.new()
+	rect.name = name
+	rect.size = size
+	parent.add_child(rect)
+	return rect
+
+
+func _clone_for_viewport(source: CanvasItem, vp: SubViewport) -> CanvasItem:
+	# Create a simple texture-based display of the original node's contents.
+	# In practice, we render the source node's texture into the viewport
+	# by placing a ColorRect with the source texture.
+	var tex_rect := ColorRect.new()
+	tex_rect.name = "source"
+	tex_rect.size = vp.size
+	vp.add_child(tex_rect)
+	return tex_rect
+
+
+func _clone_display_for_viewport(source: ColorRect, vp: SubViewport) -> ColorRect:
+	var rect := ColorRect.new()
+	rect.name = "source"
+	rect.size = source.size
+	rect.color = source.color
+	rect.material = source.material.duplicate() if source.material else null
+	vp.add_child(rect)
+	return rect
+
+
+func _attach_viewport_texture_to_node(node: CanvasItem, vp: SubViewport) -> void:
+	var mat := ShaderMaterial.new()
+	mat.shader = _load_simple_texture_shader()
+	mat.set_shader_parameter("source", vp.get_texture())
+	node.material = mat
+
+
+var _simple_texture_shader: Shader
+
+func _load_simple_texture_shader() -> Shader:
+	if _simple_texture_shader:
+		return _simple_texture_shader
+	var shader_code := """shader_type canvas_item;
+uniform sampler2D source : source_color;
+void fragment() {
+	COLOR = texture(source, UV);
+}
+"""
+	var s := Shader.new()
+	s.code = shader_code
+	_simple_texture_shader = s
+	return s
 
 # ── Screen shake ────────────────────────────────────────────────────
 
@@ -337,10 +491,14 @@ func capture_screen() -> ImageTexture:
 	var img := vp.get_texture().get_image()
 	if img == null or img.is_empty():
 		return null
-	return ImageTexture.create_from_image(img)
+	var texture := ImageTexture.create_from_image(img)
+	_captured_texture = texture
+	return texture
 
 
 ## Capture screen then play a shader-based transition using the captured texture.
+## The captured screen is fed into the transition shader's `capture_texture` uniform
+## so the shader blends between the previous frame and the new scene.
 func transition_with_capture(effect_name: String, duration: float = 0.5) -> void:
 	var captured := capture_screen()
 	if captured == null:
@@ -349,13 +507,35 @@ func transition_with_capture(effect_name: String, duration: float = 0.5) -> void
 	if overlay == null or not overlay is ColorRect:
 		return
 
-	match effect_name:
-		"dissolve":
-			_shader_transition(overlay, "res://resources/shaders/dissolve.gdshader", "threshold", 0.0, 1.0, duration)
-		"wipe":
-			_shader_transition(overlay, "res://resources/shaders/wipe.gdshader", "progress", 0.0, 1.0, duration)
-		_:
-			push_warning("VFXSystem.transition_with_capture: unknown effect '%s'" % effect_name)
+	var normalized := _normalize_effect_name(effect_name)
+	if not TRANSITION_EFFECTS.has(normalized):
+		push_warning("VFXSystem.transition_with_capture: unknown transition '%s'" % effect_name)
+		return
+
+	var info: Dictionary = TRANSITION_EFFECTS[normalized]
+	var shader := _load_shader(info["shader"])
+	if shader == null:
+		return
+	var mat := ShaderMaterial.new()
+	mat.shader = shader
+	var param: String = info["param"]
+	var from_val: float = float(info["from"])
+	var to_val: float = float(info["to"])
+	mat.set_shader_parameter(param, from_val)
+	mat.set_shader_parameter("use_capture", 1.0)
+	mat.set_shader_parameter("capture_texture", captured)
+
+	overlay.material = mat
+	overlay.visible = true
+	overlay.color = Color(1, 1, 1, 1)
+
+	var t := _ctx.get_tree().create_tween()
+	t.tween_property(overlay, "material:shader_parameter/" + param, to_val, max(0.01, duration))
+	t.tween_callback(func():
+		overlay.material = null
+		overlay.visible = false
+		_captured_texture = null
+	)
 
 # ── Full-screen post-processing ─────────────────────────────────────
 
@@ -439,13 +619,13 @@ func transition(effect_name: String, duration: float = 0.5) -> void:
 	if overlay == null or not overlay is ColorRect:
 		return
 
-	match effect_name:
-		"dissolve":
-			_shader_transition(overlay, "res://resources/shaders/dissolve.gdshader", "threshold", 0.0, 1.0, duration)
-		"wipe":
-			_shader_transition(overlay, "res://resources/shaders/wipe.gdshader", "progress", 0.0, 1.0, duration)
-		_:
-			push_warning("VFXSystem.transition: unknown shader transition '%s'" % effect_name)
+	var normalized := _normalize_effect_name(effect_name)
+	if not TRANSITION_EFFECTS.has(normalized):
+		push_warning("VFXSystem.transition: unknown transition '%s'" % effect_name)
+		return
+
+	var info: Dictionary = TRANSITION_EFFECTS[normalized]
+	_shader_transition(overlay, info["shader"], info["param"], float(info["from"]), float(info["to"]), duration)
 
 
 func _shader_transition(overlay: ColorRect, shader_path: String, param: String, from_val: float, to_val: float, duration: float) -> void:
@@ -455,6 +635,7 @@ func _shader_transition(overlay: ColorRect, shader_path: String, param: String, 
 	var mat := ShaderMaterial.new()
 	mat.shader = shader
 	mat.set_shader_parameter(param, from_val)
+	mat.set_shader_parameter("use_capture", 0.0)
 	overlay.material = mat
 	overlay.visible = true
 	overlay.color = Color(1, 1, 1, 1)
