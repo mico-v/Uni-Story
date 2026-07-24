@@ -38,7 +38,7 @@ func _run() -> void:
 
 	# ── 1. Scenario parse time ──────────────────────────────────────
 	var parse_start := Time.get_ticks_msec()
-	var graph := _parse_all_scenarios()
+	var graph: Variant = _parse_all_scenarios()
 	var parse_ms := Time.get_ticks_msec() - parse_start
 	var parse_sec: float = parse_ms / 1000.0
 	_expect(graph != null, "scenario graph should be parsed")
@@ -48,7 +48,7 @@ func _run() -> void:
 
 	# ── 2. Main scene load + subsystem init ─────────────────────────
 	var scene_start := Time.get_ticks_msec()
-	var nova: NovaController = _load_main_scene()
+	var nova: NovaController = await _load_main_scene()
 	var scene_ms := Time.get_ticks_msec() - scene_start
 	var scene_sec: float = scene_ms / 1000.0
 	_expect(nova != null, "main scene should load")
@@ -61,7 +61,7 @@ func _run() -> void:
 
 	# ── 3. Game start + first checkpoint + save ─────────────────────
 	var save_start := Time.get_ticks_msec()
-	var save_ok := _start_and_save(nova)
+	var save_ok := await _start_and_save(nova)
 	var save_ms := Time.get_ticks_msec() - save_start
 	var save_sec: float = save_ms / 1000.0
 	_expect(save_ok, "save should succeed")
@@ -70,7 +70,7 @@ func _run() -> void:
 
 	# ── 4. Restore from save ────────────────────────────────────────
 	var restore_start := Time.get_ticks_msec()
-	var restore_ok := _restore_from_save(nova)
+	var restore_ok := await _restore_from_save(nova)
 	var restore_ms := Time.get_ticks_msec() - restore_start
 	var restore_sec: float = restore_ms / 1000.0
 	_expect(restore_ok, "restore should succeed")
@@ -79,7 +79,7 @@ func _run() -> void:
 
 	# ── 5. Jump-back replay ─────────────────────────────────────────
 	var replay_start := Time.get_ticks_msec()
-	var replay_ok := _jump_back_replay(nova)
+	var replay_ok := await _jump_back_replay(nova)
 	var replay_ms := Time.get_ticks_msec() - replay_start
 	var replay_sec: float = replay_ms / 1000.0
 	_expect(replay_ok, "jump-back replay should succeed")
@@ -87,7 +87,7 @@ func _run() -> void:
 	print("  jump_back_replay: %.2fs" % replay_sec)
 
 	# ── Cleanup ─────────────────────────────────────────────────────
-	_cleanup_scene(nova)
+	await _cleanup_scene(nova)
 
 	# ── Summary ─────────────────────────────────────────────────────
 	var total_sec: float = parse_sec + scene_sec + save_sec + restore_sec + replay_sec
@@ -97,7 +97,7 @@ func _run() -> void:
 
 # ── Helpers ────────────────────────────────────────────────────────────
 
-func _parse_all_scenarios():
+func _parse_all_scenarios() -> Variant:
 	var script_loader_script := load("res://scripts/core/script_loader.gd") as Script
 	if script_loader_script == null or not script_loader_script.can_instantiate():
 		return null
