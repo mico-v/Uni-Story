@@ -126,8 +126,42 @@
       echo "❌ APK file not found!"
     fi
 
+# ── main/dev PR 质量门禁（通过后才可合并） ──────────
+.main-pr-check: &main-pr-check
+  - <<: *build-env
+    name: pr-quality-gate
+    stages:
+      - *import-project
+      - *scenario-lint
+      - *headless-tests
+      - name: build-all-platforms
+        jobs:
+          windows: *build-windows
+          linux: *build-linux
+          android: *build-android-release
+    failStages:
+      - name: notify-failure
+        script: |
+          echo "❌ PR quality gate failed: $CNB_BUILD_ID"
+          echo "请修复 lint 错误 / 测试失败 / 构建问题后再合并"
+
+.dev-pr-check: &dev-pr-check
+  - <<: *build-env
+    name: pr-quality-gate
+    stages:
+      - *import-project
+      - *scenario-lint
+      - *headless-tests
+      - *build-android-debug
+    failStages:
+      - name: notify-failure
+        script: |
+          echo "❌ PR quality gate failed: $CNB_BUILD_ID"
+          echo "请修复 lint 错误 / 测试失败 / 构建问题后再合并"
+
 # ── dev 分支：Android Debug 构建并上传 commit 附件 ─
 dev:
+  pull_request: *dev-pr-check
   push:
     - <<: *build-env
       name: android-debug-build
@@ -154,6 +188,7 @@ dev:
 
 # ── main 分支：全平台 CI 检查（不发布）+ 知识库构建 ───────────
 main:
+  pull_request: *main-pr-check
   push:
     - <<: *build-env
       name: knowledge-base
