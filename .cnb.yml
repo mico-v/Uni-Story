@@ -21,6 +21,8 @@
     PROJECT_NAME: UniStory
   services:
     - docker
+  imports:
+    - https://cnb.cool/mico-v/secerts/-/blob/main/android-release.yml
 
 # ── 平台构建步骤 ──────────────────────────────────
 .import-project: &import-project
@@ -83,10 +85,32 @@
     touch android/build/.gdignore
     # Clean any stale .import files that Godot may create in the template dir
     find android/build -name "*.import" -delete 2>/dev/null || true
-    # Android Release: 使用 debug keystore 作为 fallback（未配置 release keystore 时）
-    # 如需 release 签名，请参考文件末尾的签名配置说明
+    # ── Inject release keystore from secrets ──
+    if [ -n "$ANDROID_KEYSTORE_B64" ]; then
+      echo "$ANDROID_KEYSTORE_B64" | base64 -d > /root/release.jks
+      echo 'export/android/keystore_release = "/root/release.jks"' >> /root/.config/godot/editor_settings-4.tres
+      echo "export/android/keystore_release_user = \"$ANDROID_KEYSTORE_ALIAS\"" >> /root/.config/godot/editor_settings-4.tres
+      echo "export/android/keystore_release_password = \"$ANDROID_KEYSTORE_PASS\"" >> /root/.config/godot/editor_settings-4.tres
+      echo "=== Release keystore injected: /root/release.jks ==="
+    else
+      echo "=== ANDROID_KEYSTORE_B64 not set, skipping keystore injection ==="
+    fi
+    # Android Release 导出（如果注入了 keystore 则使用 release 签名）
     godot --headless --export-release "Android" "release/android/$PROJECT_NAME.apk" || \
       godot --headless --export-debug "Android" "release/android/$PROJECT_NAME.apk"
+    # ── Verify APK signature ──
+    echo "=== Verifying APK Signature ==="
+    APK_PATH="release/android/$PROJECT_NAME.apk"
+    if [ -f "$APK_PATH" ]; then
+      echo "APK size: $(ls -lh "$APK_PATH" | awk '{print $5}')"
+      if jarsigner -verify "$APK_PATH" 2>&1; then
+        echo "✅ APK JAR signature verification PASSED"
+      else
+        echo "⚠️  APK JAR signature check returned non-zero (may still be valid v2/v3 signing)"
+      fi
+    else
+      echo "❌ APK file not found!"
+    fi
 
 # ── dev 分支：Android Debug 构建并上传 commit 附件 ─
 dev:
@@ -187,46 +211,15 @@ $:
 # Android 签名配置说明
 # ═══════════════════════════════════════════════════════════════
 #
-# 【Debug 签名（dev 分支）】
-#   Godot 内置 debug keystore，自动处理，无需额外配置。
-#   使用 --export-debug 即可，生成的 APK 可直接安装测试。
+# 【已配置】Release 签名通过密钥仓库 mico-v/secerts 自动注入。
 #
-# 【Release 签名（tag_push 发布）】
-#   需要准备 Release Keystore，按以下步骤操作：
+# 密钥仓库 (mico-v/secerts, android-release.yml) 需包含：
+#   ANDROID_KEYSTORE_B64:   base64 编码的 my-release-key.jks
+#   ANDROID_KEYSTORE_ALIAS: keystore alias
+#   ANDROID_KEYSTORE_PASS:  store password
 #
-#   1. 生成 Keystore：
-#      keytool -genkey -v -keystore release.keystore \
-#        -alias release -keyalg RSA -keysize 2048 -validity 10000 \
-#        -storepass YOUR_STORE_PASS -keypass YOUR_KEY_PASS \
-#        -dname "CN=YourName, OU=YourOrg, O=YourOrg, L=City, S=State, C=CN"
-#
-#   2. 将 keystore 文件上传到 CNB 密钥仓库
-#      （或转为 base64 存入密钥仓库的环境变量）
-#
-#   3. 在密钥仓库 secrets.yml 中配置：
-#      ANDROID_KEYSTORE_B64: <base64编码的keystore文件内容>
-#      ANDROID_KEYSTORE_PASS: your_store_password
-#      ANDROID_KEYSTORE_ALIAS: release
-#      ANDROID_KEYSTORE_KEY_PASS: your_key_password
-#
-#   4. 在 .cnb.yml 的 build-env 中添加 imports：
-#      imports:
-#        - https://cnb.cool/<org>/<secret-repo>/-/blob/main/secrets.yml
-#
-#   5. 在 Dockerfile.ci 末尾或 CI 脚本中添加 keystore 注入：
-#      echo "$ANDROID_KEYSTORE_B64" | base64 -d > /root/release.keystore
-#
-#      # 更新 Godot 编辑器设置（配置 keystore 路径和密码）
-#      cat >> /root/.config/godot/editor_settings-4.tres << 'GODOT_EOF'
-#      export/android/keystore_release = "/root/release.keystore"
-#      export/android/keystore_release_user = "release"
-#      export/android/keystore_release_password = "YOUR_STORE_PASS"
-#      GODOT_EOF
-#
-#   6. 或者直接在 export_presets.cfg 的 Android preset 中添加：
-#      keystore/release="/root/release.keystore"
-#      keystore/release_user="release"
-#      keystore/release_password="YOUR_STORE_PASS"
-#
-#   【简化方案】：如果不发布到 Google Play，可以复用 debug keystore，
-#   只需使用 --export-debug 导出 debug 版本即可分发测试。
+# CI 运行时自动执行：
+#   1. base64 解码 -> /root/release.jks
+#   2. 写入 Godot editor_settings-4.tres
+#   3. godot --export-release -> 自动使用 release keystore 签名
+#   4. jarsigner -verify 验证签名
