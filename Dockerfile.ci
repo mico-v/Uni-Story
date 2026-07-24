@@ -24,13 +24,13 @@ RUN yes | ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --sdk_root=${A
         "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
 # Godot 标准版引擎（纯 GDScript 项目，无需 .NET/Mono）
+# 注意：标准版 zip 解压后是单个二进制文件，不是目录
 RUN wget -nv "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip" \
         -O /tmp/godot.zip \
     && unzip -o /tmp/godot.zip -d /tmp \
-    && GODOT_DIR="/tmp/Godot_v${GODOT_VERSION}-stable_linux.x86_64" \
-    && chmod +x "${GODOT_DIR}/Godot_v${GODOT_VERSION}-stable_linux.x86_64" \
-    && mv "${GODOT_DIR}/Godot_v${GODOT_VERSION}-stable_linux.x86_64" /usr/local/bin/godot \
-    && rm -rf /tmp/godot.zip "/tmp/Godot_v${GODOT_VERSION}-stable_linux.x86_64"
+    && chmod +x "/tmp/Godot_v${GODOT_VERSION}-stable_linux.x86_64" \
+    && mv "/tmp/Godot_v${GODOT_VERSION}-stable_linux.x86_64" /usr/local/bin/godot \
+    && rm -f /tmp/godot.zip
 
 # Godot 标准版导出模板
 RUN wget -nv "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz" \
@@ -39,11 +39,6 @@ RUN wget -nv "https://github.com/godotengine/godot/releases/download/${GODOT_VER
     && unzip -q /tmp/templates.tpz -d /tmp/tpl \
     && mv /tmp/tpl/templates/* "/root/.local/share/godot/export_templates/${GODOT_VERSION}.stable/" \
     && rm -rf /tmp/templates.tpz /tmp/tpl
-
-# 从导出模板中提取 Android 构建模板
-RUN mkdir -p "/root/.local/share/godot/build_templates/android" \
-    && unzip -q "/root/.local/share/godot/export_templates/${GODOT_VERSION}.stable/android_source.zip" \
-        -d "/root/.local/share/godot/build_templates/android"
 
 # Godot Editor Settings（配置 JDK 和 Android SDK 路径）
 RUN mkdir -p /root/.config/godot \
