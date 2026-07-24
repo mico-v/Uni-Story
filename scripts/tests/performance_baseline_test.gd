@@ -29,6 +29,15 @@ const MAX_REPLAY_TIME := 3.0
 var _failures: Array[String] = []
 
 
+class TestContext:
+	extends Node
+
+	var runtime: GDRuntime
+
+	func setup() -> void:
+		runtime = GDRuntime.new(self)
+
+
 func _init() -> void:
 	_run.call_deferred()
 
@@ -36,9 +45,13 @@ func _init() -> void:
 func _run() -> void:
 	_prepare_dirs()
 
+	var ctx := TestContext.new()
+	root.add_child(ctx)
+	ctx.setup()
+
 	# ── 1. Scenario parse time ──────────────────────────────────────
 	var parse_start := Time.get_ticks_msec()
-	var graph: Variant = _parse_all_scenarios()
+	var graph: Variant = _parse_all_scenarios(ctx)
 	var parse_ms := Time.get_ticks_msec() - parse_start
 	var parse_sec: float = parse_ms / 1000.0
 	_expect(graph != null, "scenario graph should be parsed")
@@ -97,11 +110,11 @@ func _run() -> void:
 
 # ── Helpers ────────────────────────────────────────────────────────────
 
-func _parse_all_scenarios() -> Variant:
+func _parse_all_scenarios(ctx: Node) -> Variant:
 	var script_loader_script := load("res://scripts/core/script_loader.gd") as Script
 	if script_loader_script == null or not script_loader_script.can_instantiate():
 		return null
-	var loader = script_loader_script.new(self)
+	var loader = script_loader_script.new(ctx)
 	if loader.has_method("load_all"):
 		var dir := DirAccess.open("res://resources/scenarios/")
 		var file_paths: Array[String] = []
