@@ -153,12 +153,17 @@ func play(effect_name: String, target: Variant, duration: float = 0.5, params: D
 	_active_effects[obj_name] = effects
 
 	# Apply: single effect → direct material; multiple → stack.
+	var is_stacked := effects.size() > 1
 	if effects.size() == 1:
 		node.material = mat
 	else:
 		_apply_stack(obj_name, node, effects)
 
-	# Animate the primary parameter.
+	# Animate the primary parameter (single effect only; stacked effects use a
+	# compositing material whose shader parameters differ from the source effect).
+	if is_stacked:
+		return _ctx.get_tree().create_tween()
+
 	var anim_key := ""
 	var anim_value: Variant = null
 	if params.is_empty():

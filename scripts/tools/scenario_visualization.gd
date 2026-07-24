@@ -490,7 +490,7 @@ func _resolve_roots(options: Dictionary, node_by_id: Dictionary, degrees: Dictio
 			"sources": include = int(((degrees.get(node_id, {}) as Dictionary).get("in_edges", 0))) == 0
 			"all": include = true
 			_:
-				include = bool(node.get("is_start", false)) or bool(node.get("is_debug", false))
+				include = bool(node.get("is_start", false)) or (bool(node.get("is_debug", false)) and int(((degrees.get(node_id, {}) as Dictionary).get("out_edges", 0))) > 0)
 		if include and bool(options.get("exclude_debug", false)) and bool(node.get("is_debug", false)) and not bool(node.get("is_start", false)):
 			include = false
 		if include:
