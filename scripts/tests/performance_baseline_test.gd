@@ -101,9 +101,19 @@ func _parse_all_scenarios() -> Variant:
 	var script_loader_script := load("res://scripts/core/script_loader.gd") as Script
 	if script_loader_script == null or not script_loader_script.can_instantiate():
 		return null
-	var loader = script_loader_script.new()
+	var loader = script_loader_script.new(self)
 	if loader.has_method("load_all"):
-		loader.load_all("res://resources/scenarios/")
+		var dir := DirAccess.open("res://resources/scenarios/")
+		var file_paths: Array[String] = []
+		if dir:
+			dir.list_dir_begin()
+			var file_name := dir.get_next()
+			while file_name != "":
+				if not dir.current_is_dir() and file_name.ends_with(".txt"):
+					file_paths.append("res://resources/scenarios/" + file_name)
+				file_name = dir.get_next()
+			dir.list_dir_end()
+		loader.load_all(file_paths)
 	return loader.get("graph")
 
 
