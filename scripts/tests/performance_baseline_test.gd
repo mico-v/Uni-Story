@@ -33,9 +33,14 @@ class TestContext:
 	extends Node
 
 	var runtime: GDRuntime
+	var script_loader: ScriptLoader
+	var game_state: GameState
+	var object_manager: ObjectManager
 
 	func setup() -> void:
 		runtime = GDRuntime.new(self)
+		game_state = GameState.new(self)
+		object_manager = ObjectManager.new()
 
 
 func _init() -> void:
@@ -115,6 +120,7 @@ func _parse_all_scenarios(ctx: Node) -> Variant:
 	if script_loader_script == null or not script_loader_script.can_instantiate():
 		return null
 	var loader = script_loader_script.new(ctx)
+	ctx.script_loader = loader
 	if loader.has_method("load_all"):
 		var dir := DirAccess.open("res://resources/scenarios/")
 		var file_paths: Array[String] = []
@@ -162,7 +168,7 @@ func _start_and_save(nova: NovaController) -> bool:
 		start_node = first_key
 
 	# Jump to start and run a few frames
-	nova.jump_to_node(start_node)
+	nova.game_state.start_node(StringName(start_node))
 	await process_frame
 	await create_timer(0.3).timeout
 
@@ -192,7 +198,7 @@ func _jump_back_replay(nova: NovaController) -> bool:
 	if current.is_empty():
 		return false
 	# Re-jump to the same node to test replay
-	nova.jump_to_node(current)
+	nova.game_state.start_node(StringName(current))
 	await process_frame
 	await create_timer(0.3).timeout
 	return nova.game_state.current_node != null
