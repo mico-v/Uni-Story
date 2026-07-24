@@ -38,12 +38,16 @@ const SEP_BACKLOG_LIST := 10
 const SEP_CHAPTER_LIST := 10
 const SEP_IMAGE_ROWS := 12
 
+const DEBUG_THEME_PATH := "res://resources/themes/debug_theme.tres"
+const MAIN_THEME_PATH := "res://resources/themes/main_theme.tres"
+
 var _ctx: Node
 
 var base_theme: Theme
 var current_work_theme: Theme
 var _base_theme_path: String = "res://resources/themes/base_theme.tres"
 var _work_theme_path: String = "res://resources/themes/main_theme.tres"
+var _is_debug_theme: bool = false
 
 
 func _init(ctx: Node) -> void:
@@ -87,7 +91,26 @@ func apply() -> void:
 ## Switch to a different work theme at runtime.
 func set_work_theme(path: String) -> void:
 	_work_theme_path = path
+	_is_debug_theme = (path == DEBUG_THEME_PATH)
 	apply()
+
+
+## Toggle between main (work) theme and debug theme.
+## Returns true if debug theme is now active.
+func toggle_debug_theme() -> bool:
+	if _is_debug_theme:
+		_is_debug_theme = false
+		_work_theme_path = MAIN_THEME_PATH
+	else:
+		_is_debug_theme = true
+		_work_theme_path = DEBUG_THEME_PATH
+	apply()
+	return _is_debug_theme
+
+
+## Returns whether the debug theme is currently active.
+func is_debug_theme_active() -> bool:
+	return _is_debug_theme
 
 
 ## Apply a font-size override to a specific control using a named tier.

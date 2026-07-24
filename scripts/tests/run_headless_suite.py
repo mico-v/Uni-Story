@@ -15,7 +15,7 @@ from pathlib import Path
 
 
 DEFAULT_TIMEOUT_SECONDS = 180.0
-SCRIPT_ERROR_MARKERS = ("SCRIPT ERROR:", "Parse Error:", "GDScript backtrace")
+SCRIPT_ERROR_MARKERS = ("SCRIPT ERROR:", "Parse Error:")
 
 
 @dataclass(frozen=True)

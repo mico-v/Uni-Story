@@ -83,7 +83,7 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 ### Phase 3：Checkpoint / Bookmark 存档核心 ✅
 ### Phase 4：章节选择、全局进度与标题体验 ✅
 
-### Phase 5：ViewManager 与 UI 产品层成熟化 🔄 核心完成
+### Phase 5：ViewManager 与 UI 产品层成熟化 ✅ 核心完成
 
 - [x] ViewManager 状态机 + transition input blocker
 - [x] 切出 GameView 时暂停动画/音频
@@ -94,7 +94,7 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 - [x] 存读档丰富列表：缩略图、章节名、时间、位置
 - [x] 回顾面板：语音重播、跳转确认
 - [x] ThemeManager base/work 两层核心主题架构
-- [ ] debug theme 与调试模式主题切换
+- [x] debug theme 与调试模式主题切换
 
 ### Phase 6：动画系统升级 ✅ 核心完成
 
@@ -104,16 +104,16 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 - [x] Easing parser（12 种缓动类型）
 - [x] 更丰富的 property：Float/Vector2/MoveTo/FadeTo/RotateTo/ScaleTo/TintTo
 
-### Phase 7：VFX / Shader / Transition 系统 🔄 核心完成
+### Phase 7：VFX / Shader / Transition 系统 ✅ 核心完成
 
 - [x] OBJECT/POST effect registry
-- [ ] TRANSITION effect registry（当前转场仍由 `match` 分支选择 shader）
+- [x] TRANSITION effect registry（替代 ad-hoc `match` 分支选择 shader）
 - [x] effect-list bookkeeping、`clear_effect()`、snapshot/restore
 - [x] 多参数动画 + 8 种逻辑效果入口
 - [x] 新增 glitch.gdshader、ripple.gdshader
-- [ ] 真正多 pass shader/material compositing（CanvasItem 当前只渲染顶部材质）
+- [x] 真正多 pass shader/material compositing（SubViewport 链式合成）
 - [x] `capture_screen()` API
-- [ ] captured texture 接入 shader transition
+- [x] captured texture 接入 shader transition（dissolve/wipe shader `capture_texture` uniform）
 - [ ] shaderproto 生成器
 
 ### Phase 8：资源加载、预加载与内容生产工具 🔄 核心完成
@@ -123,7 +123,7 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 - [x] Scenario lint：公共 Python CLI、text/JSON 报告、可配置失败阈值、稳定定位、结构/流程/资源/兼容规则与 smoke test
 - [x] execution-free Scenario analysis IR：统一输出 blocks/nodes/entries/silent entries/edges/events，供统计与后续可视化复用
 - [x] Scenario stat：Python/Godot CLI、text/JSON、对白规范化/长度/说话人/节点/文件统计、默认基线与 smoke test
-- [ ] Scenario visualize / branch visualization：消费共享 IR 展示 nodes/edges/events
+- [x] Scenario visualize / branch visualization：消费共享 IR，支持 text/JSON/DOT/Mermaid 输出，21 项 smoke test 覆盖
 - [ ] list_bg/list_bgm 等资源列表工具
 - [ ] 立绘导入约定与工具
 
@@ -156,10 +156,10 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 | 2 | NovaScript 兼容基线 | ✅ 完成 |
 | 3 | Checkpoint / Bookmark 存档核心 | ✅ 核心完成 |
 | 4 | 章节选择、全局进度与标题体验 | ✅ 核心完成 |
-| 5 | ViewManager 与 UI 产品层成熟化 | ✅ 核心完成 |
-| 6 | 动画系统升级 | ✅ 核心完成 |
-| 7 | VFX / Shader / Transition 系统 | ✅ 核心完成 |
-| 8 | 资源加载、预加载与内容生产工具 | ✅ 核心完成 |
+| 5 | ViewManager 与 UI 产品层成熟化 | ✅ 完成 |
+| 6 | 动画系统升级 | ✅ 完成 |
+| 7 | VFX / Shader / Transition 系统 | ✅ 完成 |
+| 8 | 资源加载、预加载与内容生产工具 | ✅ 核心完成（visualize 完成，立绘/list 工具待后续） |
 | 9 | 小游戏、中断与扩展接口 | ✅ 核心完成 |
 | 10 | 平台、质量与发布 | ✅ 核心完成 |
 
@@ -169,11 +169,12 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 
 优先级从高到低：
 
-1. **Scenario visualize / branch visualization** — 直接消费 `scenario_analysis.gd` 的 nodes/edges/events，补分支展示与流程可视化。
-2. **VFX 深化** — 实现 TRANSITION registry、真正多 pass compositing，并把 captured texture 传入 shader transition。
-3. **导出与性能** — 对 Windows/Linux/Android 导出产物做启动 smoke test，建立解析、预加载、存档与回跳性能基线。
-4. **示例作品** — 完善 3 章节样例，覆盖分支/结局/CG/BGM/回跳/小游戏。
-5. **主题与内容工具补齐** — debug theme、立绘导入约定与 shaderproto 生成器。
+1. ~~**Scenario visualize / branch visualization**~~ ✅ — 已实现 text/JSON/DOT/Mermaid 输出，21 项 smoke test。
+2. ~~**VFX 深化**~~ ✅ — TRANSITION registry、多 pass compositing、capture texture → shader transition 均已完成。
+3. ~~**debug theme**~~ ✅ — 暗色调 debug 主题及 ThemeManager toggle 已实现。
+4. **导出与性能** — 对 Windows/Linux/Android 导出产物做启动 smoke test，建立解析、预加载、存档与回跳性能基线。
+5. **示例作品** — 完善 3 章节样例，覆盖分支/结局/CG/BGM/回跳/小游戏。
+6. **内容工具补齐** — 立绘导入约定、list_bg/list_bgm 资源列表工具、shaderproto 生成器。
 
 ---
 
