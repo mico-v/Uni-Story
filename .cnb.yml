@@ -30,13 +30,27 @@
   script: |
     # 提前解压 Android 构建模板到项目目录，确保 Godot import 时能检测到 .template_version
     mkdir -p android/build
-    unzip -qo /root/.local/share/godot/export_templates/4.6.stable.mono/android_source.zip -d android/build
+    unzip -qo /root/.local/share/godot/export_templates/4.6.stable/android_source.zip -d android/build
     godot --headless --import
+
+# ── 质量门禁 ──────────────────────────────────────
+# 对齐 GitHub Actions quality gate：Scenario lint（error 级别阻断）+ 20 项 headless 回归测试
+.scenario-lint: &scenario-lint
+  name: scenario-lint
+  script: |
+    echo "=== Scenario Lint (fail-on error) ==="
+    python3 scripts/tools/scenario_lint.py --godot godot --fail-on error
+
+.headless-tests: &headless-tests
+  name: headless-tests
+  script: |
+    echo "=== Headless Regression Suite (20 tests) ==="
+    python3 scripts/tests/run_headless_suite.py --godot godot --timeout 180
 
 .build-windows: &build-windows
   name: Build Windows
   script: |
-    # Each job has isolated workspace; must import first to generate .sln for C#
+    # Each job has isolated workspace; must import first
     godot --headless --import
     mkdir -p release/win
     godot --headless --export-release "Windows Desktop" "release/win/$PROJECT_NAME.exe"
@@ -44,7 +58,7 @@
 .build-linux: &build-linux
   name: Build Linux
   script: |
-    # Each job has isolated workspace; must import first to generate .sln for C#
+    # Each job has isolated workspace; must import first
     godot --headless --import
     mkdir -p release/linux
     godot --headless --export-release "Linux" "release/linux/$PROJECT_NAME.x86_64"
@@ -54,14 +68,14 @@
   name: Build Android Debug
   script: |
     mkdir -p release/android
-    # Must import first to generate .sln for C# (before template extraction
+    # Must import first (before template extraction
     # to avoid Godot creating .import files in android/build/res/)
     godot --headless --import
     # Extract Android build template to project dir (required by Godot's gradle build)
     mkdir -p android/build
-    unzip -qo /root/.local/share/godot/export_templates/4.6.stable.mono/android_source.zip -d android/build
+    unzip -qo /root/.local/share/godot/export_templates/4.6.stable/android_source.zip -d android/build
     # Godot requires this file to know the template version
-    echo "4.6.stable.mono" > android/.build_version
+    echo "4.6.stable" > android/.build_version
     # Prevent Godot from scanning/corrupting Android template resources during export
     touch android/build/.gdignore
     # Clean any stale .import files that Godot may create in the template dir
@@ -73,14 +87,14 @@
   name: Build Android Release
   script: |
     mkdir -p release/android
-    # Must import first to generate .sln for C# (before template extraction
+    # Must import first (before template extraction
     # to avoid Godot creating .import files in android/build/res/)
     godot --headless --import
     # Extract Android build template to project dir (required by Godot's gradle build)
     mkdir -p android/build
-    unzip -qo /root/.local/share/godot/export_templates/4.6.stable.mono/android_source.zip -d android/build
+    unzip -qo /root/.local/share/godot/export_templates/4.6.stable/android_source.zip -d android/build
     # Godot requires this file to know the template version
-    echo "4.6.stable.mono" > android/.build_version
+    echo "4.6.stable" > android/.build_version
     # Prevent Godot from scanning/corrupting Android template resources during export
     touch android/build/.gdignore
     # Clean any stale .import files that Godot may create in the template dir
@@ -119,6 +133,8 @@ dev:
       name: android-debug-build
       stages:
         - *import-project
+        - *scenario-lint
+        - *headless-tests
         - *build-android-debug
         - name: package-android-debug
           script: |
@@ -143,6 +159,8 @@ main:
       name: ci-check
       stages:
         - *import-project
+        - *scenario-lint
+        - *headless-tests
         - name: build-all-platforms
           jobs:
             windows: *build-windows
@@ -157,6 +175,8 @@ $:
       <<: *build-env
       stages:
         - *import-project
+        - *scenario-lint
+        - *headless-tests
         - name: build-all-platforms
           jobs:
             windows: *build-windows
@@ -192,6 +212,8 @@ $:
       <<: *build-env
       stages:
         - *import-project
+        - *scenario-lint
+        - *headless-tests
         - name: build-all-platforms
           jobs:
             windows: *build-windows

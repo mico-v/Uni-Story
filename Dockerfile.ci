@@ -6,17 +6,9 @@ ENV ANDROID_SDK_ROOT=/opt/android-sdk
 ENV ANDROID_HOME=/opt/android-sdk
 ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 
-# 基础工具 + JDK 17
+# 基础工具 + JDK 17 + Python3（用于 lint/test 脚本）
 RUN apt-get update && apt-get install -y \
-    wget unzip curl ca-certificates zip openjdk-17-jdk-headless \
-    && rm -rf /var/lib/apt/lists/*
-
-# .NET SDK 8.0
-RUN wget -q https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb -O /tmp/ms.deb \
-    && dpkg -i /tmp/ms.deb \
-    && rm /tmp/ms.deb \
-    && apt-get update \
-    && apt-get install -y dotnet-sdk-8.0 \
+    wget unzip curl ca-certificates zip openjdk-17-jdk-headless python3 \
     && rm -rf /var/lib/apt/lists/*
 
 # Android SDK cmdline-tools
@@ -31,27 +23,26 @@ RUN yes | ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --sdk_root=${A
     && ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --sdk_root=${ANDROID_SDK_ROOT} \
         "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
-# Godot Mono (.NET) 引擎
-RUN wget -nv "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_mono_linux_x86_64.zip" \
+# Godot 标准版引擎（纯 GDScript 项目，无需 .NET/Mono）
+RUN wget -nv "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip" \
         -O /tmp/godot.zip \
     && unzip -o /tmp/godot.zip -d /tmp \
-    && GODOT_DIR="/tmp/Godot_v${GODOT_VERSION}-stable_mono_linux_x86_64" \
-    && chmod +x "${GODOT_DIR}/Godot_v${GODOT_VERSION}-stable_mono_linux.x86_64" \
-    && mv "${GODOT_DIR}/Godot_v${GODOT_VERSION}-stable_mono_linux.x86_64" /usr/local/bin/godot \
-    && cp -r "${GODOT_DIR}/GodotSharp" /usr/local/bin/GodotSharp \
-    && rm -rf /tmp/godot.zip "/tmp/Godot_v${GODOT_VERSION}-stable_mono_linux_x86_64"
+    && GODOT_DIR="/tmp/Godot_v${GODOT_VERSION}-stable_linux.x86_64" \
+    && chmod +x "${GODOT_DIR}/Godot_v${GODOT_VERSION}-stable_linux.x86_64" \
+    && mv "${GODOT_DIR}/Godot_v${GODOT_VERSION}-stable_linux.x86_64" /usr/local/bin/godot \
+    && rm -rf /tmp/godot.zip "/tmp/Godot_v${GODOT_VERSION}-stable_linux.x86_64"
 
-# Godot Mono (.NET) 导出模板
-RUN wget -nv "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_mono_export_templates.tpz" \
+# Godot 标准版导出模板
+RUN wget -nv "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_export_templates.tpz" \
         -O /tmp/templates.tpz \
-    && mkdir -p "/root/.local/share/godot/export_templates/${GODOT_VERSION}.stable.mono" \
+    && mkdir -p "/root/.local/share/godot/export_templates/${GODOT_VERSION}.stable" \
     && unzip -q /tmp/templates.tpz -d /tmp/tpl \
-    && mv /tmp/tpl/templates/* "/root/.local/share/godot/export_templates/${GODOT_VERSION}.stable.mono/" \
+    && mv /tmp/tpl/templates/* "/root/.local/share/godot/export_templates/${GODOT_VERSION}.stable/" \
     && rm -rf /tmp/templates.tpz /tmp/tpl
 
 # 从导出模板中提取 Android 构建模板
 RUN mkdir -p "/root/.local/share/godot/build_templates/android" \
-    && unzip -q "/root/.local/share/godot/export_templates/${GODOT_VERSION}.stable.mono/android_source.zip" \
+    && unzip -q "/root/.local/share/godot/export_templates/${GODOT_VERSION}.stable/android_source.zip" \
         -d "/root/.local/share/godot/build_templates/android"
 
 # Godot Editor Settings（配置 JDK 和 Android SDK 路径）
