@@ -7,6 +7,8 @@ uniform sampler2D noise_texture : source_color, filter_nearest;
 uniform vec4 edge_color : source_color = vec4(1.0, 0.5, 0.0, 1.0);
 uniform float edge_width : hint_range(0.0, 0.2) = 0.03;
 uniform float use_texture : hint_range(0.0, 1.0) = 0.0;
+uniform sampler2D capture_texture : source_color;
+uniform float use_capture : hint_range(0.0, 1.0) = 0.0;
 
 // Simple hash-based procedural noise fallback.
 float hash(vec2 p) {
@@ -27,7 +29,14 @@ float noise(vec2 p) {
 }
 
 void fragment() {
-	vec4 c = texture(TEXTURE, UV);
+	// When capturing, sample the previous frame as the dissolve "from" layer.
+	vec4 from_color;
+	if (use_capture > 0.5) {
+		from_color = texture(capture_texture, UV);
+	} else {
+		from_color = texture(TEXTURE, UV);
+	}
+	vec4 to_color = texture(TEXTURE, UV);
 
 	float n;
 	if (use_texture > 0.5) {
@@ -36,9 +45,21 @@ void fragment() {
 		n = noise(UV * 8.0);
 	}
 
-	// Discard pixels below threshold.
-	if (n < threshold) {
-		discard;
+	// Below threshold: show "from" (previous frame or discard).
+	// Above threshold: show "to" (current frame).
+	vec4 c;
+	if (use_capture > 0.5) {
+		c = from_color;
+		// Reveal "to" above threshold.
+		if (n >= threshold) {
+			c = to_color;
+		}
+	} else {
+		c = to_color;
+		// Discard pixels below threshold.
+		if (n < threshold) {
+			discard;
+		}
 	}
 
 	// Edge glow: pixels near the dissolve boundary.
