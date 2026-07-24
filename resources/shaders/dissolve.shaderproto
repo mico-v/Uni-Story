@@ -1,0 +1,21 @@
+{
+  "name": "dissolve_example",
+  "template": "res://resources/shaders/dissolve.gdshader",
+  "variants": [
+    {
+      "suffix": "_fast",
+      "constants": {},
+      "replacements": {
+        "edge_width : hint_range(0.0, 0.2) = 0.03": "edge_width : hint_range(0.0, 0.2) = 0.01",
+        "UV * 8.0": "UV * 4.0"
+      }
+    },
+    {
+      "suffix": "_blue",
+      "constants": {},
+      "replacements": {
+        "vec4(1.0, 0.5, 0.0, 1.0)": "vec4(0.0, 0.3, 1.0, 1.0)"
+      }
+    }
+  ]
+}
