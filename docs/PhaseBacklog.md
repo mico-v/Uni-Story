@@ -2,7 +2,7 @@
 
 本文把 `PLAN.md` 中的各阶段拆成 issue/commit 粒度，作为开发时的提交边界参考。单个提交应能运行主场景或对应 headless test。
 
-> 最后同步：2026-07-25
+> 最后同步：2026-07-25（新增 Phase 15-18 任务）
 
 状态标记：✅ 已完成 / 🔄 核心完成、仍有明确缺口 / 🔲 未完成
 
@@ -150,19 +150,80 @@
 - 🔲 `shader-effects-test`：新增 `shader_effects_smoke_test.gd`，加载验证所有 shader 编译通过。
 - 🔲 `phase14-docs`：更新 `PLAN.md`、`review.md`、`PhaseBacklog.md`。
 
-## Phase 15：Lua VM 深度兼容与设备验证
+## Phase 15：NovaScript API 深化与 Lua 兼容收尾
 
-- 🔲 `box-tint-impl`：实现 `box_tint()` 完整语义。
-- 🔲 `input-api-impl`：实现 `input()`、输入验证回调等完整 API。
-- 🔲 `text-formatting-impl`：实现 `skip_mode_custom`、text formatting hooks 等。
-- 🔲 `misc-nova-api`：实现 `set_text_speed()`、`get_current_position()` 等剩余 API。
-- 🔲 `nova-lua-compat-test`：新增 `nova_lua_compat_smoke_test.gd`，验证 API 不再为 no-op。
-- 🔲 `device-smoke-windows`：Windows 真机启动→播放→存读档→退出验证。
-- 🔲 `device-smoke-linux`：Linux 真机同上。
-- 🔲 `device-smoke-android`：Android 真机同上 + 横屏触控验证。
-- 🔲 `perf-optimize`：基于性能基线优化（场景加载/存档恢复/解析），降低 20%。
-- 🔲 `release-docs-v2`：更新 README 为完整用户手册、编写 `docs/ReleaseGuide.md`、整理 CHANGELOG。
-- 🔲 `phase15-docs`：更新 `PLAN.md`、`review.md`、`PhaseBacklog.md`。
+- 🔲 `avatar-show-hide-impl`：实现 avatar_show()/avatar_hide() 完整语义，从 linter 白名单移除
+- 🔲 `box-tint-impl`：实现 box_tint() Color/灰度/RGBA 背景染色
+- 🔲 `box-layout-impl`：实现 box_anchor/box_alignment/box_offset/new_page
+- 🔲 `ff-input-impl`：实现 stop_auto_ff/stop_ff/immediate_step/input_on_off/ff_shortcut
+- 🔲 `auto-fade-time-impl`：实现 auto_fade_on_off 引用计数 + auto_time
+- 🔲 `text-formatting-impl`：实现 text_delay/text_duration/text_scroll/set_text_speed/skip_mode_custom/text_easing
+- 🔲 `volume-api-impl`：实现 volume(bgm/bgs/voice) 按通道音量
+- 🔲 `anim-hold-impl`：实现 anim_hold_begin/end 批量动画
+- 🔲 `misc-api-impl`：实现 get_current_position/input() toast
+- 🔲 `linter-whitelist-cleanup`：从 scenario_linter 白名单移除所有已实现 API
+- 🔲 `nova-lua-compat-test`：新增 nova_lua_compat_smoke_test.gd（20+ 项编译+运行时验证）
+- 🔲 `device-checklist`：创建 docs/DeviceTestChecklist.md
+- 🔲 `device-smoke-test`：新增 device_smoke_test.gd 自动化验证
+- 🔲 `device-windows`：Windows 真机验证
+- 🔲 `device-linux`：Linux 真机验证
+- 🔲 `device-android`：Android 真机验证
+- 🔲 `perf-warm-compile`：ScriptLoader._warm_compile_cache() 编译缓存预热
+- 🔲 `perf-scene-load`：减少 autoload 初始化开销
+- 🔲 `perf-save-restore`：增量 snapshot 替代全量序列化
+- 🔲 `perf-baseline-update`：更新性能基线阈值（目标降低 20%）
+- 🔲 `phase15-docs`：更新 PLAN/review/PhaseBacklog/CHANGELOG
+
+## Phase 16：Shader/VFX 全量对齐 Nova
+
+- 🔲 `shaderproto-batch1`：Barrel/BarrelHyper/Glitch/Glow/Overglow/Overlay/Rain/Wiggle/FlipGrid（9 个）
+- 🔲 `shaderproto-batch2`：GaussianBlur/LensBlur/MotionBlur/RotationBlur/RadialBlur/Mono/Sharpen/Shake/RandRoll（9 个）
+- 🔲 `shaderproto-batch3`：Default/Fade/FadeGlobal/FadeRadialBlur/FinalBlit/Color/Colorless/Blink/BrokenTV/ChangeTextureWithFade/GrayWave/MaskedMosaic/MixAdd/Ripple/RippleMove/Roll/ShowSecondTexture/Water（18 个）
+- 🔲 `shaderproto-gen-blend`：扩展 shaderproto_gen.py 支持 Nova 风格 blend mode 变体
+- 🔲 `vfx-registry-full`：VFXSystem registry 扩展至完整 37 效果
+- 🔲 `shader-post-variants`：每个新 shader 生成对象版 + POST 全屏版
+- 🔲 `normalize-alias-full`：扩展别名映射覆盖所有 37 效果
+- 🔲 `query-uniforms-full`：扩展 query_uniforms() 覆盖所有新效果
+- 🔲 `shader-full-smoke-test`：新增 smoke test 覆盖 37 shaderproto 编译
+- 🔲 `phase16-docs`：更新 PLAN/review/PhaseBacklog/CHANGELOG
+
+## Phase 17：Editor 集成与 UI 工具深度提升
+
+- 🔲 `image-group-capturer`：Editor 中截取 CG 缩略图
+- 🔲 `image-group-editor`：Inspector 中编辑 ImageGroup 资源
+- 🔲 `image-group-list-editor`：管理所有 CG 分组的列表视图
+- 🔲 `music-entry-editor`：Inspector 中编辑音乐条目
+- 🔲 `music-entry-list-editor`：管理所有音乐条目的列表视图
+- 🔲 `build-panel`：Editor 内导出配置面板
+- 🔲 `build-hooks`：导出前后钩子（lint 门禁 + 打包校验）
+- 🔲 `standing-multi-preview`：立绘编辑器多角色切换预览
+- 🔲 `standing-pose-anim-preview`：Pose 预览动画
+- 🔲 `ui-transition-editor`：Editor 中预览 UI 过渡动画
+- 🔲 `simple-entry-list-editor`：通用列表编辑器基类
+- 🔲 `nova-menu`：Editor 菜单栏快捷入口
+- 🔲 `editor-smoke-tests`：新增 2-3 项 Editor 工具 smoke test
+- 🔲 `phase17-docs`：更新 PLAN/review/PhaseBacklog/CHANGELOG
+
+## Phase 18：工具链补完、文档与发布成熟化
+
+- 🔲 `tool-generate-charsets`：从剧本生成字体字符集
+- 🔲 `tool-generate-localized-paths`：生成 I18n 资源路径映射表
+- 🔲 `tool-generate-shaders`：Nova 版 generate_shaders 补充
+- 🔲 `tool-list-bg`：列出所有背景资源
+- 🔲 `tool-list-bgm`：列出所有 BGM 资源
+- 🔲 `tool-list-pos`：列出所有立绘位置定义
+- 🔲 `tool-show-branches`：分支可视化补充
+- 🔲 `tool-utils`：通用工具函数库
+- 🔲 `readme-user-manual-en`：英文 README 重写为用户手册
+- 🔲 `readme-user-manual-zh`：中文用户手册（docs/UserGuide.md）
+- 🔲 `docs-release-guide`：发布流程/导出配置/签名指南
+- 🔲 `vscode-syntax`：NovaScript TextMate grammar
+- 🔲 `vscode-extension-skeleton`：VS Code 扩展基础文件
+- 🔲 `full-regression`：全量 smoke test 回归（30+ 项）
+- 🔲 `scenario-lint-warning-reduce`：Scenario lint warnings < 100
+- 🔲 `triple-platform-export`：三平台导出产物验证
+- 🔲 `version-bump-v1`：项目标记 v1.0.0-rc1
+- 🔲 `phase18-docs`：更新 PLAN/review/PhaseBacklog/CHANGELOG
 
 ## 已完成任务归档
 

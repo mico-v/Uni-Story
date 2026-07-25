@@ -1,6 +1,6 @@
 # Nova 与 Uni-Story 差异评审
 
-> 审查日期：2026-06-24 · 最后更新：2026-07-25
+> 审查日期：2026-06-24 · 最后更新：2026-07-25（新增 Phase 15-18 路线图）
 > 目标工程：`Nova/`，Unity 2020.3.48f1 + C# + Lua(ToLua#)
 > 当前工程：仓库根目录，Godot 4.6 + GDScript
 > 本次分析：基于 ISSUE #14 发起的全方位代码成熟度对比
@@ -249,47 +249,43 @@ Uni-Story 代码成熟度：███████████████░░�
 
 ## 六、后续方向
 
-Phase 0-10 已全部完成。基于全方位成熟度对比分析（ISSUE #14），后续优先推进方向：
+Phase 0-14 已全部完成（PR #15-#22 已合入 main）。Phase 15 在评论中讨论但未执行提交（PR #23 不存在）。
+
+基于精准差距分析，重新规划 Phase 15-18：
 
 ### 高优先级（缩小核心差距）
 
-1. **工具链扩展 — 面向内容创作者**
-   - 剧本合并/拆分工具（对标 Nova 的 `merge.py`、`split_chara.py`）
-   - 剧本代码剥离工具（对标 Nova 的 `strip_code.py` 系列，用于导出纯文本供配音/审阅）
-   - 资源列表工具（`list_bg.py`、`list_bgm.py`、`list_pos.py`）
-   - 示例剧本生成器（`generate_sample_script.py`）
-   - 当前 Nova 有 27 个 Python 工具，Uni-Story 有 5 个——需优先补齐
-
-2. **Shader/VFX 丰富度提升**
-   - 迁移 Nova 的 shaderproto 机制：生成 `.gdshader` 变体（当前仅 1 个 `.shaderproto` 示例）
-   - 补充常用 VFX：Barrel、Kaleido、Glow、MotionBlur、Rain、Water、Shake
-   - Nova 有 162 个 shader 变体（37 种效果 × 多 blend mode），Uni-Story 有 14 个（8 种效果）
-
-3. **I18n 内容落地**
-   - 补齐英文 LocalizedResources 副本（至少覆盖 4 个主章节剧本）
-   - 完善 `generate_localized_paths.py` 同等工具
-   - 当前 Nova 有 4 个英文已译剧本，Uni-Story 仍是中文 only
+**Phase 15 — NovaScript API 深化与 Lua 兼容收尾**
+- avatar_show() / avatar_hide() 完整实现
+- 20+ NovaScript API 从 no-op 升级为完整实现（box_tint, box_anchor, text_delay, volume, anim_hold 等）
+- scenario_linter 白名单从 30 → 0
+- 设备验证框架（DeviceTestChecklist + device_smoke_test）
+- ScriptLoader 编译缓存预热 + 性能优化 20%
+- 目标：Lua 兼容 70% → 95%+
 
 ### 中优先级（生态建设）
 
-4. **立绘生产管线**
-   - 实现 Nova 的 Standing tools（`export_poses.py`、`merge_psd_layers.py`）的 Godot 版
-   - 完善 `docs/StandingImportGuide.md` 配套的自动化流程
+**Phase 16 — Shader/VFX 全量对齐 Nova**
+- 28 个缺失 shaderproto：Barrel/Glow/Rain/Wiggle/GaussianBlur/LensBlur/MotionBlur/Shake/Water 等
+- shaderproto 模板 9 → 37（100% 对齐 Nova）
+- shader 总数 50 → 185+
+- 目标：Shader 丰富度 24% → 100%
 
-5. **Godot Editor 集成**
-   - 立绘 Inspector 定制（对标 Nova 的 `CharacterPoseComposer`）
-   - SaveViewer（对标 Nova 的 `SaveViewer.cs`）
-   - Build Hooks 配置面板
-   - 当前 Nova 有 31 个 Editor 脚本，Uni-Story 有 1 个
-
-6. **示例作品完善** — 3+ 章节完整故事线，含分支/结局/CG/BGM/回跳/小游戏
+**Phase 17 — Editor 集成与 UI 工具深度提升**
+- ImageGroup/MusicGallery Inspector 编辑器
+- 一键构建面板 + BuildHooks
+- 立绘编辑器增强（多角色预览、Pose 动画）
+- Editor 脚本 8 → 18+
+- 目标：Editor 集成 23% → 58%+
 
 ### 低优先级（可选长期）
 
-7. **更多小游戏模板** — 点击、拖拽、QTE 等常见类型
-8. **Lua VM 完整兼容** — 继续覆盖 Nova 上游 API，减少 no-op 兼容桩
-9. **真实设备 smoke test** — 在 Windows/Linux/Android 真机上验证导出产物
-10. **社区建设** — 文档站点、示例作品集、VS Code 扩展适配
+**Phase 18 — 工具链补完、文档与发布成熟化**
+- 剩余 Python 工具（generate_charsets, generate_localized_paths 等）
+- README 重写为用户手册
+- VS Code NovaScript 语法高亮
+- 全量测试回归 + 三平台发布验证
+- 目标：工具链 67% → 93%+，项目标记 v1.0.0-rc1
 
 ---
 

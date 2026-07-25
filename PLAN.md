@@ -3,7 +3,7 @@
 > 当前目标：使用 Godot 4.6 + GDScript，学习 Nova 的架构设计，逐步建设成熟、可维护、可扩展的视觉小说游戏引擎。  
 > 参考工程：`Nova/` Unity + C# + Lua(ToLua#)  
 > 当前工程：Godot + GDScript-first，不引入 Unity/C# 依赖，不把 Lua VM 作为默认运行时。  
-> 日期：2026-06-24 · 最后更新：2026-07-25
+> 日期：2026-06-24 · 最后更新：2026-07-25（新增 Phase 15-18）
 
 ---
 
@@ -296,51 +296,233 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 
 ---
 
-### Phase 15：Lua VM 深度兼容与设备验证（低优先级 🟢）
+### Phase 15：NovaScript API 深化与 Lua 兼容收尾（高优先级 🔴）
 
-> 目标：进一步提升 NovaScript 行为兼容度，完成真实设备验证，进行性能优化。  
-> 背景：当前 NovaScript 行为兼容 ~70-80%，部分 API 仍为 no-op 兼容桩。  
-> 差距：Lua 兼容度缺 ~20-30%。
+> 目标：解决剩余 no-op 兼容桩，提升 NovaScript 行为兼容度至 95%+；建立设备验证基础设施。  
+> 背景：当前 avatar_show 仍为 no-op；30 项 NovaScript API 已在 scenario_linter 白名单中但运行时未完整实现。无设备测试机制。  
+> 差距：Lua 兼容 ~70% / 设备验证 0%。
 
-#### 15.1 Lua VM 兼容深化
+#### 15.1 补齐剩余 NovaScript API no-op
 
-- [ ] 实现 `box_tint()` 完整语义（对话框背景染色）
-- [ ] 实现输入相关的完整 API（`input()`、输入验证回调）
-- [ ] 实现快进/文本排版相关接口（`skip_mode_custom`、text formatting hooks）
-- [ ] 实现剩余 Nova Lua API：`set_text_speed()` 运行时动态调整、`get_current_position()` 等
-- [ ] 新增 `nova_lua_compat_smoke_test.gd`：验证 Lua API 兼容桩不再为 no-op
+- [ ] 实现 `avatar_show()/avatar_hide()` 完整语义（角色立绘显示/隐藏），从 scenario_linter 白名单移除
+- [ ] 实现 `box_tint()` 完整语义（Color/灰度/RGBA 对话框背景染色）
+- [ ] 实现 `box_anchor()` 锚点布局（{left,right,top,bottom}）
+- [ ] 实现 `box_alignment()` 文本对齐（左/中/右）
+- [ ] 实现 `box_offset()` 像素偏移边距
+- [ ] 实现 `new_page()` 清空对话文本
+- [ ] 实现 `stop_auto_ff()` / `stop_ff()` 自动/快进模式停止
+- [ ] 实现 `immediate_step()` 强制推进到下一句
+- [ ] 实现 `input_on()/input_off()` 输入开关
+- [ ] 实现 `ff_shortcut_on()/ff_shortcut_off()` 快进快捷键开关
+- [ ] 实现 `auto_fade_on()/auto_fade_off()` fade 开关引用计数
+- [ ] 实现 `auto_time()` 自动播放延迟控制
+- [ ] 实现 `text_delay()` / `text_duration()` / `text_scroll()` 文本排版 API
+- [ ] 实现 `set_text_speed()` 运行时 CPS 调整
+- [ ] 实现 `skip_mode_custom()` 自定义快进模式
+- [ ] 实现 `text_easing()` 缓动类型存储
+- [ ] 实现 `volume(bgm/bgs/voice)` 按通道音量
+- [ ] 实现 `anim_hold_begin/end()` 动画批量操作
+- [ ] 实现 `get_current_position()` 位置快照 {node,index}
+- [ ] 实现 `input()` toast 提示回退
+- [ ] 从 `scenario_linter.gd` 白名单中移除所有已实现 API
+- [ ] 新增 `nova_lua_compat_smoke_test.gd`：每个 API 的编译+运行时验证（目标 20+ 项）
 
-#### 15.2 真实设备 smoke test
+#### 15.2 设备验证框架
 
-- [ ] Windows 真机：启动 → 播放 ch1 → 存档 → 读档 → 退出，全程无崩溃
-- [ ] Linux 真机：同上
-- [ ] Android 真机：启动 → 横屏适配 → 触控操作 → 播放 → 存档/读档 → 退出
+- [ ] 创建 `docs/DeviceTestChecklist.md`：三平台（Windows/Linux/Android）测试步骤
+- [ ] 新增 `device_smoke_test.gd`：启动→播放 ch1→存档→读档→退出 自动化流程
+- [ ] Windows 真机验证（启动→播放→存读档→退出，无崩溃）
+- [ ] Linux 真机验证（同上）
+- [ ] Android 真机验证（横屏适配 + 触控操作 + 完整流程）
 - [ ] 记录并修复设备相关 Bug
-- [ ] 新增 `device_smoke_test_checklist.md`：设备测试清单和结果记录模板
 
 #### 15.3 性能优化
 
-- [ ] 基于 `performance_baseline_test.gd` 基线，设定优化目标（每项降低 20%）
-- [ ] 场景加载优化：减少不必要的 autoload 初始化
+- [ ] ScriptLoader 编译缓存预热（`_warm_compile_cache()`）
+- [ ] 场景加载优化：减少不必要的 autoload 初始化开销
 - [ ] 存档/恢复优化：增量 snapshot 替代全量序列化
-- [ ] 解析优化：ScriptLoader 缓存预热
+- [ ] 基于 `performance_baseline_test.gd` 设定优化目标（每项降低 20%）
 - [ ] 更新性能基线阈值
-
-#### 15.4 文档与发布准备
-
-- [ ] 更新 `README.md` 为完整的用户使用手册
-- [ ] 编写 `docs/ReleaseGuide.md`：发布流程、导出配置、平台注意事项
-- [ ] 整理 `CHANGELOG.md` 为面向用户的版本发布日志
-- [ ] 所有文档同步至最新事实
 
 #### Phase 15 验收标准
 
 - `python scripts/tools/scenario_lint.py` → `errors=0`
-- 全部已有测试通过 + 1 项新 smoke test
-- Nova Lua API no-op 桩减少至 0（全部实现或明确标记为 `not_applicable`）
-- 三平台真机测试通过
-- 性能指标不低于基线（或达标优化目标）
-- 所有文档与代码一致
+- scenario_linter 白名单从 30 → 0（或明确标记 `not_applicable`）
+- 全部已有测试通过 + 2 项新 smoke test（lua_compat + device）
+- NovaScript 行为兼容度 70% → **95%+**
+- 三平台设备测试清单完成，至少一平台通过真机验证
+- 性能优化目标达成（各指标降低 ≥20%）
+
+---
+
+### Phase 16：Shader/VFX 全量对齐 Nova（中优先级 🟡）
+
+> 目标：将 shaderproto 模板从 9 个扩展至 37 个，100% 对齐 Nova 的视觉效果能力。  
+> 背景：Nova 有 37 个 shaderproto 生成 176 个 shader 变体；Uni-Story 有 9 个 shaderproto（50 个 .gdshader）。差距 28 个基础效果模板。  
+> 差距：Shader 丰富度 24%（9/37 shaderproto）。
+
+#### 16.1 补齐 Nova 缺失 shaderproto（第一批：9 个屏幕特效）
+
+- [ ] **Barrel**：桶形畸变（VR/CRT 镜头变形）
+- [ ] **BarrelHyper**：超桶形畸变（鱼眼效果）
+- [ ] **Glitch**：故障艺术（已有基础实现，补 shaderproto 模板和变体）
+- [ ] **Glow**：辉光/泛光效果
+- [ ] **Overglow**：过曝辉光
+- [ ] **Overlay**：纹理叠加混合
+- [ ] **Rain**：雨水效果
+- [ ] **Wiggle**：画面摆动
+- [ ] **FlipGrid**：翻页网格转场
+
+#### 16.2 补齐 Nova 缺失 shaderproto（第二批：9 个模糊/变形）
+
+- [ ] **GaussianBlur**：高斯模糊（已有 blur，补 shaderproto 模板）
+- [ ] **LensBlur**：镜头模糊/景深
+- [ ] **MotionBlur**：运动模糊
+- [ ] **RotationBlur**：旋转模糊
+- [ ] **RadialBlur**：径向模糊（已有实现，补 shaderproto 模板）
+- [ ] **Mono**：单色化
+- [ ] **Sharpen**：锐化
+- [ ] **Shake**：画面震动
+- [ ] **RandRoll**：随机滚动
+
+#### 16.3 补齐 Nova 缺失 shaderproto（第三批：10 个混合/转场/其他）
+
+- [ ] **Default**：默认无效果透传
+- [ ] **Fade**：淡入淡出
+- [ ] **FadeGlobal**：全局淡出
+- [ ] **FadeRadialBlur**：径向模糊淡出
+- [ ] **FinalBlit**：最终合成
+- [ ] **Color**：色彩调整
+- [ ] **Colorless**：去色
+- [ ] **Blink**：闪烁
+- [ ] **BrokenTV**：CRT 故障
+- [ ] **ChangeTextureWithFade**：纹理渐变切换
+- [ ] **GrayWave**：灰度波形
+- [ ] **MaskedMosaic**：遮罩马赛克
+- [ ] **MixAdd**：加法混合
+- [ ] **Ripple**：波纹（已有实现，补 shaderproto 模板）
+- [ ] **RippleMove**：移动波纹
+- [ ] **Roll**：画面滚动
+- [ ] **ShowSecondTexture**：第二纹理显示
+- [ ] **Water**：水面效果
+
+#### 16.4 系统增强
+
+- [ ] 扩展 `shaderproto_gen.py`：支持 Nova 风格的 blend mode 变体（PP/Multiply/Premul/Screen）
+- [ ] VFXSystem registry 扩展至完整 37 效果
+- [ ] 每个新 shader 均有对象版和 POST 全屏版
+- [ ] 扩展 `_normalize_effect_name()` 别名映射
+- [ ] 扩展 `query_uniforms()` 覆盖所有新效果
+
+#### Phase 16 验收标准
+
+- `python scripts/tools/scenario_lint.py` → `errors=0`
+- `shaderproto_gen.py --all` 成功生成所有 37 个模板的变体
+- 全部已有测试通过 + 1 项新 smoke test（覆盖所有 37 个 shaderproto 编译）
+- shader 总数：50 → **185+**（Nova 对标 176）
+- shaderproto 模板：9 → **37**（100% 对齐 Nova）
+
+---
+
+### Phase 17：Editor 集成与 UI 工具深度提升（中优先级 🟡）
+
+> 目标：补全 Godot Editor 集成能力，对齐 Nova 31 个 Editor 脚本的核心功能。  
+> 背景：Nova 有 31 Editor 脚本含 ImageGroup 编辑器、MusicGallery 编辑器、SpriteCropper、Build Hooks 等；Uni-Story 当前仅 8 个 editor 脚本。  
+> 差距：Editor 集成 23%（7/31）。
+
+#### 17.1 CG/Image Gallery 编辑器
+
+- [ ] 实现 `ImageGroupCapturer`：在 Editor 中截取 CG 缩略图
+- [ ] 实现 `ImageGroupEditor`：Inspector 中编辑 ImageGroup 资源（图片列表+分组+解锁条件）
+- [ ] 实现 `ImageGroupListEditor`：管理所有 CG 分组的列表视图
+
+#### 17.2 Music Gallery 编辑器
+
+- [ ] 实现 `MusicEntryEditor`：Inspector 中编辑音乐条目（音频文件+标题+作者+封面）
+- [ ] 实现 `MusicEntryListEditor`：管理所有音乐条目的列表视图
+- [ ] 集成 Editor 内音频试听
+
+#### 17.3 构建与发布工具
+
+- [ ] 实现 `BuildPanel`：Editor 内导出配置面板（平台选择、签名配置、版本号）
+- [ ] 实现 `BuildHooks`：导出前后钩子（资源检查、lint 门禁、打包后校验）
+- [ ] 一键导出到 Windows/Linux/Android
+
+#### 17.4 立绘编辑器增强
+
+- [ ] `StandingInspectorPlugin` 支持多角色切换预览
+- [ ] 图层拖拽排序可视化改进
+- [ ] Pose 预览动画（自动循环切换 Pose 展示效果）
+
+#### 17.5 UI 编辑器辅助
+
+- [ ] `CompositeUIViewTransitionEditor`：Editor 中预览 UI 过渡动画
+- [ ] `SimpleEntryListEditor`：通用列表编辑器基类（供 Gallery 复用）
+- [ ] `NovaMenu`：Editor 菜单栏快捷入口（lint/stat/build/文档）
+
+#### Phase 17 验收标准
+
+- 全部已有测试通过
+- 新增 2-3 项 Editor 工具 smoke test
+- Editor 脚本数量：8 → **18+**（对齐 Nova 的核心 Editor 功能集）
+- ImageGroup + MusicGallery 编辑器可在 Inspector 中正常使用
+- 一键构建面板可触发 CI release pipeline
+
+---
+
+### Phase 18：工具链补完、文档与发布成熟化（低优先级 🟢）
+
+> 目标：补齐 Nova 剩余 9 个 Python 工具；完善用户文档和发布指南；社区准备。  
+> 背景：当前 18/27 工具已覆盖，差 9 个；README 为开发者文档需转为用户手册。  
+> 差距：工具链 67% / 文档面向非开发者不足。
+
+#### 18.1 补齐 Nova 剩余 Python 工具
+
+- [ ] `generate_charsets.py`：从剧本生成字体字符集（减少字体纹理大小）
+- [ ] `generate_localized_paths.py`：生成 I18n 资源路径映射表
+- [ ] `generate_shaders.py`（Nova 版 shaderproto_gen 的补充）
+- [ ] `list_bg.py`：列出所有背景资源（已有 `list_resources.py` 部分覆盖）
+- [ ] `list_bgm.py`：列出所有 BGM 资源
+- [ ] `list_pos.py`：列出所有立绘位置定义
+- [ ] `show_branches.py`：分支可视化（已有 `scenario_visualize.py` 覆盖）
+- [ ] `nova_script_parser.py`（Nova 原版 parser，参考价值，不强制迁移）
+- [ ] `utils.py`（通用工具函数库）
+
+#### 18.2 README 重写为用户手册
+
+- [ ] 英文 README：项目介绍、快速开始、剧本语法速览、API 索引
+- [ ] 中文 README（或独立 `docs/UserGuide.md`）：完整用户手册
+  - 安装与项目初始化
+  - NovaScript 完整教程（含示例）
+  - 立绘导入教程（链接 `StandingImportGuide.md`）
+  - 音视频资源组织
+  - 打包发布指南
+  - FAQ / 常见问题
+- [ ] `docs/ReleaseGuide.md`：发布流程、导出配置、平台注意事项、签名指南
+- [ ] `docs/CHANGELOG.md` 独立为用户可读版本（已有 `CHANGELOG.md` 在根目录）
+
+#### 18.3 VS Code / 编辑器扩展准备
+
+- [ ] NovaScript 语法高亮文件（`.tmlanguage` / TextMate grammar）
+- [ ] `scripts/tools/vscode/` 目录：VS Code 扩展基础文件
+- [ ] 文档站点骨架（可选：GitHub Pages）
+
+#### 18.4 最终质量验收
+
+- [ ] 全量 smoke test 回归（目标 30+ 项测试全部通过）
+- [ ] Scenario lint → `errors=0, warnings<100`
+- [ ] 三平台导出产物验证（Windows/Linux/Android 均可用）
+- [ ] 性能基线不劣于 Phase 10 基线
+- [ ] 全部文档交叉引用正确、无死链接
+- [ ] CHANGELOG 整理为面向用户的版本发布日志
+
+#### Phase 18 验收标准
+
+- 全部已有测试通过 + 1 项新 smoke test（工具链全量验证）
+- 工具链覆盖率：67% → **93%+**（25/27 工具）
+- README / 用户手册完成，新手可按文档独立完成一个简单作品
+- 三平台导出 + 真机验证通过
+- 项目标记为 `v1.0.0-rc1`
 
 ---
 
@@ -363,27 +545,31 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 | **12** | **立绘生产管线与 Editor 集成** | ✅ 完成 |
 | **13** | **示例作品与 I18n 内容** | ✅ 完成 |
 | **14** | **Shader/VFX 丰富度提升** | ✅ 完成 |
-| **15** | **Lua VM 深度兼容与设备验证** | 🔲 未开始 |
+| **15** | **NovaScript API 深化与 Lua 兼容收尾** | 🔲 未开始 |
+| **16** | **Shader/VFX 全量对齐 Nova** | 🔲 未开始 |
+| **17** | **Editor 集成与 UI 工具深度提升** | 🔲 未开始 |
+| **18** | **工具链补完、文档与发布成熟化** | 🔲 未开始 |
 
 ---
 
 ## 六、当前状态
 
-**已全部完成 Phase 0-10**（24 项 headless 测试通过 + export smoke test + 性能基线）。
+**已全部完成 Phase 0-14**（已合入 main：PR #15-#22）。Phase 15 之前在评论中讨论但未执行提交（PR #23 不存在）。
 
-**当前差距**（按优先级，源自 `review.md`）：
+**当前相对于 Nova（37 shaderprotos, 27 tools, 31 editor scripts）的实际差距**：
 
 ```
-工具链完整性  ████████████████████░░  52%  (14/27 工具已覆盖)
+工具链完整性  ███████████████░░░░░░░  67%  (18/27 工具已覆盖，差 9 个)
 立绘生产管线  ██████████████████████  100%  (4/4 工具)
-Editor 集成   ██████████░░░░░░░░░░░░  23%  (7/31 脚本)
-I18n 内容     ████████████████████░░  90%  (EN ch1-ch4 全翻译，含多结局分支)
-Shader 丰富度 ████████████████████░░  57%  (50/176 shader，按基础效果 21 种)
-示例作品      ████████████████████░░  90%  (ch1-ch4 完整叙事 + 3 结局 + 3 小游戏模板)
-Lua 兼容      ████████████████░░░░  78%  (部分 API 仍为 no-op)
+Editor 集成   █████████░░░░░░░░░░░░  23%  (7/31 脚本，差 24 个)
+I18n 内容     ████████████████████░░  90%  (EN ch1-ch4 全翻译 + 多结局)
+Shader 丰富度 ██████████░░░░░░░░░░░░  24%  (9/37 shaderproto 模板，差 28 个)
+示例作品      ████████████████████░░  90%  (ch1-ch4 完整叙事 + 3 结局)
+Lua 兼容      ██████████████░░░░░░░░  70%  (avatar_show 等仍为 no-op)
+设备验证      ░░░░░░░░░░░░░░░░░░░░░░  0%   (无设备测试清单/结果)
 ```
 
-**下一步**：按照 Phase 11 → 12 → 13 → 14 → 15 顺序推进，每个阶段独立可验证，完成后更新状态表。
+**下一步**：按 Phase 15 → 16 → 17 → 18 顺序推进，目标对齐 Nova 完整成熟引擎能力。
 
 ---
 
