@@ -872,7 +872,7 @@ func _chars_per_second(delay_seconds: float) -> float:
 
 
 func set_text_speed(cps: float = 30.0) -> void:
-	## Runtime dynamic adjustment of typewriter character-per-second rate.
+	# Runtime dynamic adjustment of typewriter character-per-second rate.
 	if _ctx and _ctx.game_view_controller:
 		_ctx.game_view_controller.type_cps = maxf(cps, 1.0)
 
@@ -884,7 +884,7 @@ func get_current_position() -> Dictionary:
 
 
 func skip_mode_custom(enabled: bool = true) -> void:
-	## Enable/disable custom skip mode override.
+	# Enable/disable custom skip mode override.
 	if _ctx and _ctx.game_view_controller:
 		if enabled:
 			_ctx.game_view_controller.skip_unread = true
@@ -895,14 +895,14 @@ func skip_mode_custom(enabled: bool = true) -> void:
 
 
 func text_easing(easing: Variant = null) -> void:
-	## Override typewriter text animation easing type. Stored for future animation system use.
+	# Override typewriter text animation easing type. Stored for future animation system use.
 	if _ctx:
 		_ctx.set("_text_easing", easing)
 
 
-func input(variable_name: String = "", _title: String = "", _placeholder: String = "") -> void:
-	## Nova compat: request text input from player, store result in a variable.
-	## Currently shows a toast prompt — full text input dialog can be added later.
+func nova_input(variable_name: String = "", _title: String = "", _placeholder: String = "") -> void:
+	# Nova compat: request text input from player, store result in a variable.
+	# Currently shows a toast prompt — full text input dialog can be added later.
 	if variable_name.is_empty():
 		return
 	if _ctx and _ctx.dialog_system:
@@ -910,7 +910,7 @@ func input(variable_name: String = "", _title: String = "", _placeholder: String
 
 
 func box_offset(offset: Variant = null) -> void:
-	## Nova compat: set dialogue box offset margins (left, right, top, bottom).
+	# Nova compat: set dialogue box offset margins (left, right, top, bottom).
 	if offset is Array and (offset as Array).size() >= 4:
 		var arr := offset as Array
 		var box := _resolve_dbox()
