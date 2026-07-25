@@ -123,6 +123,16 @@ var _help_vc: Control
 # ── Settings return tracking ──────────────────────────────────────────
 var _settings_return_to := "title"
 
+# ── Lua/Nova compat session state ────────────────────────────────────
+var _auto_fade_off_count: int = 0
+var _input_enabled: bool = true
+var _ff_shortcut_enabled: bool = true
+
+# ── Public accessor for BaseBlock → GameViewController ───────────────
+var game_view_controller: GameViewController:
+	get:
+		return _game_vc
+
 
 # ── Ready ────────────────────────────────────────────────────────────
 
@@ -686,3 +696,41 @@ func _t(key: String, fallback: String = "") -> String:
 	if i18n == null:
 		return fallback
 	return i18n.t(key, fallback)
+
+
+# ── Nova Lua compat helpers ──────────────────────────────────────────
+
+func deactivate_auto_mode() -> void:
+	if _game_vc:
+		_game_vc._is_auto = false
+		_game_vc._auto_gen += 1
+		if _game_vc._auto_btn:
+			_game_vc._auto_btn.button_pressed = false
+
+
+func deactivate_skip_mode() -> void:
+	if _game_vc:
+		_game_vc._is_skip = false
+		_game_vc._skip_gen += 1
+		if _game_vc._skip_btn:
+			_game_vc._skip_btn.button_pressed = false
+
+
+func set_input_enabled(enabled: bool) -> void:
+	_input_enabled = enabled
+	if _game_vc:
+		_game_vc.mouse_filter = Control.MOUSE_FILTER_PASS if enabled else Control.MOUSE_FILTER_IGNORE
+
+
+func set_ff_shortcut_enabled(enabled: bool) -> void:
+	_ff_shortcut_enabled = enabled
+
+
+func get_current_position() -> Dictionary:
+	if game_state == null or game_state.current_node == null:
+		return {}
+	return {
+		"node": str(game_state.current_node.name),
+		"index": game_state.current_index,
+		"end_name": game_state.current_end_name,
+	}

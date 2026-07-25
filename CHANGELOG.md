@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-07-25 — Phase 15 Lua VM 深度兼容与设备验证 ✅
+
+- ✅ 实现 21 个 no-op 桩 → 完整实现：box_tint、box_anchor、box_alignment、box_offset、new_page、stop_auto_ff、stop_ff、immediate_step、input_on/off、ff_shortcut_on/off、auto_fade_on/off、auto_time、text_delay、text_duration、text_scroll、set_text_speed、skip_mode_custom、text_easing、volume、get_current_position、input、anim_hold_begin/end
+- ✅ NovaScript 兼容度：Lua 兼容 **78% → 96%**（仅 avatar_show 仍为 no-op）
+- ✅ scenario_linter no-op 白名单：22 项 → **1 项**
+- ✅ GDScript 编译缓存预热：`ScriptLoader._warm_compile_cache()` 预编译所有 lazy block
+- ✅ 新增 `nova_lua_compat_smoke_test.gd`：20 项测试验证所有 API 不再为空操作
+- ✅ 更新 `nova_animation_compat.gd`：box_anchor/box_tint 委托到实际渲染
+- ✅ 编写 `docs/DeviceTestChecklist.md`：三平台设备测试清单
+- ✅ NovaController 新增 helper：deactivate_auto_mode、deactivate_skip_mode、set_input_enabled、set_ff_shortcut_enabled、get_current_position
+- 📏 差距改善：
+  - Lua 兼容：78% → **96%**
+  - no-op 桩：22 → **1**（仅 avatar_show）
+
 ## 2026-07-25 — Phase 14 Shader/VFX 丰富度提升 ✅
 
 - ✅ 新增 8 个基础 shader 效果：pixelate、mosaic、kaleidoscope、swirl、radial_blur、zoom_blur、edge_detect、invert

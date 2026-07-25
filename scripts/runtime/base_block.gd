@@ -369,8 +369,36 @@ func box_hide_show(_seconds: Variant = 0.0) -> void:
 	set_box()
 
 
-func box_tint(_color: Variant = null) -> void:
-	pass
+func box_tint(color_or_value: Variant = null) -> void:
+	if _ctx == null:
+		return
+	var box := _resolve_dbox()
+	if box == null:
+		return
+	var target_color: Color
+	if color_or_value is Color:
+		target_color = color_or_value
+	elif color_or_value is int or color_or_value is float:
+		var v := clampf(float(color_or_value), 0.0, 1.0)
+		target_color = Color(v, v, v, 0.82)
+	elif color_or_value is Array and (color_or_value as Array).size() >= 2:
+		var arr := color_or_value as Array
+		if arr.size() >= 4:
+			target_color = Color(float(arr[0]), float(arr[1]), float(arr[2]), float(arr[3]))
+		else:
+			target_color = Color(float(arr[0]), float(arr[0]), float(arr[0]), float(arr[1]))
+	else:
+		return
+	# Update StyleBoxFlat background
+	if box is Panel:
+		var sb := box.get_theme_stylebox("panel", "Panel") as StyleBoxFlat
+		if sb:
+			sb.bg_color = target_color
+			box.add_theme_stylebox_override("panel", sb)
+		else:
+			var new_sb := StyleBoxFlat.new()
+			new_sb.bg_color = target_color
+			box.add_theme_stylebox_override("panel", new_sb)
 
 
 func env_tint(obj: Variant, color: Variant = null) -> void:
@@ -411,52 +439,70 @@ func video_duration() -> float:
 	return 0.0
 
 
+var _anim_hold_counter: int = 0
+
 func anim_hold_begin() -> void:
-	pass
+	_anim_hold_counter += 1
 
 
 func anim_hold_end() -> void:
-	pass
+	_anim_hold_counter = maxi(0, _anim_hold_counter - 1)
 
 
 func stop_auto_ff() -> void:
-	pass
+	if _ctx and _ctx.has_method("deactivate_auto_mode"):
+		_ctx.deactivate_auto_mode()
 
 
 func stop_ff() -> void:
-	pass
+	if _ctx and _ctx.has_method("deactivate_skip_mode"):
+		_ctx.deactivate_skip_mode()
 
 
 func input_on() -> void:
-	pass
+	if _ctx and _ctx.has_method("set_input_enabled"):
+		_ctx.set_input_enabled(true)
 
 
 func input_off() -> void:
-	pass
+	if _ctx and _ctx.has_method("set_input_enabled"):
+		_ctx.set_input_enabled(false)
 
 
 func ff_shortcut_on() -> void:
-	pass
+	if _ctx and _ctx.has_method("set_ff_shortcut_enabled"):
+		_ctx.set_ff_shortcut_enabled(true)
 
 
 func ff_shortcut_off() -> void:
-	pass
+	if _ctx and _ctx.has_method("set_ff_shortcut_enabled"):
+		_ctx.set_ff_shortcut_enabled(false)
 
 
 func auto_fade_on() -> void:
-	pass
+	if _ctx == null:
+		return
+	var counter := _ctx.get("_auto_fade_off_count") as int
+	counter = maxi(0, counter - 1)
+	_ctx.set("_auto_fade_off_count", counter)
 
 
 func auto_fade_off() -> void:
-	pass
+	if _ctx == null:
+		return
+	var counter := _ctx.get("_auto_fade_off_count") as int
+	_ctx.set("_auto_fade_off_count", counter + 1)
 
 
-func auto_time(_seconds: Variant = 0.0) -> void:
-	pass
+func auto_time(seconds: Variant = 0.0) -> void:
+	if _ctx and _ctx.game_view_controller:
+		_ctx.game_view_controller.auto_delay = _to_float(seconds, 0.10)
 
 
 func immediate_step() -> void:
-	pass
+	# Force immediate advance to next dialogue entry.
+	if _ctx and _ctx.game_state and _ctx.game_state.is_waiting_input:
+		_ctx.game_state.continue_after_input()
 
 
 func minigame(loader: Variant = null, minigame_name: Variant = null) -> void:
@@ -500,28 +546,60 @@ func current_box() -> Object:
 	return _ctx.object_manager.objects.get("default_box")
 
 
-func text_delay(_seconds: Variant = 0.0) -> void:
-	pass
+func text_delay(seconds: Variant = 0.0) -> void:
+	if _ctx and _ctx.game_view_controller:
+		_ctx.game_view_controller.type_cps = _chars_per_second(_to_float(seconds, 0.0))
 
 
-func text_duration(_seconds: Variant = 0.0) -> void:
-	pass
+func text_duration(seconds: Variant = 0.0) -> void:
+	if _ctx and _ctx.game_view_controller:
+		var dur := _to_float(seconds, 0.0)
+		if dur > 0.0 and _ctx.game_view_controller._story_label:
+			_ctx.game_view_controller.type_cps = _ctx.game_view_controller._story_label.text.length() / dur
 
 
-func text_scroll(_from: Variant = null, _to: Variant = null, _duration: Variant = null, _easing: Variant = null) -> void:
-	pass
+func text_scroll(from_value: Variant = null, to_value: Variant = null, _duration: Variant = null, _easing: Variant = null) -> void:
+	if _ctx == null or _ctx.game_view_controller == null:
+		return
+	var box := _resolve_dbox()
+	if box:
+		var target := _to_float(to_value, _to_float(from_value, 0.0))
+		box.position.y = -target
 
 
-func box_anchor(_anchor: Variant = null) -> void:
-	pass
+func box_anchor(anchor: Variant = null) -> void:
+	if anchor is Array and (anchor as Array).size() >= 4:
+		var arr := anchor as Array
+		var box := _resolve_dbox()
+		if box:
+			box.anchor_left = float(arr[0])
+			box.anchor_right = float(arr[1])
+			box.anchor_top = float(arr[2])
+			box.anchor_bottom = float(arr[3])
+			box.offset_left = 0
+			box.offset_right = 0
+			box.offset_top = 0
+			box.offset_bottom = 0
 
 
-func box_alignment(_alignment: Variant = null) -> void:
-	pass
+func box_alignment(alignment: Variant = null) -> void:
+	if _ctx == null or _ctx.game_view_controller == null:
+		return
+	var label: RichTextLabel = _ctx.game_view_controller._story_label
+	if label == null:
+		return
+	var mode := str(alignment).to_lower()
+	match mode:
+		"left":   label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		"center": label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		"right":  label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 
 
 func new_page() -> void:
-	pass
+	if _ctx and _ctx.game_view_controller:
+		var label: RichTextLabel = _ctx.game_view_controller._story_label
+		if label:
+			label.text = ""
 
 
 func alert(message: String = "") -> void:
@@ -540,8 +618,20 @@ func avatar_clear() -> void:
 	clear_avatar()
 
 
-func volume(_channel: Variant, _value: Variant = null) -> void:
-	pass
+func volume(channel: Variant, value: Variant = null) -> void:
+	if _ctx == null or _ctx.audio == null:
+		return
+	var channel_name := str(channel).to_lower()
+	var linear: float = 0.0
+	if value is int or value is float:
+		linear = clampf(float(value), 0.0, 1.0)
+	match channel_name:
+		"bgm":
+			_ctx.audio.set_bgm_volume(linear)
+		"bgs", "se":
+			_ctx.audio.set_se_volume(linear)
+		"voice":
+			_ctx.audio.set_voice_volume(linear)
 
 
 func stop(channel: Variant = null) -> void:
@@ -753,6 +843,71 @@ func _is_runtime_voice_suppressed() -> bool:
 
 func _nova_cg_pose(_obj_name: String, pose: String) -> String:
 	return pose
+
+
+func _resolve_dbox() -> Control:
+	if _ctx == null:
+		return null
+	var obj := _ctx.object_manager.objects.get("default_box")
+	if obj is Control:
+		return obj
+	return null
+
+
+func _chars_per_second(delay_seconds: float) -> float:
+	if delay_seconds <= 0.0:
+		return 30.0  # default
+	return 1.0 / delay_seconds
+
+
+func set_text_speed(cps: float = 30.0) -> void:
+	## Runtime dynamic adjustment of typewriter character-per-second rate.
+	if _ctx and _ctx.game_view_controller:
+		_ctx.game_view_controller.type_cps = maxf(cps, 1.0)
+
+
+func get_current_position() -> Dictionary:
+	if _ctx and _ctx.has_method("get_current_position"):
+		return _ctx.get_current_position()
+	return {}
+
+
+func skip_mode_custom(enabled: bool = true) -> void:
+	## Enable/disable custom skip mode override.
+	if _ctx and _ctx.game_view_controller:
+		if enabled:
+			_ctx.game_view_controller.skip_unread = true
+			_ctx.game_view_controller.skip_delay = 1.0 / 60.0  # fast but not instant
+		else:
+			_ctx.game_view_controller.skip_unread = false
+			_ctx.game_view_controller.skip_delay = 0.05
+
+
+func text_easing(easing: Variant = null) -> void:
+	## Override typewriter text animation easing type. Stored for future animation system use.
+	if _ctx:
+		_ctx.set("_text_easing", easing)
+
+
+func input(variable_name: String = "", _title: String = "", _placeholder: String = "") -> void:
+	## Nova compat: request text input from player, store result in a variable.
+	## Currently shows a toast prompt — full text input dialog can be added later.
+	if variable_name.is_empty():
+		return
+	if _ctx and _ctx.dialog_system:
+		_ctx.dialog_system.show_toast("Input: %s" % variable_name, 2.0)
+
+
+func box_offset(offset: Variant = null) -> void:
+	## Nova compat: set dialogue box offset margins (left, right, top, bottom).
+	if offset is Array and (offset as Array).size() >= 4:
+		var arr := offset as Array
+		var box := _resolve_dbox()
+		if box:
+			box.offset_left = float(arr[0])
+			box.offset_right = -float(arr[1])
+			box.offset_top = float(arr[2])
+			box.offset_bottom = -float(arr[3])
 
 # --- Interrupt / Minigame API -------------------------------------------------
 
