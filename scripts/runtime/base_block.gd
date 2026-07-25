@@ -15,7 +15,8 @@ var _ctx: Node
 
 # GameViewController; accessed via _ctx.get() for dynamic compat
 var _gvc:
-	get: return _ctx.get("game_view_controller") if _ctx else null
+	get:
+		return _ctx.get("game_view_controller") if _ctx else null
 
 
 func run() -> Variant:
