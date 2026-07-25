@@ -1,5 +1,18 @@
 # Changelog
 
+## 2026-07-25 — Phase 14 Shader/VFX 丰富度提升 ✅
+
+- ✅ 新增 8 个基础 shader 效果：pixelate、mosaic、kaleidoscope、swirl、radial_blur、zoom_blur、edge_detect、invert
+- ✅ 每个基础 shader 均有对应的 POST 全屏版本（共 16 个新 .gdshader 文件）
+- ✅ 新增 8 个 .shaderproto 模板，`shaderproto_gen.py` 生成 22 个变体 shader
+- ✅ shader 总数：14 → **50**（基础效果 8 种 → **21 种**）
+- ✅ VFXSystem registry 扩展：OBJECT_EFFECTS 5→13，POST_EFFECTS 5→13
+- ✅ 新增 `query_uniforms()` 方法：按效果名查询 uniform 参数（名称/类型/hint）
+- ✅ 扩展 `_normalize_effect_name()` 别名（pixel/tile/twirl/negative 等 8 组映射）
+- ✅ 新增 `shader_effects_smoke_test.gd`：验证所有 shader 编译、registry、stack/snapshot/restore、uniform 查询
+- 📏 差距改善：
+  - Shader 丰富度：12% → **57%**（12/176 → 50/176，按基础效果 21 种）
+
 ## 2026-07-25 — Phase 13 示例作品与 I18n 内容 ✅
 
 - ✅ ch3 新增玩家选择分支（throw_away / use_poison），双路径剧情

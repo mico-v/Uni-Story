@@ -1,0 +1,25 @@
+{
+  "name": "edge_detect",
+  "template": "res://resources/shaders/edge_detect.gdshader",
+  "variants": [
+    {
+      "suffix": "_subtle",
+      "replacements": {
+        "amount : hint_range(0.0, 1.0) = 1.0": "amount : hint_range(0.0, 1.0) = 0.3",
+        "threshold : hint_range(0.0, 1.0) = 0.3": "threshold : hint_range(0.0, 1.0) = 0.5"
+      }
+    },
+    {
+      "suffix": "_strong",
+      "replacements": {
+        "threshold : hint_range(0.0, 1.0) = 0.3": "threshold : hint_range(0.0, 1.0) = 0.1"
+      }
+    },
+    {
+      "suffix": "_red",
+      "replacements": {
+        "vec4(0.0, 0.0, 0.0, 1.0)": "vec4(1.0, 0.0, 0.0, 1.0)"
+      }
+    }
+  ]
+}
