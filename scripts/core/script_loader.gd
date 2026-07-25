@@ -97,8 +97,8 @@ func _append_text(line: String) -> void:
 	_current_node.add_entry(entry)
 
 
-## A lazy block with no following text becomes a silent entry (presentation
-## only) so it still executes in sequence.
+# A lazy block with no following text becomes a silent entry (presentation
+# only) so it still executes in sequence.
 func _flush_pending_lazy_as_silent() -> void:
 	if _pending_lazy_by_stage.is_empty():
 		return
@@ -271,8 +271,8 @@ func interpolate_text(text: String) -> String:
 	return NovaCompatScript.interpolate_text(text, _ctx.variables)
 
 
-## Phase 15: pre-compile all lazy blocks in the graph to warm the runtime cache.
-## This avoids first-play compilation pauses on slower platforms.
+# Phase 15: pre-compile all lazy blocks in the graph to warm the runtime cache.
+# This avoids first-play compilation pauses on slower platforms.
 func _warm_compile_cache() -> void:
 	if _runtime == null:
 		return
