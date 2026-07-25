@@ -108,41 +108,41 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 
 #### 11.1 剧本合并工具 `merge.py`
 
-- [ ] 实现 `scripts/tools/merge.py`：将多个分角色剧本文件合并为单一 NovaScript 剧本
-- [ ] 支持按角色标签 (`#角色名`) 识别和归并台词
-- [ ] 支持 `--input-dir`、`--output` 参数
-- [ ] 输出格式兼容 NovaScript 规范，可直接被现有 parser 解析
-- [ ] smoke test：`merge_tool_smoke_test.gd` 验证合并输出可被 `ScriptLoader` 正确解析
+- [x] 实现 `scripts/tools/merge.py`：将多个分角色剧本文件合并为单一 NovaScript 剧本
+- [x] 支持按角色标签 (`#角色名`) 识别和归并台词
+- [x] 支持 `--input-dir`、`--output` 参数
+- [x] 输出格式兼容 NovaScript 规范，可直接被现有 parser 解析
+- [x] smoke test：`merge_tool_smoke_test.gd` 验证合并输出可被 `ScriptLoader` 正确解析
 
 #### 11.2 角色台词拆分工具 `split_chara.py`
 
-- [ ] 实现 `scripts/tools/split_chara.py`：将完整剧本按角色拆分为独立文件
-- [ ] 支持 `--input`、`--output-dir` 参数
-- [ ] 保留原始行号和上下文注释
-- [ ] smoke test：验证拆分后的文件覆盖所有角色的所有台词，无遗漏、无重复
+- [x] 实现 `scripts/tools/split_chara.py`：将完整剧本按角色拆分为独立文件
+- [x] 支持 `--input`、`--output-dir` 参数
+- [x] 保留原始行号和上下文注释
+- [x] smoke test：验证拆分后的文件覆盖所有角色的所有台词，无遗漏、无重复
 
 #### 11.3 代码剥离工具家族 `strip_code.py` / `strip_code_docx.py` / `strip_code_tex.py` / `strip_code_xlsx.py`
 
-- [ ] 实现 `scripts/tools/strip_code.py`：剥离剧本中所有 `<|...|>` 代码块，输出纯文本
-- [ ] 实现 `scripts/tools/strip_code_docx.py`：剥离代码后输出 Word (.docx) 格式
-- [ ] 实现 `scripts/tools/strip_code_tex.py`：剥离代码后输出 LaTeX 格式
-- [ ] 实现 `scripts/tools/strip_code_xlsx.py`：剥离代码后输出 Excel (.xlsx) 格式（按列：说话人/台词/位置）
-- [ ] 保留 `（TODO：…）` 注记和 stage directions 作为注释
-- [ ] 统一 `--input` / `--output` CLI 接口
-- [ ] smoke test：对 ch1.txt 执行四种剥离，验证输出格式正确且内容完整
+- [x] 实现 `scripts/tools/strip_code.py`：剥离剧本中所有 `<|...|>` 代码块，输出纯文本
+- [x] 实现 `scripts/tools/strip_code_docx.py`：剥离代码后输出 Word (.docx) 格式
+- [x] 实现 `scripts/tools/strip_code_tex.py`：剥离代码后输出 LaTeX 格式
+- [x] 实现 `scripts/tools/strip_code_xlsx.py`：剥离代码后输出 Excel (.xlsx) 格式（按列：说话人/台词/位置）
+- [x] 保留 `（TODO：…）` 注记和 stage directions 作为注释
+- [x] 统一 `--input` / `--output` CLI 接口
+- [x] smoke test：对 ch1.txt 执行四种剥离，验证输出格式正确且内容完整
 
 #### 11.4 软连字符工具 `add_soft_hyphens.py`
 
-- [ ] 实现 `scripts/tools/add_soft_hyphens.py`：在日文/中文文本中自动插入软连字符
-- [ ] 支持 `--language zh|ja` 参数
-- [ ] smoke test：验证插入位置符合语言排版规范
+- [x] 实现 `scripts/tools/add_soft_hyphens.py`：在日文/中文文本中自动插入软连字符
+- [x] 支持 `--language zh|ja` 参数
+- [x] smoke test：验证插入位置符合语言排版规范
 
 #### 11.5 示例剧本生成器 `generate_sample_script.py`
 
-- [ ] 实现 `scripts/tools/generate_sample_script.py`：从模板生成示例 NovaScript 剧本
-- [ ] 支持 `--template basic|branching|minigame` 参数
-- [ ] 生成结果可被 `ScriptLoader` 正确解析并编译
-- [ ] smoke test：三种模板生成后均可通过 Scenario lint（error=0）
+- [x] 实现 `scripts/tools/generate_sample_script.py`：从模板生成示例 NovaScript 剧本
+- [x] 支持 `--template basic|branching|minigame` 参数
+- [x] 生成结果可被 `ScriptLoader` 正确解析并编译
+- [x] smoke test：三种模板生成后均可通过 Scenario lint（error=0）
 
 #### Phase 11 验收标准
 
@@ -356,7 +356,7 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 | 8 | 资源加载、预加载与内容生产工具 | ✅ 完成 |
 | 9 | 小游戏、中断与扩展接口 | ✅ 完成 |
 | 10 | 平台、质量与发布 | ✅ 完成 |
-| **11** | **协作编剧工具链** | 🔲 未开始 |
+| **11** | **协作编剧工具链** | ✅ 完成 |
 | **12** | **立绘生产管线与 Editor 集成** | 🔲 未开始 |
 | **13** | **示例作品与 I18n 内容** | 🔲 未开始 |
 | **14** | **Shader/VFX 丰富度提升** | 🔲 未开始 |
