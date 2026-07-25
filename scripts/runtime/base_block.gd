@@ -76,6 +76,8 @@ var bgs: String:
 var voice: String:
 	get: return "voice"
 
+var _anim_hold_counter: int = 0
+
 
 # --- flow chart API (meaningful during the eager/parse pass) -----------------
 
