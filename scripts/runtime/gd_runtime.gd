@@ -159,16 +159,13 @@ func _await_possible_async_result(value: Variant):
 
 
 func _wrap_statements(source: String) -> String:
-	# Strip leading whitespace from each line individually, then indent by one tab.
-	var lines := source.split("\n")
-	var body_lines: Array[String] = []
-	for line in lines:
-		var stripped := line.strip_edges(true, false)  # strip left whitespace only
-		if not stripped.is_empty():
-			body_lines.append(stripped)
-	if body_lines.is_empty():
-		return "extends BaseBlock\nfunc __eval():\n\tpass"
+	# Indent every line by one tab so it nests under __eval().
+	# Strip leading whitespace from each line first to avoid double-indenting
+	# when the caller includes its own indentation (e.g. triple-quoted strings).
+	var body := source.strip_edges()
+	if body.is_empty():
+		body = "pass"
 	var indented := ""
-	for line in body_lines:
-		indented += "\t" + line + "\n"
+	for line in body.split("\n"):
+		indented += "\t" + line.lstrip("\t ") + "\n"
 	return "extends BaseBlock\nfunc __eval():\n%s" % indented
