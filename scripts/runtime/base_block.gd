@@ -683,7 +683,7 @@ func get_current_position() -> Dictionary:
 		var gs = _ctx.game_state
 		return {
 			"node_id": str(gs.get("current_node_id")),
-			"block_index": int(gs.get("current_block_index")),
+			"block_index": int(str(gs.get("current_block_index", 0))),
 			"file": str(gs.get("current_file")),
 		}
 	return {}
