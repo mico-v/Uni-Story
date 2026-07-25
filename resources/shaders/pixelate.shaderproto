@@ -1,0 +1,25 @@
+{
+  "name": "pixelate",
+  "template": "res://resources/shaders/pixelate.gdshader",
+  "variants": [
+    {
+      "suffix": "_fine",
+      "replacements": {
+        "pixel_size : hint_range(1.0, 64.0) = 8.0": "pixel_size : hint_range(1.0, 64.0) = 4.0"
+      }
+    },
+    {
+      "suffix": "_coarse",
+      "replacements": {
+        "pixel_size : hint_range(1.0, 64.0) = 8.0": "pixel_size : hint_range(1.0, 64.0) = 16.0"
+      }
+    },
+    {
+      "suffix": "_retro",
+      "replacements": {
+        "pixel_size : hint_range(1.0, 64.0) = 8.0": "pixel_size : hint_range(1.0, 64.0) = 6.0",
+        "amount : hint_range(0.0, 1.0) = 1.0": "amount : hint_range(0.0, 1.0) = 0.8"
+      }
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "radial_blur",
+  "template": "res://resources/shaders/radial_blur.gdshader",
+  "variants": [
+    {
+      "suffix": "_light",
+      "replacements": {
+        "amount : hint_range(0.0, 1.0) = 0.5": "amount : hint_range(0.0, 1.0) = 0.2"
+      }
+    },
+    {
+      "suffix": "_heavy",
+      "replacements": {
+        "amount : hint_range(0.0, 1.0) = 0.5": "amount : hint_range(0.0, 1.0) = 0.8",
+        "samples : hint_range(4.0, 32.0) = 10.0": "samples : hint_range(4.0, 32.0) = 20.0"
+      }
+    }
+  ]
+}

@@ -15,19 +15,35 @@ var _ctx: Node
 # ── Effect registries ───────────────────────────────────────────────
 
 const OBJECT_EFFECTS := {
-	"blur":      { "shader": "res://resources/shaders/blur.gdshader",      "params": { "amount": 5.0 } },
-	"grayscale": { "shader": "res://resources/shaders/grayscale.gdshader", "params": { "amount": 1.0 } },
-	"dissolve":  { "shader": "res://resources/shaders/dissolve.gdshader",  "params": { "threshold": 1.0 } },
-	"glitch":    { "shader": "res://resources/shaders/glitch.gdshader",    "params": { "intensity": 0.5, "speed": 2.0 } },
-	"ripple":    { "shader": "res://resources/shaders/ripple.gdshader",    "params": { "amount": 0.5, "speed": 2.0 } },
+	"blur":         { "shader": "res://resources/shaders/blur.gdshader",         "params": { "amount": 5.0 } },
+	"grayscale":    { "shader": "res://resources/shaders/grayscale.gdshader",    "params": { "amount": 1.0 } },
+	"dissolve":     { "shader": "res://resources/shaders/dissolve.gdshader",     "params": { "threshold": 1.0 } },
+	"glitch":       { "shader": "res://resources/shaders/glitch.gdshader",       "params": { "intensity": 0.5, "speed": 2.0 } },
+	"ripple":       { "shader": "res://resources/shaders/ripple.gdshader",       "params": { "intensity": 0.3, "speed": 2.0 } },
+	"pixelate":     { "shader": "res://resources/shaders/pixelate.gdshader",     "params": { "amount": 1.0, "pixel_size": 8.0 } },
+	"mosaic":       { "shader": "res://resources/shaders/mosaic.gdshader",       "params": { "amount": 1.0, "tile_size": 8.0 } },
+	"kaleidoscope": { "shader": "res://resources/shaders/kaleidoscope.gdshader", "params": { "amount": 1.0, "segments": 6.0 } },
+	"swirl":        { "shader": "res://resources/shaders/swirl.gdshader",        "params": { "amount": 1.0, "strength": 2.0 } },
+	"radial_blur":  { "shader": "res://resources/shaders/radial_blur.gdshader",  "params": { "amount": 0.5 } },
+	"zoom_blur":    { "shader": "res://resources/shaders/zoom_blur.gdshader",    "params": { "amount": 0.3 } },
+	"edge_detect":  { "shader": "res://resources/shaders/edge_detect.gdshader",  "params": { "amount": 1.0, "threshold": 0.3 } },
+	"invert":       { "shader": "res://resources/shaders/invert.gdshader",       "params": { "amount": 1.0 } },
 }
 
 const POST_EFFECTS := {
-	"chromatic": { "shader": "res://resources/shaders/chromatic_aberration_post.gdshader", "params": { "amount": 3.0 } },
-	"vignette":  { "shader": "res://resources/shaders/vignette_post.gdshader",             "params": { "intensity": 0.5 } },
-	"grayscale": { "shader": "res://resources/shaders/grayscale_post.gdshader",             "params": { "amount": 1.0 } },
-	"blur":      { "shader": "res://resources/shaders/blur_post.gdshader",                  "params": { "amount": 5.0 } },
-	"glitch":    { "shader": "res://resources/shaders/glitch.gdshader",                     "params": { "intensity": 0.5, "speed": 2.0 } },
+	"chromatic":    { "shader": "res://resources/shaders/chromatic_aberration_post.gdshader", "params": { "amount": 3.0 } },
+	"vignette":     { "shader": "res://resources/shaders/vignette_post.gdshader",             "params": { "intensity": 0.5 } },
+	"grayscale":    { "shader": "res://resources/shaders/grayscale_post.gdshader",             "params": { "amount": 1.0 } },
+	"blur":         { "shader": "res://resources/shaders/blur_post.gdshader",                  "params": { "amount": 5.0 } },
+	"glitch":       { "shader": "res://resources/shaders/glitch.gdshader",                     "params": { "intensity": 0.5, "speed": 2.0 } },
+	"pixelate":     { "shader": "res://resources/shaders/pixelate_post.gdshader",              "params": { "amount": 1.0, "pixel_size": 8.0 } },
+	"mosaic":       { "shader": "res://resources/shaders/mosaic_post.gdshader",                "params": { "amount": 1.0, "tile_size": 8.0 } },
+	"kaleidoscope": { "shader": "res://resources/shaders/kaleidoscope_post.gdshader",          "params": { "amount": 1.0, "segments": 6.0 } },
+	"swirl":        { "shader": "res://resources/shaders/swirl_post.gdshader",                 "params": { "amount": 1.0, "strength": 2.0 } },
+	"radial_blur":  { "shader": "res://resources/shaders/radial_blur_post.gdshader",           "params": { "amount": 0.5 } },
+	"zoom_blur":    { "shader": "res://resources/shaders/zoom_blur_post.gdshader",             "params": { "amount": 0.3 } },
+	"edge_detect":  { "shader": "res://resources/shaders/edge_detect_post.gdshader",           "params": { "amount": 1.0, "threshold": 0.3 } },
+	"invert":       { "shader": "res://resources/shaders/invert_post.gdshader",                "params": { "amount": 1.0 } },
 }
 
 const TRANSITION_EFFECTS := {
@@ -63,7 +79,7 @@ func set_post_fx_rect(node: ColorRect) -> void:
 func _resolve(target: Variant) -> CanvasItem:
 	if _is_camera_target(target):
 		return _post_fx_rect
-	if target is CanvasItem:
+	if is_instance_valid(target) and target is CanvasItem:
 		return target
 	if target is String or target is StringName:
 		var objects: Dictionary = _ctx.object_manager.objects
@@ -162,7 +178,7 @@ func play(effect_name: String, target: Variant, duration: float = 0.5, params: D
 	# Animate the primary parameter (single effect only; stacked effects use a
 	# compositing material whose shader parameters differ from the source effect).
 	if is_stacked:
-		return _ctx.get_tree().create_tween()
+		return _null_tween()
 
 	var anim_key := ""
 	var anim_value: Variant = null
@@ -182,6 +198,37 @@ func play(effect_name: String, target: Variant, duration: float = 0.5, params: D
 	var prop_path := "material:shader_parameter/" + anim_key
 	t.tween_property(node, prop_path, anim_value, max(0.01, duration))
 	return t
+
+
+## Query available uniform parameters for a named effect.
+## Returns an empty array for unknown effects, otherwise a list of {name, type, hint} dicts.
+func query_uniforms(effect_name: String, is_post: bool = false) -> Array:
+	effect_name = _normalize_effect_name(effect_name)
+	var registry := POST_EFFECTS if is_post else OBJECT_EFFECTS
+	var info: Dictionary = registry.get(effect_name, {})
+	if info.is_empty():
+		return []
+	var shader := _load_shader(info["shader"])
+	if shader == null:
+		return []
+	var result: Array = []
+	for uniform in shader.get_shader_uniform_list():
+		result.append({"name": uniform.name, "type": _uniform_type_name(uniform.type), "hint": uniform.hint})
+	return result
+
+
+func _uniform_type_name(uniform_type: int) -> String:
+	# Type enums from RenderingServer/Shader; see Godot docs.
+	match uniform_type:
+		0:  return "float"
+		1:  return "vec2"
+		2:  return "vec3"
+		3:  return "vec4"
+		4:  return "bool"
+		5:  return "int"
+		6:  return "uint"
+		7:  return "sampler2D"
+		_:  return "unknown"
 
 
 ## Clear all VFX from a target node.
@@ -655,8 +702,17 @@ func _shader_transition(overlay: ColorRect, shader_path: String, param: String, 
 # ── Helpers ─────────────────────────────────────────────────────────
 
 func _null_tween() -> Tween:
-	var t := _ctx.get_tree().create_tween()
-	t.tween_interval(0.0)
+	# Guard against freed _ctx — fallback to Engine.get_main_loop().
+	var tree: SceneTree = null
+	if is_instance_valid(_ctx):
+		tree = _ctx.get_tree()
+	if tree == null:
+		tree = Engine.get_main_loop() as SceneTree
+	if tree == null:
+		push_warning("VFXSystem._null_tween: no SceneTree available")
+		return null
+	var t := tree.create_tween()
+	t.tween_callback(func(): pass)
 	return t
 
 
@@ -666,6 +722,22 @@ func _normalize_effect_name(effect_name: String) -> String:
 			return "grayscale"
 		"radial_blur", "lens_blur":
 			return "blur"
+		"pixel", "pixelization":
+			return "pixelate"
+		"tile", "block":
+			return "mosaic"
+		"kaleido", "kaleidoscope_effect":
+			return "kaleidoscope"
+		"twirl", "whirl":
+			return "swirl"
+		"radial", "radial_zoom":
+			return "radial_blur"
+		"zoom", "speed_blur", "forward_blur":
+			return "zoom_blur"
+		"edges", "sobel", "outline":
+			return "edge_detect"
+		"negative", "reverse_color", "reverse":
+			return "invert"
 		"color":
 			return ""
 		_:

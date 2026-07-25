@@ -262,27 +262,29 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 
 #### 14.1 扩充 shaderproto 模板库
 
-- [ ] 新增 8 个基础 shader 效果模板（JSON）：pixelate、mosaic、kaleidoscope、swirl、radial_blur、zoom_blur、edge_detect、invert
-- [ ] 每个模板支持与现有 blend mode 变体组合
-- [ ] `shaderproto_gen.py` 生成验证：`python scripts/tools/shaderproto_gen.py --all` 无错误
+- [x] 新增 8 个基础 shader 效果模板（JSON）：pixelate、mosaic、kaleidoscope、swirl、radial_blur、zoom_blur、edge_detect、invert
+- [x] 每个模板支持与现有 blend mode 变体组合
+- [x] `shaderproto_gen.py` 生成验证：`python3 scripts/tools/shaderproto_gen.py --all` 无错误，共生成 22 个变体 shader
 
 #### 14.2 新增 shader 效果
 
-- [ ] `pixelate.gdshader`：像素化效果（可调 pixel_size）
-- [ ] `mosaic.gdshader`：马赛克效果
-- [ ] `kaleidoscope.gdshader`：万花筒效果
-- [ ] `swirl.gdshader`：漩涡扭曲
-- [ ] `radial_blur.gdshader`：径向模糊
-- [ ] `zoom_blur.gdshader`：缩放模糊
-- [ ] `edge_detect.gdshader`：边缘检测
-- [ ] `invert.gdshader`：色彩反转
-- [ ] 新增 `shader_effects_smoke_test.gd`：逐个加载并验证所有 shader 编译通过
+- [x] `pixelate.gdshader`：像素化效果（可调 pixel_size）
+- [x] `mosaic.gdshader`：马赛克效果
+- [x] `kaleidoscope.gdshader`：万花筒效果
+- [x] `swirl.gdshader`：漩涡扭曲
+- [x] `radial_blur.gdshader`：径向模糊
+- [x] `zoom_blur.gdshader`：缩放模糊
+- [x] `edge_detect.gdshader`：边缘检测
+- [x] `invert.gdshader`：色彩反转
+- [x] 每个基础 shader 均有对应的 `_post.gdshader` 全屏版本
+- [x] 新增 `shader_effects_smoke_test.gd`：逐个加载并验证所有 shader 编译通过，测试 stack/snapshot/restore
 
 #### 14.3 VFX 系统增强
 
-- [ ] 注册新 shader 到 OBJECT_EFFECTS 或 POST_EFFECTS registry
-- [ ] `VFXSystem` 支持按 uniform 参数查询效果（为后续可视化编辑器做准备）
-- [ ] 确保新 shader 均支持 snapshot/restore
+- [x] 注册新 shader 到 OBJECT_EFFECTS（13 个效果）和 POST_EFFECTS（13 个效果） registry
+- [x] `VFXSystem` 新增 `query_uniforms()` 方法：按效果名查询 uniform 参数列表（名称/类型/hint），为后续可视化编辑器做准备
+- [x] 新 shader 均支持 snapshot/restore（继承自现有 VFXSystem 基础设施）
+- [x] `_normalize_effect_name()` 扩展别名映射（pixel→pixelate, tile→mosaic, twirl→swirl, negative→invert 等）
 
 #### Phase 14 验收标准
 
@@ -360,7 +362,7 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 | **11** | **协作编剧工具链** | ✅ 完成 |
 | **12** | **立绘生产管线与 Editor 集成** | ✅ 完成 |
 | **13** | **示例作品与 I18n 内容** | ✅ 完成 |
-| **14** | **Shader/VFX 丰富度提升** | 🔲 未开始 |
+| **14** | **Shader/VFX 丰富度提升** | ✅ 完成 |
 | **15** | **Lua VM 深度兼容与设备验证** | 🔲 未开始 |
 
 ---
@@ -376,7 +378,7 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 立绘生产管线  ██████████████████████  100%  (4/4 工具)
 Editor 集成   ██████████░░░░░░░░░░░░  23%  (7/31 脚本)
 I18n 内容     ████████████████████░░  90%  (EN ch1-ch4 全翻译，含多结局分支)
-Shader 丰富度 ████░░░░░░░░░░░░░░░░░░  12%  (12/176 shader，缺 164)
+Shader 丰富度 ████████████████████░░  57%  (50/176 shader，按基础效果 21 种)
 示例作品      ████████████████████░░  90%  (ch1-ch4 完整叙事 + 3 结局 + 3 小游戏模板)
 Lua 兼容      ████████████████░░░░  78%  (部分 API 仍为 no-op)
 ```
