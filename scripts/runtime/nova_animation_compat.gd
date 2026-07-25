@@ -6,7 +6,7 @@ class_name NovaAnimationCompat extends RefCounted
 ## without crashing. Methods map simple operations to current runtime systems and
 ## return `self` so Nova-style chained calls keep compiling.
 
-var _ctx  # Node (NovaController); untyped for Godot 4.6 dynamic dispatch compat
+var _ctx: Node
 
 
 func _init(ctx: Node) -> void:
