@@ -271,8 +271,8 @@ func interpolate_text(text: String) -> String:
 	return NovaCompatScript.interpolate_text(text, _ctx.variables)
 
 
-# Phase 15: pre-compile all lazy blocks in the graph to warm the runtime cache.
-# This avoids first-play compilation pauses on slower platforms.
+## Phase 15: pre-compile all lazy blocks in the graph to warm the runtime cache.
+## This avoids first-play compilation pauses on slower platforms.
 func _warm_compile_cache() -> void:
 	if _runtime == null:
 		return
