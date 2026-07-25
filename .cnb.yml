@@ -1,12 +1,40 @@
 # UniStory Godot 4.6 构建配置
 # 支持：Windows / Linux / Android 三平台导出
 #
-# 分支策略：
-#   dev  - push: 构建 Android Debug APK（自动 debug 签名）
-#   main - push: 全平台 CI 检查（不发布）
-#   tag_push ($): 全平台构建 + Release 签名 + 创建 Release + 上传产物附件
+# 分支策略（优化后）：
+#   dev  - pull_request:      PR 质量门禁（lint + 测试 + Android Debug 构建）
+#   dev  - pull_request.merged: 知识库更新（仅 MD 变更时）
+#   main - pull_request:      PR 质量门禁（lint + 测试 + 全平台构建）
+#   main - pull_request.merged: 知识库更新（仅 MD 变更时）
+#   tag_push ($):             全平台构建 + Release 签名 + 创建 Release + 上传产物附件
+#
+# 资源优化要点：
+#   1. 移除 dev/main push 触发 → 杜绝 PR 合并后二次 CI 浪费
+#   2. ifModify 精细控制 → 仅代码/资源文件变更才启动 CI
+#   3. lock + cancel-in-wait → 多次推送只保留最新一次构建
+#   4. 知识库更新仅 MD 文件变更时触发，runner 降为 2 核
+#   5. PR 门禁按目标分支差异化：dev 只跑 Android，main 跑全平台
 #
 # Android 签名说明见文件末尾注释和 README
+
+# ── 文件变更匹配模式 ──────────────────────────────
+# 仅以下文件变更时才触发 PR 质量门禁（跳过纯文档/配置无关改动）
+.code-files: &code-files
+  - "**.gd"
+  - "**.tscn"
+  - "**.tres"
+  - "**.gdshader"
+  - "**.shader"
+  - "project.godot"
+  - "export_presets.cfg"
+  - "scripts/**"
+  - "Dockerfile.ci"
+  - ".cnb.yml"
+  - ".ci/**"
+
+# 知识库更新仅 MD 文件变更时触发
+.md-files: &md-files
+  - "**.md"
 
 # ── 公共构建环境 ──────────────────────────────────
 .build-env: &build-env
@@ -126,74 +154,36 @@
       echo "❌ APK file not found!"
     fi
 
-# ── main/dev PR 质量门禁（通过后才可合并） ──────────
-.main-pr-check: &main-pr-check
-  - <<: *build-env
-    name: pr-quality-gate
-    stages:
-      - *import-project
-      - *scenario-lint
-      - *headless-tests
-      - name: build-all-platforms
-        jobs:
-          windows: *build-windows
-          linux: *build-linux
-          android: *build-android-release
-    failStages:
-      - name: notify-failure
-        script: |
-          echo "❌ PR quality gate failed: $CNB_BUILD_ID"
-          echo "请修复 lint 错误 / 测试失败 / 构建问题后再合并"
-
-.dev-pr-check: &dev-pr-check
-  - <<: *build-env
-    name: pr-quality-gate
-    stages:
-      - *import-project
-      - *scenario-lint
-      - *headless-tests
-      - *build-android-debug
-    failStages:
-      - name: notify-failure
-        script: |
-          echo "❌ PR quality gate failed: $CNB_BUILD_ID"
-          echo "请修复 lint 错误 / 测试失败 / 构建问题后再合并"
-
-# ── dev 分支：Android Debug 构建并上传 commit 附件 ─
+# ── dev 分支：PR 质量门禁 + 合并后知识库更新 ──────
 dev:
-  pull_request: *dev-pr-check
-  push:
+  # PR 门禁：仅代码文件变更时触发，多次推送只保留最新构建
+  pull_request:
     - <<: *build-env
-      name: android-debug-build
+      name: pr-quality-gate
+      ifModify: *code-files
+      lock:
+        key: pr-gate-dev-$CNB_PULL_REQUEST_IID
+        wait: true
+        cancel-in-wait: true
       stages:
         - *import-project
         - *scenario-lint
         - *headless-tests
         - *build-android-debug
-        - name: package-android-debug
-          script: |
-            COMMIT_SHORT=$(echo "$CNB_COMMIT" | cut -c1-7)
-            cp release/android/*.apk "$PROJECT_NAME-debug-$COMMIT_SHORT.apk" 2>/dev/null || true
-            echo "=== 打包完成 ==="
-            ls -lah *.apk 2>/dev/null || true
-        - name: upload-debug-apk
-          image: cnbcool/attachments:latest
-          settings:
-            attachments:
-              - "./*.apk"
       failStages:
         - name: notify-failure
           script: |
-            echo "Dev Android build failed: $CNB_BUILD_ID"
+            echo "❌ PR quality gate failed: $CNB_BUILD_ID"
+            echo "请修复 lint 错误 / 测试失败 / 构建问题后再合并"
 
-# ── main 分支：全平台 CI 检查（不发布）+ 知识库构建 ───────────
-main:
-  pull_request: *main-pr-check
-  push:
-    - <<: *build-env
-      name: knowledge-base
+  # PR 合并后：知识库增量更新（仅 MD 文件变更时）
+  pull_request.merged:
+    - name: knowledge-base
+      ifModify: *md-files
+      runner:
+        cpus: 2
       stages:
-        - name: build knowledge base
+        - name: update knowledge base
           type: knowledge:update
           options:
             include: "**/**.md"
@@ -203,8 +193,18 @@ main:
               - "*.import"
             chunkSize: 1500
             issueSyncEnabled: true
+
+# ── main 分支：PR 质量门禁 + 合并后知识库更新 ────
+main:
+  # PR 门禁：全平台 CI 检查，仅代码文件变更时触发
+  pull_request:
     - <<: *build-env
-      name: ci-check
+      name: pr-quality-gate
+      ifModify: *code-files
+      lock:
+        key: pr-gate-main-$CNB_PULL_REQUEST_IID
+        wait: true
+        cancel-in-wait: true
       stages:
         - *import-project
         - *scenario-lint
@@ -214,13 +214,40 @@ main:
             windows: *build-windows
             linux: *build-linux
             android: *build-android-release
+      failStages:
+        - name: notify-failure
+          script: |
+            echo "❌ PR quality gate failed: $CNB_BUILD_ID"
+            echo "请修复 lint 错误 / 测试失败 / 构建问题后再合并"
+
+  # PR 合并后：知识库增量更新（仅 MD 文件变更时）
+  pull_request.merged:
+    - name: knowledge-base
+      ifModify: *md-files
+      runner:
+        cpus: 2
+      stages:
+        - name: update knowledge base
+          type: knowledge:update
+          options:
+            include: "**/**.md"
+            exclude:
+              - ".cnb/**"
+              - "node_modules/**"
+              - "*.import"
+            chunkSize: 1500
+            issueSyncEnabled: true
 
 # ── 兜底分支（仓库级事件） ────────────────────────
 $:
-  # Tag 推送：全平台构建 + 签名 + 发布 Release + 上传产物
+  # Tag 推送：全平台构建 + 签名 + 发布 Release + 上传产物附件
   tag_push:
     build-and-release:
       <<: *build-env
+      lock:
+        key: tag-release
+        wait: true
+        cancel-in-wait: true
       stages:
         - *import-project
         - *scenario-lint
