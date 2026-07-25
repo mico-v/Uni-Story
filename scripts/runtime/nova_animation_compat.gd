@@ -135,13 +135,13 @@ func cam_punch() -> NovaAnimationCompat:
 
 func box_anchor(anchor: Variant = null, _duration: Variant = null, _easing: Variant = null) -> NovaAnimationCompat:
 	if _ctx and _ctx.has_method("box_anchor"):
-		_ctx.box_anchor(anchor)
+		_ctx.call("box_anchor", anchor)
 	return self
 
 
 func box_tint(color: Variant = null, _duration: Variant = null) -> NovaAnimationCompat:
 	if _ctx and _ctx.has_method("box_tint"):
-		_ctx.box_tint(color)
+		_ctx.call("box_tint", color)
 	return self
 
 

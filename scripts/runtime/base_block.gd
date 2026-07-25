@@ -451,32 +451,32 @@ func anim_hold_end() -> void:
 
 func stop_auto_ff() -> void:
 	if _ctx and _ctx.has_method("deactivate_auto_mode"):
-		_ctx.deactivate_auto_mode()
+		_ctx.call("deactivate_auto_mode")
 
 
 func stop_ff() -> void:
 	if _ctx and _ctx.has_method("deactivate_skip_mode"):
-		_ctx.deactivate_skip_mode()
+		_ctx.call("deactivate_skip_mode")
 
 
 func input_on() -> void:
 	if _ctx and _ctx.has_method("set_input_enabled"):
-		_ctx.set_input_enabled(true)
+		_ctx.call("set_input_enabled", true)
 
 
 func input_off() -> void:
 	if _ctx and _ctx.has_method("set_input_enabled"):
-		_ctx.set_input_enabled(false)
+		_ctx.call("set_input_enabled", false)
 
 
 func ff_shortcut_on() -> void:
 	if _ctx and _ctx.has_method("set_ff_shortcut_enabled"):
-		_ctx.set_ff_shortcut_enabled(true)
+		_ctx.call("set_ff_shortcut_enabled", true)
 
 
 func ff_shortcut_off() -> void:
 	if _ctx and _ctx.has_method("set_ff_shortcut_enabled"):
-		_ctx.set_ff_shortcut_enabled(false)
+		_ctx.call("set_ff_shortcut_enabled", false)
 
 
 func auto_fade_on() -> void:
@@ -879,7 +879,7 @@ func set_text_speed(cps: float = 30.0) -> void:
 
 func get_current_position() -> Dictionary:
 	if _ctx and _ctx.has_method("get_current_position"):
-		return _ctx.get_current_position()
+		return _ctx.call("get_current_position")
 	return {}
 
 
