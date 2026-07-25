@@ -593,6 +593,8 @@ func box_alignment(alignment: Variant = null) -> void:
 		"left":   label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		"center": label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		"right":  label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		_:
+			pass
 
 
 func new_page() -> void:
@@ -632,6 +634,8 @@ func volume(channel: Variant, value: Variant = null) -> void:
 			_ctx.audio.set_se_volume(linear)
 		"voice":
 			_ctx.audio.set_voice_volume(linear)
+		_:
+			pass
 
 
 func stop(channel: Variant = null) -> void:
