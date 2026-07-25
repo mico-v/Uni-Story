@@ -506,17 +506,17 @@ func immediate_step() -> void:
 
 
 func minigame(loader: Variant = null, minigame_name: Variant = null) -> void:
-	## Load and start a minigame scene using the interrupt protocol.
-	##
-	## Nova compat: minigame(__Nova.uiPrefabLoader, 'ExampleMinigame') is
-	## translated to minigame("ui_prefab_loader", "ExampleMinigame").
-	##
-	## Flow:
-	##   1. begin_interrupt() blocks story advance.
-	##   2. The minigame scene is loaded via PrefabLoader.
-	##   3. Player interacts with the minigame.
-	##   4. Minigame destroys itself → teardown_prefab() → end_interrupt().
-	##   5. Story can continue from the next dialogue entry.
+	# Load and start a minigame scene using the interrupt protocol.
+	#
+	# Nova compat: minigame(__Nova.uiPrefabLoader, 'ExampleMinigame') is
+	# translated to minigame("ui_prefab_loader", "ExampleMinigame").
+	#
+	# Flow:
+	#   1. begin_interrupt() blocks story advance.
+	#   2. The minigame scene is loaded via PrefabLoader.
+	#   3. Player interacts with the minigame.
+	#   4. Minigame destroys itself → teardown_prefab() → end_interrupt().
+	#   5. Story can continue from the next dialogue entry.
 	var loader_name := str(loader) if loader != null else ""
 	var target_name := str(minigame_name) if minigame_name != null else ""
 	if target_name.is_empty():
