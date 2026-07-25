@@ -245,7 +245,7 @@ func _test_default_corpus_baseline() -> void:
 		"dialogues": 798,
 		"labels": 57,
 		"errors": 0,
-		"warnings": 134,
+		"warnings": 100,
 		"resource_references": 426,
 		"resource_found": 424,
 		"resource_virtual": 2,

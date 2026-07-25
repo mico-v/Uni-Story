@@ -109,7 +109,7 @@ func _test_box_tint(nova: Node) -> void:
 		return
 
 	# Test with Color value
-	var box_before := ctx._resolve_dbox()
+	var box_before: Control = ctx._resolve_dbox()
 	if box_before is Panel:
 		# Test with numeric greyscale
 		ctx.box_tint(0.5)
@@ -253,7 +253,7 @@ func _test_auto_time(nova: Node) -> void:
 	if ctx == null:
 		_failures.append("auto_time: no block context")
 		return
-	var original := nova.game_view_controller.auto_delay
+	var original: float = nova.game_view_controller.auto_delay
 	ctx.auto_time(0.25)
 	if absf(nova.game_view_controller.auto_delay - 0.25) > 0.001:
 		_failures.append("auto_time: auto_delay should be 0.25, got %f" % nova.game_view_controller.auto_delay)
@@ -268,7 +268,7 @@ func _test_text_speed(nova: Node) -> void:
 	if ctx == null:
 		_failures.append("text_speed: no block context")
 		return
-	var original := nova.game_view_controller.type_cps
+	var original: float = nova.game_view_controller.type_cps
 	ctx.set_text_speed(50.0)
 	if absf(nova.game_view_controller.type_cps - 50.0) > 0.5:
 		_failures.append("set_text_speed: type_cps should be 50, got %f" % nova.game_view_controller.type_cps)
@@ -311,8 +311,8 @@ func _test_skip_mode_custom(nova: Node) -> void:
 	if ctx == null:
 		_failures.append("skip_mode_custom: no block context")
 		return
-	var original_skip_unread := nova.game_view_controller.skip_unread
-	var original_skip_delay := nova.game_view_controller.skip_delay
+	var original_skip_unread: bool = nova.game_view_controller.skip_unread
+	var original_skip_delay: float = nova.game_view_controller.skip_delay
 	ctx.skip_mode_custom(true)
 	if not nova.game_view_controller.skip_unread:
 		_failures.append("skip_mode_custom(true): skip_unread should be true")
@@ -331,7 +331,7 @@ func _test_anim_hold(nova: Node) -> void:
 	if ctx == null:
 		_failures.append("anim_hold: no block context")
 		return
-	var before := ctx._anim_hold_counter
+	var before: int = ctx._anim_hold_counter
 	ctx.anim_hold_begin()
 	if ctx._anim_hold_counter != before + 1:
 		_failures.append("anim_hold_begin: counter should increase by 1")
@@ -372,7 +372,7 @@ func _test_get_current_position(nova: Node) -> void:
 	if ctx == null:
 		_failures.append("get_current_position: no block context")
 		return
-	var pos := ctx.get_current_position()
+	var pos: Dictionary = ctx.get_current_position()
 	if not pos is Dictionary:
 		_failures.append("get_current_position: should return Dictionary")
 	# When game hasn't started, should return empty
@@ -423,7 +423,7 @@ func _test_compile_all_apis(nova: Node) -> void:
 	volume("bgm", 0.75)
 	volume("voice", 0.9)
 	""")
-	var script := nova.runtime.compile_block(block)
+	var script: GDScript = nova.runtime.compile_block(block)
 	if script == null:
 		_failures.append("compile_all_apis: block compilation failed")
 		return
@@ -437,7 +437,7 @@ func _test_compile_all_apis(nova: Node) -> void:
 
 func _block_ctx(nova: Node) -> Object:
 	# Instantiate a minimal compiled-block context for testing BaseBlock APIs.
-	var script := nova.runtime.compile_block(_wrap_block(""))
+	var script: GDScript = nova.runtime.compile_block(_wrap_block(""))
 	if script == null:
 		return null
 	var inst = script.new()
