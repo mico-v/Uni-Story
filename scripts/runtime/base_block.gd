@@ -585,21 +585,28 @@ func box_anchor(anchor: Variant = null) -> void:
 func box_alignment(alignment: Variant = null) -> void:
 	if _ctx == null or _ctx.game_view_controller == null:
 		return
-	var label: RichTextLabel = _ctx.game_view_controller._story_label
+	var label = _ctx.game_view_controller._story_label
 	if label == null:
 		return
 	var mode := str(alignment).to_lower()
+	var text: String = label.text
+	# Strip prior alignment BBCode (RichTextLabel uses BBCode, not horizontal_alignment)
+	text = text.replace("[right]", "").replace("[/right]", "")
+	text = text.replace("[center]", "").replace("[/center]", "")
+	text = text.replace("[left]", "").replace("[/left]", "")
+	text = text.replace("[fill]", "").replace("[/fill]", "")
 	match mode:
-		"left":   label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-		"center": label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		"right":  label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+		"center":
+			label.text = "[center]" + text + "[/center]"
+		"right":
+			label.text = "[right]" + text + "[/right]"
 		_:
-			pass
+			label.text = text
 
 
 func new_page() -> void:
 	if _ctx and _ctx.game_view_controller:
-		var label: RichTextLabel = _ctx.game_view_controller._story_label
+		var label = _ctx.game_view_controller._story_label
 		if label:
 			label.text = ""
 
