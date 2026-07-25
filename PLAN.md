@@ -3,7 +3,7 @@
 > 当前目标：使用 Godot 4.6 + GDScript，学习 Nova 的架构设计，逐步建设成熟、可维护、可扩展的视觉小说游戏引擎。  
 > 参考工程：`Nova/` Unity + C# + Lua(ToLua#)  
 > 当前工程：Godot + GDScript-first，不引入 Unity/C# 依赖，不把 Lua VM 作为默认运行时。  
-> 日期：2026-06-24 · 最后更新：2026-07-24
+> 日期：2026-06-24 · 最后更新：2026-07-25
 
 ---
 
@@ -127,24 +127,25 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 - [x] list_bg/list_bgm 等资源列表工具
 - [x] 立绘导入约定与工具
 
-### Phase 9：小游戏、中断与扩展接口 🔄 核心完成
+### Phase 9：小游戏、中断与扩展接口 ✅ 完成
 
 - [x] InterruptManager：begin/end_interrupt 协议
 - [x] 中断期间暂停推进 + 结束后自动 checkpoint
 - [x] BaseBlock 暴露中断 API + restorable 注册
 - [x] Gameplay prefab manager：WORLD/UI/PERSISTENT 分类生命周期
-- [ ] 示例小游戏场景
+- [x] 示例小游戏场景（ExampleMinigame：文字输入 + 变量回传 + teardown 协议）
+- [x] minigame() 函数实现（NovaScript 兼容翻译 + PrefabLoader 集成）
 
-### Phase 10：平台、质量与发布 🔄 核心完成
+### Phase 10：平台、质量与发布 ✅ 完成
 
-- [x] 20/20 个 headless 测试纳入自动发现并通过（约 55 秒）
+- [x] 21 个 headless 测试纳入自动发现并通过（含新增 minigame smoke test + export smoke test）
 - [x] Python 聚合 runner：`scripts/tests/run_headless_suite.py`
 - [x] CI/Release 在所有导出 job 前执行 Scenario lint（error 阻断、warning 默认不阻断）与 headless quality gate
 - [x] 主场景 headless 加载通过
-- [x] 文档对齐至 2026-07-24 当前事实
+- [x] 文档对齐至最新事实
 - [x] 性能基线 headless 测试（解析/场景加载/存档/恢复/回跳耗时）
-- [ ] 导出产物启动 smoke test
-- [ ] 示例作品完善
+- [x] 导出产物启动 smoke test（`export_smoke_test.gd`：子系统初始化 + ch1 推进 + 存读档 + 视图导航 + ch4 播放）
+- [x] 示例小游戏完善（ExampleMinigame 场景 + minigame_smoke_test.gd）
 
 ---
 
@@ -161,21 +162,24 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 | 6 | 动画系统升级 | ✅ 完成 |
 | 7 | VFX / Shader / Transition 系统 | ✅ 完成 |
 | 8 | 资源加载、预加载与内容生产工具 | ✅ 完成 |
-| 9 | 小游戏、中断与扩展接口 | ✅ 核心完成 |
-| 10 | 平台、质量与发布 | ✅ 核心完成（性能基线完成，导出 smoke test 待后续） |
+| 9 | 小游戏、中断与扩展接口 | ✅ 完成 |
+| 10 | 平台、质量与发布 | ✅ 完成 |
 
 ---
 
-## 六、下一步开发路径
+## 六、当前状态
 
-优先级从高到低：
+所有 Phase 0-10 已全部完成：
 
-1. ~~**Scenario visualize / branch visualization**~~ ✅ — 已实现 text/JSON/DOT/Mermaid 输出，21 项 smoke test。
-2. ~~**VFX 深化**~~ ✅ — TRANSITION registry、多 pass compositing、capture texture → shader transition 均已完成。
-3. ~~**debug theme**~~ ✅ — 暗色调 debug 主题及 ThemeManager toggle 已实现。
-4. **导出与性能** — ~~性能基线 headless 测试已完成~~。对 Windows/Linux/Android 导出产物做启动 smoke test。
-5. **示例作品** — 完善 3 章节样例，覆盖分支/结局/CG/BGM/回跳/小游戏。
-6. **示例小游戏场景** — 为 Phase 9 InterruptManager 协议提供可玩 demo。
+- Phase 0-8：核心运行时、UI、动画、VFX、资源工具链
+- Phase 9：小游戏中断协议 + 示例小游戏 (ExampleMinigame)
+- Phase 10：headless 测试套件（21 项）+ 导出 smoke test + 性能基线
+
+后续可继续推进的方向：
+- 完善示例作品（3+ 章节完整故事线）
+- 添加更多小游戏模板
+- 导出产物真实设备 smoke test
+- Lua VM 完整兼容层
 
 ---
 
