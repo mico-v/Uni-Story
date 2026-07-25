@@ -13,10 +13,6 @@ const NovaAnimationCompatScript := preload("res://scripts/runtime/nova_animation
 
 var _ctx: Node
 
-# GameViewController; accessed via _ctx.get() for dynamic compat
-func _gvc():
-	return _ctx.get("game_view_controller") if _ctx else null
-
 
 func run() -> Variant:
 	return __eval()
@@ -498,8 +494,9 @@ func auto_fade_off() -> void:
 
 
 func auto_time(seconds: Variant = 0.0) -> void:
-	if _gvc():
-		_gvc().auto_delay = _to_float(seconds, 0.10)
+	var gvc = _ctx.get("game_view_controller") if _ctx else null
+	if gvc:
+		gvc.auto_delay = _to_float(seconds, 0.10)
 
 
 func immediate_step() -> void:
@@ -550,19 +547,22 @@ func current_box() -> Object:
 
 
 func text_delay(seconds: Variant = 0.0) -> void:
-	if _gvc():
-		_gvc().type_cps = _chars_per_second(_to_float(seconds, 0.0))
+	var gvc = _ctx.get("game_view_controller") if _ctx else null
+	if gvc:
+		gvc.type_cps = _chars_per_second(_to_float(seconds, 0.0))
 
 
 func text_duration(seconds: Variant = 0.0) -> void:
-	if _gvc():
+	var gvc = _ctx.get("game_view_controller") if _ctx else null
+	if gvc:
 		var dur := _to_float(seconds, 0.0)
-		if dur > 0.0 and _gvc()._story_label:
-			_gvc().type_cps = _gvc()._story_label.text.length() / dur
+		if dur > 0.0 and gvc._story_label:
+			gvc.type_cps = gvc._story_label.text.length() / dur
 
 
 func text_scroll(from_value: Variant = null, to_value: Variant = null, _duration: Variant = null, _easing: Variant = null) -> void:
-	if _gvc() == null:
+	var gvc = _ctx.get("game_view_controller") if _ctx else null
+	if gvc == null:
 		return
 	var box := _resolve_dbox()
 	if box:
@@ -586,9 +586,10 @@ func box_anchor(anchor: Variant = null) -> void:
 
 
 func box_alignment(alignment: Variant = null) -> void:
-	if _gvc() == null:
+	var gvc = _ctx.get("game_view_controller") if _ctx else null
+	if gvc == null:
 		return
-	var label = _gvc()._story_label
+	var label = gvc._story_label
 	if label == null:
 		return
 	var mode := str(alignment).to_lower()
@@ -608,8 +609,9 @@ func box_alignment(alignment: Variant = null) -> void:
 
 
 func new_page() -> void:
-	if _gvc():
-		var label = _gvc()._story_label
+	var gvc = _ctx.get("game_view_controller") if _ctx else null
+	if gvc:
+		var label = gvc._story_label
 		if label:
 			label.text = ""
 
@@ -876,8 +878,9 @@ func _chars_per_second(delay_seconds: float) -> float:
 
 func set_text_speed(cps: float = 30.0) -> void:
 	# Runtime dynamic adjustment of typewriter character-per-second rate.
-	if _gvc():
-		_gvc().type_cps = maxf(cps, 1.0)
+	var gvc = _ctx.get("game_view_controller") if _ctx else null
+	if gvc:
+		gvc.type_cps = maxf(cps, 1.0)
 
 
 func get_current_position() -> Dictionary:
@@ -888,13 +891,14 @@ func get_current_position() -> Dictionary:
 
 func skip_mode_custom(enabled: bool = true) -> void:
 	# Enable/disable custom skip mode override.
-	if _gvc():
+	var gvc = _ctx.get("game_view_controller") if _ctx else null
+	if gvc:
 		if enabled:
-			_gvc().skip_unread = true
-			_gvc().skip_delay = 1.0 / 60.0  # fast but not instant
+			gvc.skip_unread = true
+			gvc.skip_delay = 1.0 / 60.0  # fast but not instant
 		else:
-			_gvc().skip_unread = false
-			_gvc().skip_delay = 0.05
+			gvc.skip_unread = false
+			gvc.skip_delay = 0.05
 
 
 func text_easing(easing: Variant = null) -> void:
