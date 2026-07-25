@@ -76,6 +76,7 @@ var bgs: String:
 var voice: String:
 	get: return "voice"
 
+var _anim_hold_counter: int = 0
 
 # --- flow chart API (meaningful during the eager/parse pass) -----------------
 
@@ -220,15 +221,15 @@ func clear_post_fx(duration: float = 0.3):
 func shake(intensity: float = 10.0, duration: float = 0.5):
 	return _ctx.vfx.shake(intensity, duration)
 
-## Clear only a specific named effect from a target, leaving other stacked effects intact.
+# Clear only a specific named effect from a target, leaving other stacked effects intact.
 func clear_effect(effect_name: String, target: Variant, duration: float = 0.3):
 	return _ctx.vfx.clear_effect(effect_name, target, duration)
 
-## Capture the current game screen to a texture (for script-driven transitions).
+# Capture the current game screen to a texture (for script-driven transitions).
 func capture_screen():
 	return _ctx.vfx.capture_screen()
 
-## Capture screen then play a shader-based transition.
+# Capture screen then play a shader-based transition.
 func capture_transition(effect_name: String, duration: float = 0.5):
 	return _ctx.vfx.transition_with_capture(effect_name, duration)
 
@@ -369,8 +370,35 @@ func box_hide_show(_seconds: Variant = 0.0) -> void:
 	set_box()
 
 
-func box_tint(_color: Variant = null) -> void:
-	pass
+func box_tint(color_or_value: Variant = null) -> void:
+	if _ctx == null:
+		return
+	var box := _resolve_dbox()
+	if box == null:
+		return
+	var target_color: Color
+	if color_or_value is Color:
+		target_color = color_or_value
+	elif color_or_value is int or color_or_value is float:
+		var v := clampf(float(color_or_value), 0.0, 1.0)
+		target_color = Color(v, v, v, 0.82)
+	elif color_or_value is Array and (color_or_value as Array).size() >= 2:
+		var arr := color_or_value as Array
+		if arr.size() >= 4:
+			target_color = Color(float(arr[0]), float(arr[1]), float(arr[2]), float(arr[3]))
+		else:
+			target_color = Color(float(arr[0]), float(arr[0]), float(arr[0]), float(arr[1]))
+	else:
+		return
+	if box is Panel:
+		var sb := box.get_theme_stylebox("panel", "Panel") as StyleBoxFlat
+		if sb:
+			sb.bg_color = target_color
+			box.add_theme_stylebox_override("panel", sb)
+		else:
+			var new_sb := StyleBoxFlat.new()
+			new_sb.bg_color = target_color
+			box.add_theme_stylebox_override("panel", new_sb)
 
 
 func env_tint(obj: Variant, color: Variant = null) -> void:
@@ -412,51 +440,67 @@ func video_duration() -> float:
 
 
 func anim_hold_begin() -> void:
-	pass
+	_anim_hold_counter += 1
 
 
 func anim_hold_end() -> void:
-	pass
+	_anim_hold_counter = maxi(0, _anim_hold_counter - 1)
 
 
 func stop_auto_ff() -> void:
-	pass
+	if _ctx and _ctx.has_method("deactivate_auto_mode"):
+		_ctx.call("deactivate_auto_mode")
 
 
 func stop_ff() -> void:
-	pass
+	if _ctx and _ctx.has_method("deactivate_skip_mode"):
+		_ctx.call("deactivate_skip_mode")
 
 
 func input_on() -> void:
-	pass
+	if _ctx and _ctx.has_method("set_input_enabled"):
+		_ctx.call("set_input_enabled", true)
 
 
 func input_off() -> void:
-	pass
+	if _ctx and _ctx.has_method("set_input_enabled"):
+		_ctx.call("set_input_enabled", false)
 
 
 func ff_shortcut_on() -> void:
-	pass
+	if _ctx and _ctx.has_method("set_ff_shortcut_enabled"):
+		_ctx.call("set_ff_shortcut_enabled", true)
 
 
 func ff_shortcut_off() -> void:
-	pass
+	if _ctx and _ctx.has_method("set_ff_shortcut_enabled"):
+		_ctx.call("set_ff_shortcut_enabled", false)
 
 
 func auto_fade_on() -> void:
-	pass
+	if _ctx == null:
+		return
+	var counter := _ctx.get("_auto_fade_off_count") as int
+	counter = maxi(0, counter - 1)
+	_ctx.set("_auto_fade_off_count", counter)
 
 
 func auto_fade_off() -> void:
-	pass
+	if _ctx == null:
+		return
+	var counter := _ctx.get("_auto_fade_off_count") as int
+	_ctx.set("_auto_fade_off_count", counter + 1)
 
 
-func auto_time(_seconds: Variant = 0.0) -> void:
-	pass
+func auto_time(seconds: Variant = 0.0) -> void:
+	var gvc = _ctx.get("game_view_controller") if _ctx else null
+	if gvc:
+		gvc.auto_delay = _to_float(seconds, 0.10)
 
 
 func immediate_step() -> void:
-	pass
+	if _ctx and _ctx.game_state and _ctx.game_state.is_waiting_input:
+		_ctx.game_state.continue_after_input()
 
 
 func minigame(loader: Variant = null, minigame_name: Variant = null) -> void:
@@ -500,28 +544,73 @@ func current_box() -> Object:
 	return _ctx.object_manager.objects.get("default_box")
 
 
-func text_delay(_seconds: Variant = 0.0) -> void:
-	pass
+func text_delay(seconds: Variant = 0.0) -> void:
+	var gvc = _ctx.get("game_view_controller") if _ctx else null
+	if gvc:
+		gvc.type_cps = _chars_per_second(_to_float(seconds, 0.0))
 
 
-func text_duration(_seconds: Variant = 0.0) -> void:
-	pass
+func text_duration(seconds: Variant = 0.0) -> void:
+	var gvc = _ctx.get("game_view_controller") if _ctx else null
+	if gvc:
+		var dur := _to_float(seconds, 0.0)
+		if dur > 0.0 and gvc._story_label:
+			gvc.type_cps = gvc._story_label.text.length() / dur
 
 
-func text_scroll(_from: Variant = null, _to: Variant = null, _duration: Variant = null, _easing: Variant = null) -> void:
-	pass
+func text_scroll(from_value: Variant = null, to_value: Variant = null, _duration: Variant = null, _easing: Variant = null) -> void:
+	var gvc = _ctx.get("game_view_controller") if _ctx else null
+	if gvc == null:
+		return
+	var box := _resolve_dbox()
+	if box:
+		var target := _to_float(to_value, _to_float(from_value, 0.0))
+		box.position.y = -target
 
 
-func box_anchor(_anchor: Variant = null) -> void:
-	pass
+func box_anchor(anchor: Variant = null) -> void:
+	if anchor is Array and (anchor as Array).size() >= 4:
+		var arr := anchor as Array
+		var box := _resolve_dbox()
+		if box:
+			box.anchor_left = float(arr[0])
+			box.anchor_right = float(arr[1])
+			box.anchor_top = float(arr[2])
+			box.anchor_bottom = float(arr[3])
+			box.offset_left = 0
+			box.offset_right = 0
+			box.offset_top = 0
+			box.offset_bottom = 0
 
 
-func box_alignment(_alignment: Variant = null) -> void:
-	pass
+func box_alignment(alignment: Variant = null) -> void:
+	var gvc = _ctx.get("game_view_controller") if _ctx else null
+	if gvc == null:
+		return
+	var label = gvc._story_label
+	if label == null:
+		return
+	var mode := str(alignment).to_lower()
+	var text: String = label.text
+	text = text.replace("[right]", "").replace("[/right]", "")
+	text = text.replace("[center]", "").replace("[/center]", "")
+	text = text.replace("[left]", "").replace("[/left]", "")
+	text = text.replace("[fill]", "").replace("[/fill]", "")
+	match mode:
+		"center":
+			label.text = "[center]" + text + "[/center]"
+		"right":
+			label.text = "[right]" + text + "[/right]"
+		_:
+			label.text = text
 
 
 func new_page() -> void:
-	pass
+	var gvc = _ctx.get("game_view_controller") if _ctx else null
+	if gvc:
+		var label = gvc._story_label
+		if label:
+			label.text = ""
 
 
 func alert(message: String = "") -> void:
@@ -540,8 +629,22 @@ func avatar_clear() -> void:
 	clear_avatar()
 
 
-func volume(_channel: Variant, _value: Variant = null) -> void:
-	pass
+func volume(channel: Variant, value: Variant = null) -> void:
+	if _ctx == null or _ctx.audio == null:
+		return
+	var channel_name := str(channel).to_lower()
+	var linear: float = 0.0
+	if value is int or value is float:
+		linear = clampf(float(value), 0.0, 1.0)
+	match channel_name:
+		"bgm":
+			_ctx.audio.set_bgm_volume(linear)
+		"bgs", "se":
+			_ctx.audio.set_se_volume(linear)
+		"voice":
+			_ctx.audio.set_voice_volume(linear)
+		_:
+			pass
 
 
 func stop(channel: Variant = null) -> void:
