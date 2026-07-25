@@ -100,13 +100,73 @@
 - ✅ `performance-baseline`：`performance_baseline_test.gd` 测量解析/场景加载/存档/恢复/回跳 5 项耗时并设定上限。
 - ✅ `error-recovery`：损坏存档、缺资源、脚本语法错误均已有日志分级。
 - ✅ `release-docs`：`PLAN.md`、`README.md`、`Setup.md`、`review.md`、`CLAUDE.md` 与 API/backlog 文档已同步至 2026-07-25 当前事实。
-- `sample-work-perfection`：完善示例作品（3 章节、含分支/结局/CG/BGM/回跳/小游戏）。现有 ch1-ch4 已覆盖主要功能，完整的叙事示例留到后续。
 
-## 后续预留
+（`sample-work-perfection` 提升至 Phase 13 作为独立阶段推进。）
 
-以下任务标记为留到后续，不阻塞当前引擎核心基线：
+## Phase 11：协作编剧工具链
 
-- `debug-theme-layer`：debug theme 与调试模式切换（已实现，2026-07-24）
-- `minigame-example`：示例小游戏（已实现，2026-07-25）
-- `export-smoke`：导出产物启动检查（已实现，2026-07-25）
-- `sample-work-perfection`：示例作品完善
+- 🔲 `merge-tool`：新增 `scripts/tools/merge.py`，将分角色剧本文件合并为 NovaScript 剧本；支持 `#角色名` 标签归并、`--input-dir`/`--output` 参数。
+- 🔲 `split-chara-tool`：新增 `scripts/tools/split_chara.py`，按角色拆分剧本为独立文件，保留原始行号和上下文。
+- 🔲 `strip-code-tools`：新增 `strip_code.py`/`strip_code_docx.py`/`strip_code_tex.py`/`strip_code_xlsx.py`，剥离 `<|...|>` 代码块输出纯文本/DOCX/TEX/XLSX。
+- 🔲 `soft-hyphens-tool`：新增 `scripts/tools/add_soft_hyphens.py`，在日/中文文本中插入软连字符。
+- 🔲 `sample-script-gen`：新增 `scripts/tools/generate_sample_script.py`，从模板生成示例剧本（basic/branching/minigame）。
+- 🔲 `merge-tool-tests`：新增 `merge_tool_smoke_test.gd`，验证合并输出可被 ScriptLoader 正确解析。
+- 🔲 `strip-tool-tests`：新增 `strip_code_smoke_test.gd`，对 ch1.txt 执行四种剥离验证内容完整。
+- 🔲 `phase11-docs`：更新 `PLAN.md`、`review.md`、`PhaseBacklog.md`。
+
+## Phase 12：立绘生产管线与 Editor 集成
+
+- 🔲 `psd-export`：新增 `scripts/tools/standing/export_psd_layers.py`，从 PSD 导出图层为独立 PNG，按 `StandingImportGuide.md` 约定命名。
+- 🔲 `psd-merge`：新增 `scripts/tools/standing/merge_psd_layers.py`，按 Pose 配置合并图层，输出与 SpriteComposer 一致的结果。
+- 🔲 `pose-export-sort`：新增 `scripts/tools/standing/export_poses.py` 和 `sort_poses.py`。
+- 🔲 `standing-editor-plugin`：创建 `addons/standing_editor/` Godot EditorPlugin，Inspector 可视化编辑 offset/scale + 实时预览。
+- 🔲 `save-viewer`：新增 `scripts/editor/save_viewer.gd`，Editor 中查看存档 JSON，显示 bookmark 元数据和 checkpoint 状态。
+- 🔲 `resource-dashboard`：新增 `scripts/editor/resource_dashboard.gd`，Editor 面板聚合资源扫描结果，缺失项可跳转。
+- 🔲 `standing-tool-tests`：新增 `standing_tool_smoke_test.gd`，覆盖 PSD 导出、合并、Pose 排序全链路。
+- 🔲 `save-viewer-test`：新增 `save_viewer_smoke_test.gd`，验证解析至少 3 个存档文件。
+- 🔲 `phase12-docs`：更新 `PLAN.md`、`review.md`、`PhaseBacklog.md`。
+
+## Phase 13：示例作品与 I18n 内容
+
+- 🔲 `sample-work-script`：编写 ch1-ch3 完整叙事剧本（含分支、至少 2 个结局），覆盖全部核心功能。
+- 🔲 `sample-work-assets`：制作配套立绘素材（3+ 角色，2+ Pose）+ StandingProfile + VisualProfile 配置。
+- 🔲 `sample-work-voice`：配置 AutoVoice 语音素材（至少 1 个角色完整语音）。
+- 🔲 `sample-work-playback-test`：新增 `sample_work_playback_smoke_test.gd`，完整播放 ch1-ch3 到达所有结局。
+- 🔲 `sample-work-save-test`：新增 `sample_work_save_load_test.gd`，存档/读档/回跳全流程。
+- 🔲 `english-translation`：翻译 ch1-ch3 为英文版，完善 `en.json` UI 字符串。
+- 🔲 `i18n-switch-test`：新增 `i18n_switch_smoke_test.gd`，运行时 zh/en 切换验证。
+- 🔲 `minigame-click`：新增 ClickMinigame 模板（点击得分）。
+- 🔲 `minigame-drag`：新增 DragMinigame 模板（拖拽到目标）。
+- 🔲 `minigame-qte`：新增 QTEMinigame 模板（限时按键）。
+- 🔲 `minigame-templates-test`：新增 `minigame_templates_smoke_test.gd`，加载运行三种模板。
+- 🔲 `phase13-docs`：更新 `PLAN.md`、`review.md`、`PhaseBacklog.md`。
+
+## Phase 14：Shader/VFX 丰富度提升
+
+- 🔲 `shaderproto-templates`：新增 8 个基础 shader 效果 JSON 模板（pixelate/mosaic/kaleidoscope/swirl/radial_blur/zoom_blur/edge_detect/invert）。
+- 🔲 `new-shaders`：新增 8 个 `.gdshader` 文件并注册到 VFX registry。
+- 🔲 `shader-gen-verify`：`shaderproto_gen.py --all` 成功生成所有变体。
+- 🔲 `vfx-lookup-api`：VFXSystem 支持按 uniform 参数查询效果。
+- 🔲 `shader-effects-test`：新增 `shader_effects_smoke_test.gd`，加载验证所有 shader 编译通过。
+- 🔲 `phase14-docs`：更新 `PLAN.md`、`review.md`、`PhaseBacklog.md`。
+
+## Phase 15：Lua VM 深度兼容与设备验证
+
+- 🔲 `box-tint-impl`：实现 `box_tint()` 完整语义。
+- 🔲 `input-api-impl`：实现 `input()`、输入验证回调等完整 API。
+- 🔲 `text-formatting-impl`：实现 `skip_mode_custom`、text formatting hooks 等。
+- 🔲 `misc-nova-api`：实现 `set_text_speed()`、`get_current_position()` 等剩余 API。
+- 🔲 `nova-lua-compat-test`：新增 `nova_lua_compat_smoke_test.gd`，验证 API 不再为 no-op。
+- 🔲 `device-smoke-windows`：Windows 真机启动→播放→存读档→退出验证。
+- 🔲 `device-smoke-linux`：Linux 真机同上。
+- 🔲 `device-smoke-android`：Android 真机同上 + 横屏触控验证。
+- 🔲 `perf-optimize`：基于性能基线优化（场景加载/存档恢复/解析），降低 20%。
+- 🔲 `release-docs-v2`：更新 README 为完整用户手册、编写 `docs/ReleaseGuide.md`、整理 CHANGELOG。
+- 🔲 `phase15-docs`：更新 `PLAN.md`、`review.md`、`PhaseBacklog.md`。
+
+## 已完成任务归档
+
+- ✅ `debug-theme-layer`：debug theme 与调试模式切换（已实现，2026-07-24）
+- ✅ `minigame-example`：示例小游戏（已实现，2026-07-25）
+- ✅ `export-smoke`：导出产物启动检查（已实现，2026-07-25）
+- ✅ `sample-work-perfection`：示例作品完善（提升至 Phase 13）
