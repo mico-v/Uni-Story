@@ -11,7 +11,7 @@ const NovaAnimationCompatScript := preload("res://scripts/runtime/nova_animation
 ##
 ## `_ctx` is the NovaController instance, injected right after `.new()`.
 
-var _ctx
+var _ctx: Node
 
 # GameViewController; accessed via _ctx.get() for dynamic compat
 var _gvc:

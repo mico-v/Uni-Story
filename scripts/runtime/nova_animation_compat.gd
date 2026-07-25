@@ -6,7 +6,7 @@ class_name NovaAnimationCompat extends RefCounted
 ## without crashing. Methods map simple operations to current runtime systems and
 ## return `self` so Nova-style chained calls keep compiling.
 
-var _ctx
+var _ctx: Node
 
 
 func _init(ctx: Node) -> void:
