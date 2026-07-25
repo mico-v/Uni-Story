@@ -386,7 +386,7 @@ func box_tint(color_or_value: Variant = null) -> void:
 		var v := clampf(float(color_or_value), 0.0, 1.0)
 		target_color = Color(v, v, v, 0.82)
 	elif color_or_value is Array and (color_or_value as Array).size() >= 2:
-		var arr := color_or_value as Array
+		var arr: Array = color_or_value as Array
 		if arr.size() >= 4:
 			target_color = Color(float(arr[0]), float(arr[1]), float(arr[2]), float(arr[3]))
 		else:
@@ -394,7 +394,7 @@ func box_tint(color_or_value: Variant = null) -> void:
 	else:
 		return
 	if box is Panel:
-		var sb := box.get_theme_stylebox("panel", "Panel") as StyleBoxFlat
+		var sb: StyleBoxFlat = box.get_theme_stylebox("panel", "Panel") as StyleBoxFlat
 		if sb:
 			sb.bg_color = target_color
 			box.add_theme_stylebox_override("panel", sb)
@@ -483,7 +483,7 @@ func ff_shortcut_off() -> void:
 func auto_fade_on() -> void:
 	if _ctx == null:
 		return
-	var counter := _ctx.call("get", "_auto_fade_off_count") as int
+	var counter: int = _ctx.call("get", "_auto_fade_off_count") as int
 	counter = maxi(0, counter - 1)
 	_ctx.call("set", "_auto_fade_off_count", counter)
 
@@ -491,7 +491,7 @@ func auto_fade_on() -> void:
 func auto_fade_off() -> void:
 	if _ctx == null:
 		return
-	var counter := _ctx.call("get", "_auto_fade_off_count") as int
+	var counter: int = _ctx.call("get", "_auto_fade_off_count") as int
 	_ctx.call("set", "_auto_fade_off_count", counter + 1)
 
 
@@ -573,7 +573,7 @@ func text_scroll(from_value: Variant = null, to_value: Variant = null, _duration
 
 func box_anchor(anchor: Variant = null) -> void:
 	if anchor is Array and (anchor as Array).size() >= 4:
-		var arr := anchor as Array
+		var arr: Array = anchor as Array
 		var box := _resolve_dbox()
 		if box:
 			box.anchor_left = float(arr[0])
@@ -588,7 +588,7 @@ func box_anchor(anchor: Variant = null) -> void:
 
 func box_offset(margins: Variant = null) -> void:
 	if margins is Array and (margins as Array).size() >= 4:
-		var arr := margins as Array
+		var arr: Array = margins as Array
 		var box := _resolve_dbox()
 		if box:
 			box.offset_left = float(arr[0])
@@ -824,7 +824,7 @@ func _nova_camera_vfx(effect_spec: Variant, range_spec: Variant, duration_spec: 
 	if effect_spec == null:
 		return _ctx.vfx.clear_post(_to_float(duration_spec, 0.0))
 	if effect_spec is Array:
-		var arr := effect_spec as Array
+		var arr: Array = effect_spec as Array
 		if arr.is_empty():
 			return _ctx.vfx.clear_post(_to_float(duration_spec, 0.0))
 		if arr[0] == null:
