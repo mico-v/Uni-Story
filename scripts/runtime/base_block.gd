@@ -11,7 +11,7 @@ const NovaAnimationCompatScript := preload("res://scripts/runtime/nova_animation
 ##
 ## `_ctx` is the NovaController instance, injected right after `.new()`.
 
-var _ctx: Node
+var _ctx  # Node (NovaController); untyped for Godot 4.6 dynamic dispatch compat
 
 
 func run() -> Variant:
@@ -484,20 +484,20 @@ func ff_shortcut_off() -> void:
 func auto_fade_on() -> void:
 	if _ctx == null:
 		return
-	var counter := _ctx.get("_auto_fade_off_count") as int
+	var counter := _ctx._auto_fade_off_count as int
 	counter = maxi(0, counter - 1)
-	_ctx.set("_auto_fade_off_count", counter)
+	_ctx._auto_fade_off_count = counter
 
 
 func auto_fade_off() -> void:
 	if _ctx == null:
 		return
-	var counter := _ctx.get("_auto_fade_off_count") as int
-	_ctx.set("_auto_fade_off_count", counter + 1)
+	var counter := _ctx._auto_fade_off_count as int
+	_ctx._auto_fade_off_count = counter + 1
 
 
 func auto_time(seconds: Variant = 0.0) -> void:
-	var gvc = _ctx.get("game_view_controller") if _ctx else null
+	var gvc = _ctx.game_view_controller if _ctx else null
 	if gvc:
 		gvc.auto_delay = _to_float(seconds, 0.10)
 
@@ -550,13 +550,13 @@ func current_box() -> Object:
 
 
 func text_delay(seconds: Variant = 0.0) -> void:
-	var gvc = _ctx.get("game_view_controller") if _ctx else null
+	var gvc = _ctx.game_view_controller if _ctx else null
 	if gvc:
 		gvc.type_cps = _chars_per_second(_to_float(seconds, 0.0))
 
 
 func text_duration(seconds: Variant = 0.0) -> void:
-	var gvc = _ctx.get("game_view_controller") if _ctx else null
+	var gvc = _ctx.game_view_controller if _ctx else null
 	if gvc:
 		var dur := _to_float(seconds, 0.0)
 		if dur > 0.0 and gvc._story_label:
@@ -564,7 +564,7 @@ func text_duration(seconds: Variant = 0.0) -> void:
 
 
 func text_scroll(from_value: Variant = null, to_value: Variant = null, _duration: Variant = null, _easing: Variant = null) -> void:
-	var gvc = _ctx.get("game_view_controller") if _ctx else null
+	var gvc = _ctx.game_view_controller if _ctx else null
 	if gvc == null:
 		return
 	var box := _resolve_dbox()
@@ -589,7 +589,7 @@ func box_anchor(anchor: Variant = null) -> void:
 
 
 func box_alignment(alignment: Variant = null) -> void:
-	var gvc = _ctx.get("game_view_controller") if _ctx else null
+	var gvc = _ctx.game_view_controller if _ctx else null
 	if gvc == null:
 		return
 	var label = gvc._story_label
@@ -612,7 +612,7 @@ func box_alignment(alignment: Variant = null) -> void:
 
 
 func new_page() -> void:
-	var gvc = _ctx.get("game_view_controller") if _ctx else null
+	var gvc = _ctx.game_view_controller if _ctx else null
 	if gvc:
 		var label = gvc._story_label
 		if label:
@@ -847,13 +847,13 @@ func _is_default_effect_value(value: Variant) -> bool:
 func _composer() -> Object:
 	if _ctx == null:
 		return null
-	return _ctx.get("composer") as Object
+	return _ctx.composer as Object
 
 
 func _auto_voice_system() -> Object:
 	if _ctx == null:
 		return null
-	return _ctx.get("auto_voice") as Object
+	return _ctx.auto_voice as Object
 
 
 func _is_runtime_voice_suppressed() -> bool:
@@ -881,7 +881,7 @@ func _chars_per_second(delay_seconds: float) -> float:
 
 func set_text_speed(cps: float = 30.0) -> void:
 	# Runtime dynamic adjustment of typewriter character-per-second rate.
-	var gvc = _ctx.get("game_view_controller") if _ctx else null
+	var gvc = _ctx.game_view_controller if _ctx else null
 	if gvc:
 		gvc.type_cps = maxf(cps, 1.0)
 
@@ -894,7 +894,7 @@ func get_current_position() -> Dictionary:
 
 func skip_mode_custom(enabled: bool = true) -> void:
 	# Enable/disable custom skip mode override.
-	var gvc = _ctx.get("game_view_controller") if _ctx else null
+	var gvc = _ctx.game_view_controller if _ctx else null
 	if gvc:
 		if enabled:
 			gvc.skip_unread = true
@@ -907,7 +907,7 @@ func skip_mode_custom(enabled: bool = true) -> void:
 func text_easing(easing: Variant = null) -> void:
 	# Override typewriter text animation easing type. Stored for future animation system use.
 	if _ctx:
-		_ctx.set("_text_easing", easing)
+		_ctx._text_easing = easing
 
 
 func nova_input(variable_name: String = "", _title: String = "", _placeholder: String = "") -> void:
