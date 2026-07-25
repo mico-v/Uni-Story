@@ -81,7 +81,7 @@ func _run() -> void:
 
 	# ── 5. Backlog access ──────────────────────────────────────────
 	if nova.backlog:
-		var entries := nova.backlog.get_entries()
+		var entries: Array = nova.backlog.entries()
 		_expect(entries.size() >= 0, "backlog should be accessible")
 		nova.backlog.clear()
 

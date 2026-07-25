@@ -71,7 +71,7 @@ func _run() -> void:
 		# Pick first option and advance.
 		# The branch options are passed to the UI via the branch_requested signal.
 		# We just need to choose a destination to continue.
-		nova.game_state.choose_branch(&"l_a")
+		nova.game_state.choose_branch(&"test_minigame:l_a")
 		await _wait_until(func() -> bool:
 			return nova.game_state.is_waiting_input or nova.game_state.is_waiting_branch or nova.game_state.is_ended
 		, 120)
