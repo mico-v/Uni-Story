@@ -178,7 +178,7 @@ func play(effect_name: String, target: Variant, duration: float = 0.5, params: D
 	# Animate the primary parameter (single effect only; stacked effects use a
 	# compositing material whose shader parameters differ from the source effect).
 	if is_stacked:
-		return _ctx.get_tree().create_tween()
+		return _null_tween()
 
 	var anim_key := ""
 	var anim_value: Variant = null

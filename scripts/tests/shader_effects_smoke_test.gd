@@ -39,7 +39,7 @@ func _run() -> void:
 		_test_shader_registry(vfx)
 		await _test_new_object_effects(vfx, scene)
 		await _test_post_effects(vfx)
-		_test_snapshot_restore_new(vfx, scene)
+		await _test_snapshot_restore_new(vfx, scene)
 		_test_query_uniforms(vfx)
 		vfx.clear_all()
 
