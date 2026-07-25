@@ -79,7 +79,7 @@ func set_post_fx_rect(node: ColorRect) -> void:
 func _resolve(target: Variant) -> CanvasItem:
 	if _is_camera_target(target):
 		return _post_fx_rect
-	if target is CanvasItem:
+	if is_instance_valid(target) and target is CanvasItem:
 		return target
 	if target is String or target is StringName:
 		var objects: Dictionary = _ctx.object_manager.objects
@@ -702,8 +702,17 @@ func _shader_transition(overlay: ColorRect, shader_path: String, param: String, 
 # ── Helpers ─────────────────────────────────────────────────────────
 
 func _null_tween() -> Tween:
-	var t := _ctx.get_tree().create_tween()
-	t.tween_interval(0.0)
+	# Guard against freed _ctx — fallback to Engine.get_main_loop().
+	var tree: SceneTree = null
+	if is_instance_valid(_ctx):
+		tree = _ctx.get_tree()
+	if tree == null:
+		tree = Engine.get_main_loop() as SceneTree
+	if tree == null:
+		push_warning("VFXSystem._null_tween: no SceneTree available")
+		return null
+	var t := tree.create_tween()
+	t.tween_callback(func(): pass)
 	return t
 
 
