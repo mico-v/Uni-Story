@@ -155,7 +155,7 @@ func _test_i18n_class() -> void:
 	var fallback: String = i18n.t("title.menu.start")
 	_assert(fallback != "", "Fallback locale works for unknown locale")
 
-	i18n.free()
+	# Note: I18n extends RefCounted; no manual free() needed in Godot 4
 
 
 func _read_file(path: String) -> String:

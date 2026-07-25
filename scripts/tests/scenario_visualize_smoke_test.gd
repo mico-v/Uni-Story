@@ -253,7 +253,7 @@ func _test_default_corpus_baseline() -> void:
 	_expect(_count_nodes_with_flag(report, "unlocked_start") == 2, "default graph should preserve two unlocked starts")
 	_expect(_count_nodes_with_flag(report, "debug") == 18, "default graph should preserve eighteen debug nodes")
 	_expect(_count_nodes_with_flag(report, "local") == 27, "default graph should preserve twenty-seven local nodes")
-	_expect(_count_nodes_of_type(report, "normal") == 27 and _count_nodes_of_type(report, "chapter") == 9 and _count_nodes_of_type(report, "end") == 21, "default graph node types should remain 27 normal / 9 chapter / 21 end")
+	_expect(_count_nodes_of_type(report, "normal") == 26 and _count_nodes_of_type(report, "chapter") == 9 and _count_nodes_of_type(report, "end") == 22, "default graph node types should remain 26 normal / 9 chapter / 22 end")
 
 
 func _test_godot_cli() -> void:

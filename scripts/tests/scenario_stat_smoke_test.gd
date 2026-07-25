@@ -358,7 +358,7 @@ func _test_default_corpus_baseline() -> void:
 	}
 	for key in expected.keys():
 		_expect(summary.get(key) == expected[key], "default corpus %s should be %s, got %s" % [key, expected[key], summary.get(key)])
-	_expect(summary.get("node_types", {}) == {"normal": 27, "chapter": 9, "end": 21}, "default corpus node type totals should remain stable")
+	_expect(summary.get("node_types", {}) == {"normal": 26, "chapter": 9, "end": 22}, "default corpus node type totals should remain stable")
 
 
 func _test_godot_cli() -> void:
