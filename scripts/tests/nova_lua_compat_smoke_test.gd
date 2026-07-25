@@ -446,8 +446,9 @@ func _block_ctx(nova: Node) -> Object:
 
 
 func _wrap_block(body: String) -> String:
+	# Strip common leading whitespace from triple-quoted blocks
 	# compile_block/_wrap_statements already wraps in extends BaseBlock / func __eval()
-	return body
+	return body.dedent().strip_edges()
 
 
 func _load_main_scene() -> Node:
