@@ -3,7 +3,7 @@
 > 当前目标：使用 Godot 4.6 + GDScript，学习 Nova 的架构设计，逐步建设成熟、可维护、可扩展的视觉小说游戏引擎。  
 > 参考工程：`Nova/` Unity + C# + Lua(ToLua#)  
 > 当前工程：Godot + GDScript-first，不引入 Unity/C# 依赖，不把 Lua VM 作为默认运行时。  
-> 日期：2026-06-24 · 最后更新：2026-07-10
+> 日期：2026-06-24 · 最后更新：2026-07-24
 
 ---
 
@@ -114,9 +114,9 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 - [x] 真正多 pass shader/material compositing（SubViewport 链式合成）
 - [x] `capture_screen()` API
 - [x] captured texture 接入 shader transition（dissolve/wipe shader `capture_texture` uniform）
-- [ ] shaderproto 生成器
+- [x] shaderproto 生成器
 
-### Phase 8：资源加载、预加载与内容生产工具 🔄 核心完成
+### Phase 8：资源加载、预加载与内容生产工具 ✅ 完成
 
 - [x] 严格资源扫描：包含 `say(speaker, id)`，`referenced=369`、`found=367`、`virtual=2`、`missing=0`
 - [x] PreloadSystem 优先级、分类型 LRU、取消、引用计数与进度
@@ -124,8 +124,8 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 - [x] execution-free Scenario analysis IR：统一输出 blocks/nodes/entries/silent entries/edges/events，供统计与后续可视化复用
 - [x] Scenario stat：Python/Godot CLI、text/JSON、对白规范化/长度/说话人/节点/文件统计、默认基线与 smoke test
 - [x] Scenario visualize / branch visualization：消费共享 IR，支持 text/JSON/DOT/Mermaid 输出，21 项 smoke test 覆盖
-- [ ] list_bg/list_bgm 等资源列表工具
-- [ ] 立绘导入约定与工具
+- [x] list_bg/list_bgm 等资源列表工具
+- [x] 立绘导入约定与工具
 
 ### Phase 9：小游戏、中断与扩展接口 🔄 核心完成
 
@@ -141,8 +141,9 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 - [x] Python 聚合 runner：`scripts/tests/run_headless_suite.py`
 - [x] CI/Release 在所有导出 job 前执行 Scenario lint（error 阻断、warning 默认不阻断）与 headless quality gate
 - [x] 主场景 headless 加载通过
-- [x] 文档对齐至 2026-07-10 当前事实
-- [ ] 导出产物启动 smoke test + 性能基线
+- [x] 文档对齐至 2026-07-24 当前事实
+- [x] 性能基线 headless 测试（解析/场景加载/存档/恢复/回跳耗时）
+- [ ] 导出产物启动 smoke test
 - [ ] 示例作品完善
 
 ---
@@ -159,9 +160,9 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 | 5 | ViewManager 与 UI 产品层成熟化 | ✅ 完成 |
 | 6 | 动画系统升级 | ✅ 完成 |
 | 7 | VFX / Shader / Transition 系统 | ✅ 完成 |
-| 8 | 资源加载、预加载与内容生产工具 | ✅ 核心完成（visualize 完成，立绘/list 工具待后续） |
+| 8 | 资源加载、预加载与内容生产工具 | ✅ 完成 |
 | 9 | 小游戏、中断与扩展接口 | ✅ 核心完成 |
-| 10 | 平台、质量与发布 | ✅ 核心完成 |
+| 10 | 平台、质量与发布 | ✅ 核心完成（性能基线完成，导出 smoke test 待后续） |
 
 ---
 
@@ -172,9 +173,9 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 1. ~~**Scenario visualize / branch visualization**~~ ✅ — 已实现 text/JSON/DOT/Mermaid 输出，21 项 smoke test。
 2. ~~**VFX 深化**~~ ✅ — TRANSITION registry、多 pass compositing、capture texture → shader transition 均已完成。
 3. ~~**debug theme**~~ ✅ — 暗色调 debug 主题及 ThemeManager toggle 已实现。
-4. **导出与性能** — 对 Windows/Linux/Android 导出产物做启动 smoke test，建立解析、预加载、存档与回跳性能基线。
+4. **导出与性能** — ~~性能基线 headless 测试已完成~~。对 Windows/Linux/Android 导出产物做启动 smoke test。
 5. **示例作品** — 完善 3 章节样例，覆盖分支/结局/CG/BGM/回跳/小游戏。
-6. **内容工具补齐** — 立绘导入约定、list_bg/list_bgm 资源列表工具、shaderproto 生成器。
+6. **示例小游戏场景** — 为 Phase 9 InterruptManager 协议提供可玩 demo。
 
 ---
 
@@ -187,6 +188,7 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 | `docs/NovaScript.md` | 脚本语法、兼容表、API 参考 |
 | `docs/PhaseBacklog.md` | 各 Phase commit 粒度清单 |
 | `docs/ProjectTerms.md` | 术语表 |
+| `docs/StandingImportGuide.md` | 立绘导入约定、目录结构、图层命名、Pose 配置 |
 | `docs/CodingStandards.md` | 编码规范 |
 | `README.md` | 用户视角快速开始和能力摘要 |
 | `Setup.md` | 环境搭建与架构概览 |

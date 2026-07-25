@@ -2,7 +2,7 @@
 
 本文把 `PLAN.md` 中的各阶段拆成 issue/commit 粒度，作为开发时的提交边界参考。单个提交应能运行主场景或对应 headless test。
 
-> 最后同步：2026-07-10
+> 最后同步：2026-07-24
 
 状态标记：✅ 已完成 / 🔄 核心完成、仍有明确缺口 / 🔲 未完成
 
@@ -57,15 +57,15 @@
 
 ## Phase 7：VFX / Shader / Transition 系统
 
-- 🔄 `shader-registry`：OBJECT_EFFECTS / POST_EFFECTS 已完成；TRANSITION registry 尚未实现，当前仍用 `match` 选择转场 shader。
+- ✅ `shader-registry`：OBJECT_EFFECTS / POST_EFFECTS / TRANSITION_EFFECTS 注册表均已完成，替代 ad-hoc `match` 分支选择 shader。
 - ✅ `vfx-domains`：支持对象 VFX、后处理 VFX、转场 VFX 三类。
 - ✅ `vfx-parameter-animation`：支持 float/color 参数动画（已有）。
 - ✅ `vfx-effect-state`：完成 effect-list bookkeeping、`clear_effect()` 和 snapshot/restore。
-- 🔲 `shader-layer-stack`：实现真正多 pass compositing；当前 CanvasItem 只渲染 effect list 顶部材质。
+- ✅ `shader-layer-stack`：实现真正多 pass compositing（SubViewport 链式合成）。
 - ✅ `screen-capture-api`：提供 `capture_screen()` API。
-- 🔲 `screen-capture-transition`：把 captured texture 实际传入 shader transition；当前捕获结果尚未参与渲染。
+- ✅ `screen-capture-transition`：captured texture 实际传入 dissolve/wipe shader transition。
 - ✅ `nova-vfx-subset`：已有 fade、wipe、blur、grayscale、dissolve、glitch、ripple、shake、chromatic、vignette。
-- 🔲 `shaderproto-generator`：Godot 版 shader 生成器。留到后续。
+- ✅ `shaderproto-generator`：`scripts/tools/shaderproto_gen.py` 支持 JSON 模板，生成 .gdshader 变体。
 
 ## Phase 8：资源加载、预加载与内容生产工具
 
@@ -77,9 +77,9 @@
 - ✅ `scenario-analysis-ir`：新增不执行 eager code 的共享静态 IR，稳定输出 blocks/nodes/entries/silent entries/edges/events，供统计与后续 visualize 复用。
 - ✅ `scenario-stat`：新增 Python/Godot CLI、text/JSON、`--top`、按文件/节点/canonical speaker 与长度分布统计；默认 28 个剧本为 360 blocks、53 nodes、731 dialogues、15434 characters、23 jumps、24 branch options。
 - ✅ `scenario-stat-smoke`：覆盖源码坐标、canonical speaker、rich/TODO/空格规范化、silent lazy、flow 作用域、默认基线、Godot/Python CLI 与 0/2 退出码。
-- 🔲 `scenario-visualize`：迁移 show_branches/visualize，直接消费共享 IR。留到后续。
-- 🔲 `scenario-asset-list`：迁移 list_bg/list_bgm 等资源列表工具。留到后续。
-- 🔲 `standing-import-convention`：设计角色/图层/表情/口型/头像路径规则。留到后续。
+- ✅ `scenario-visualize`：迁移 show_branches/visualize，直接消费共享 IR，text/JSON/DOT/Mermaid 输出。
+- ✅ `scenario-asset-list`：`scripts/tools/list_resources.py` 支持 bg/bgm/se/cg/character 等 12 种类别，text/JSON/CSV 输出。
+- ✅ `standing-import-convention`：`docs/StandingImportGuide.md` 定义目录结构、图层命名、Pose 配置与 Nova 迁移指南。
 
 ## Phase 9：小游戏、中断与扩展接口
 
@@ -97,9 +97,9 @@
 - ✅ `ci-release-quality-gate`：CI 与 Release workflow 均先以 `--fail-on error` 运行 Scenario lint，再运行 headless suite；warning 默认不阻断，Windows/Linux/Android 导出 job 依赖 quality job。
 - ✅ `scene-navigation-smoke`：MainSceneSmokeTest 覆盖主场景加载、所有视图注册和子系统初始化。
 - 🔲 `export-smoke`：Windows/Linux/Android 导出产物启动与基础运行检查；现有 workflow 只负责导出构建，不等同于启动 smoke。
-- 🔲 `performance-baseline`：记录解析、预加载、存档、回跳耗时。留到后续。
+- ✅ `performance-baseline`：`performance_baseline_test.gd` 测量解析/场景加载/存档/恢复/回跳 5 项耗时并设定上限。
 - ✅ `error-recovery`：损坏存档、缺资源、脚本语法错误均已有日志分级。
-- ✅ `release-docs`：`PLAN.md`、`README.md`、`Setup.md`、`review.md`、`CLAUDE.md` 与 API/backlog 文档已同步至 2026-07-10 当前事实。
+- ✅ `release-docs`：`PLAN.md`、`README.md`、`Setup.md`、`review.md`、`CLAUDE.md` 与 API/backlog 文档已同步至 2026-07-24 当前事实。
 - 🔲 `sample-work-perfection`：完善示例作品（3 章节、含分支/结局/CG/BGM/回跳/小游戏）。留到后续。
 
 ## 后续预留
@@ -107,14 +107,6 @@
 以下任务标记为留到后续，不阻塞当前引擎核心基线：
 
 - `debug-theme-layer`：debug theme 与调试模式切换
-- `scenario-visualize`：show_branches/visualize
-- `scenario-asset-list`：list_bg/list_bgm
-- `standing-import-convention`：立绘导入约定与工具
-- `transition-registry`：TRANSITION effect registry
-- `shader-layer-stack`：真正多 pass shader/material compositing
-- `screen-capture-transition`：captured texture 驱动的 shader transition
-- `shaderproto-generator`：Shader 生成器
 - `minigame-example`：示例小游戏
 - `export-smoke`：导出产物启动检查
-- `performance-baseline`：性能基线
 - `sample-work-perfection`：示例作品完善
