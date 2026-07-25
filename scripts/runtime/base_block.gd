@@ -734,7 +734,7 @@ func _show_profile_character(char_name: String, pose: String, coord: Variant, co
 
 
 func _show_nova_cg(obj_name: String, pose: String, coord: Variant, color: Variant) -> void:
-# Nova Lua show() uses 0 to mean "default / no effect", not a color.
+	# Nova Lua show() uses 0 to mean "default / no effect", not a color.
 	if _is_default_effect_value(color):
 		color = null
 	var resolved_pose := _nova_cg_pose(obj_name, pose)
