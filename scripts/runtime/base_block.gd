@@ -76,6 +76,7 @@ var bgs: String:
 var voice: String:
 	get: return "voice"
 
+var _anim_hold_counter: int = 0
 
 # --- flow chart API (meaningful during the eager/parse pass) -----------------
 
@@ -438,8 +439,6 @@ func video_hide() -> void:
 func video_duration() -> float:
 	return 0.0
 
-
-var _anim_hold_counter: int = 0
 
 func anim_hold_begin() -> void:
 	_anim_hold_counter += 1
