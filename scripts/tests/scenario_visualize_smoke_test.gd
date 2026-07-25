@@ -245,15 +245,15 @@ func _test_default_corpus_baseline() -> void:
 	var report := _build(analysis, {"root_policy": "all", "phases": ["eager"]})
 	var summary: Dictionary = report.get("summary", {})
 	_expect(int(summary.get("files", 0)) == 28, "default visualization corpus should contain 28 files")
-	_expect(int(summary.get("defined_nodes", 0)) == 53, "default visualization corpus should contain 53 defined nodes")
-	_expect(int(summary.get("edges", 0)) == 47, "default eager flow graph should contain 47 transitions")
-	_expect(int(summary.get("branch_edges", 0)) == 24, "default eager flow graph should contain 24 branch options")
-	_expect(int(summary.get("jump_to_edges", 0)) + int(summary.get("jump_if_edges", 0)) == 23, "default eager flow graph should contain 23 jump-like transitions")
+	_expect(int(summary.get("defined_nodes", 0)) == 57, "default visualization corpus should contain 57 defined nodes")
+	_expect(int(summary.get("edges", 0)) == 52, "default eager flow graph should contain 52 transitions")
+	_expect(int(summary.get("branch_edges", 0)) == 28, "default eager flow graph should contain 28 branch options")
+	_expect(int(summary.get("jump_to_edges", 0)) + int(summary.get("jump_if_edges", 0)) == 24, "default eager flow graph should contain 24 jump-like transitions")
 	_expect(_count_nodes_with_flag(report, "start") == 9, "default graph should preserve nine start nodes")
 	_expect(_count_nodes_with_flag(report, "unlocked_start") == 2, "default graph should preserve two unlocked starts")
 	_expect(_count_nodes_with_flag(report, "debug") == 18, "default graph should preserve eighteen debug nodes")
-	_expect(_count_nodes_with_flag(report, "local") == 23, "default graph should preserve twenty-three local nodes")
-	_expect(_count_nodes_of_type(report, "normal") == 23 and _count_nodes_of_type(report, "chapter") == 9 and _count_nodes_of_type(report, "end") == 21, "default graph node types should remain 23 normal / 9 chapter / 21 end")
+	_expect(_count_nodes_with_flag(report, "local") == 27, "default graph should preserve twenty-seven local nodes")
+	_expect(_count_nodes_of_type(report, "normal") == 26 and _count_nodes_of_type(report, "chapter") == 9 and _count_nodes_of_type(report, "end") == 22, "default graph node types should remain 26 normal / 9 chapter / 22 end")
 
 
 func _test_godot_cli() -> void:

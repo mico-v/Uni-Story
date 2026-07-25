@@ -112,6 +112,135 @@ hide(qianye)
 
 <|
 hide(ergong)
+|>
+现在该做决定了。
+
+@<|
+branch {
+    { dest = 'l_true_good', mode = 'jump', cond = '!v_used_poison' },
+    { dest = 'l_true_dark', mode = 'jump' },
+}
+|>
+
+@<| label 'l_true_good' |>
+<|
+hide(ergong)
+anim:fade_out(bgm, 2)
+|>
+我看着面前三杯一模一样的奶茶。
+
+然后，轻轻地把它们推开。
+
+李竹内：：“我有话要对大家说。”
+
+<|
+show(ergong, 'normal', pos_l)
+show(gaotian, 'normal', pos_r)
+show(qianye, 'normal', pos_c)
+show(xiben, 'normal', pos_r)
+|>
+所有人的目光都集中在我身上。
+
+浅野冷汗直流。会长饶有兴味地抱着手臂。
+
+高天困惑地看着我。西本咬着嘴唇。
+
+我摘下了墨镜。
+
+<|
+play(bgm, 'final', 0.1)
+|>
+李竹内：：“我叫李竹内。我不是转校生，是……被人派到这里来的。”
+
+李竹内：：“北条议员，他是高天的亲生父亲。”
+
+<|
+hide(gaotian)
+show(gaotian, 'cry', pos_r)
+|>
+高天的脸色瞬间变得惨白。
+
+陈高天：：“什……什么？”
+
+李竹内：：“他想让你消失。因为大选就要到了，有一个私生女对他来说是政治上的弱点。”
+
+李竹内：：“这就是为什么他给了我那瓶毒药。”
+
+<|
+hide(qianye)
+show(qianye, 'angry', pos_c)
+|>
+张浅野：：“你疯了！你知道自己在说什么吗？”
+
+李竹内：：“我知道。但是我已经把药扔了。”
+
+<|
+hide(qianye)
+hide(ergong)
+|>
+张浅野：：“扔了……”
+
+<|
+show(ergong, 'smile', pos_l)
+|>
+王二宫：：“原来如此。难怪你今天一直怪怪的。”
+
+会长微微一笑，好像早就猜到了几分。
+
+<|
+hide(ergong)
+show(xiben, 'smile', pos_r)
+|>
+孙西本：：“白痴。”
+
+西本的眼泪终于流了下来。但这次，她的嘴角却带着笑意。
+
+<|
+hide(xiben)
+hide(gaotian)
+show(gaotian, 'normal', pos_r)
+|>
+高天没有说话。
+
+她只是低着头，肩膀微微颤抖着。
+
+陈高天：：“我……我一直以为，父亲只是不知道我的存在……”
+
+陈高天：：“原来……原来他知道，却想让我……”
+
+李竹内：：“对不起。”
+
+陈高天：：“谢谢你，告诉我真相。”
+
+她抬起头，泪水模糊了她的眼睛，但她努力地对我微笑。
+
+陈高天：：“竹内君扔掉了药，对吧？那就够了。”
+
+<|
+anim:trans_fade(bg, 'black', 2)
+anim:fade_out(bgm, 3)
+hide(gaotian)
+|>
+我不知道明天会怎样。
+
+北条先生不会放过我。警察也许会来。
+
+但至少今天，我说了真话。
+
+至少今天，这三个人知道真相后，还能站在我身边。
+
+<|
+set_box('hide')
+stop_auto_ff()
+anim:trans_fade(bg, 'staff', 2)
+|>
+<align="center">——献给追求真相的人</align>
+<align="center">终</align>
+@<| is_end 'true_end_good' |>
+
+@<| label 'l_true_dark' |>
+<|
+hide(ergong)
 anim:fade_out(bgm)
 |>
 有意见。
@@ -221,7 +350,7 @@ set_box('hide')
 stop_auto_ff()
 |>
 <align="center">终</align>
-@<| is_end 'true_end' |>
+@<| is_end 'true_end_dark' |>
 
 @<| label 'l_bad' |>
 <|

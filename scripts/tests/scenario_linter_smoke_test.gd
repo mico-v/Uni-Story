@@ -241,13 +241,13 @@ func _test_default_corpus_baseline() -> void:
 	var summary: Dictionary = report.get("summary", {})
 	var expected := {
 		"files": 28,
-		"blocks": 360,
-		"dialogues": 731,
-		"labels": 53,
+		"blocks": 387,
+		"dialogues": 798,
+		"labels": 57,
 		"errors": 0,
-		"warnings": 133,
-		"resource_references": 372,
-		"resource_found": 370,
+		"warnings": 134,
+		"resource_references": 426,
+		"resource_found": 424,
 		"resource_virtual": 2,
 		"resource_missing": 0,
 	}

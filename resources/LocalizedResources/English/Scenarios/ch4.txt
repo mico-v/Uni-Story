@@ -1,11 +1,11 @@
 @<|
 label('ch4', 'The Last Chapter')
 |>
-Ergong::“Huh? Why does it take so long to get a cup?”
+Ergong::"Huh? Why does it take so long to get a cup?"
 
-The president asks in suspicious.
+The president asks suspiciously.
 
-Zhunei::“Sorry, it's too dark there.”
+Zhunei::"Sorry, it's too dark there."
 
 I push my sunglasses. The president reluctantly accepts the excuse.
 
@@ -17,21 +17,26 @@ But eventually the cup will be full.
 
 Gaotian looks happy, and I smile back at her stiffly.
 
-At this moment, my remaining eyes see Qianye's face changed.
+At this moment, from the corner of my eye I see Qianye's face change.
 
 What had happened?
-@<||>
+@<|
+branch {
+    { dest = 'l_true', mode = 'jump', cond = 'v_flag_xiben' },
+    { dest = 'l_bad', mode = 'jump' },
+}
+|>
 
 @<|
 label('l_true', 'The Last Chapter')
 |>
-Xiben::“I want a drink too.”
+Xiben::"I want a drink too."
 
 Unexpectedly, Xiben gets next to me and draws a cup from my arms.
 
 The ribbon in her hair grazes my nose as she bends down.
 
-Gaotian::“…umm, Xiben…”
+Gaotian::"...umm, Xiben..."
 
 Gaotian has an overwhelmed expression, looking like a wounded deer.
 
@@ -41,15 +46,15 @@ Xiben had been keeping away from others in the high school. Her strange behavior
 
 I'm sure the president didn't miss my stiff expression. She's looking back and forth at Xiben, Gaotian, and me.
 
-Qianye tried to say something, but the president gets ahead of him.
+Qianye tries to say something, but the president gets ahead of him.
 
-Ergong::“It's okay. There's still enough milk tea.”
+Ergong::"It's okay. There's still enough milk tea."
 
-Ergong::“Maybe Xiben is a little thirsty too.”
+Ergong::"Maybe Xiben is a little thirsty too."
 
-Qianye::“B-But…Zhunei and Gaotian are…”
+Qianye::"B-But... Zhunei and Gaotian are..."
 
-Ergong::“We are all friends. What does it matter?”
+Ergong::"We are all friends. What does it matter?"
 
 The president says as she casually messes up the cups on the table.
 
@@ -57,8 +62,90 @@ All three disposable cups are filled with milky white liquid. No one is able to 
 
 Qianye sneaks a glance at the empty glass vial in the trash bin, then shows a desperate expression.
 
-Ergong::“Zhunei, let's drink first. Everybody has a drink, and Gaotian and Xiben don't mind, right?”
+Ergong::"Zhunei, let's drink first. Everybody has a drink, and Gaotian and Xiben don't mind, right?"
 
+Now it's time to decide.
+@<|
+branch {
+    { dest = 'l_true_good', mode = 'jump', cond = '!v_used_poison' },
+    { dest = 'l_true_dark', mode = 'jump' },
+}
+|>
+
+@<|
+label('l_true_good', 'The Last Chapter')
+|>
+I look at the three identical cups of milk tea before me.
+
+Then I gently push them away.
+
+Zhunei::"I have something to tell everyone."
+
+Everyone's eyes are on me.
+
+Qianye is sweating bullets. The president folds her arms with interest.
+
+Gaotian looks at me confused. Xiben bites her lip.
+
+I take off my sunglasses.
+
+Zhunei::"My name is Li Zhunei. I'm not a transfer student. I was... sent here."
+
+Zhunei::"Councilor Kitajou — he's Gaotian's biological father."
+
+Gaotian's face turns pale instantly.
+
+Gaotian::"Wha... what?"
+
+Zhunei::"He wanted you to disappear. A scandal about an illegitimate daughter during the election would ruin him politically."
+
+Zhunei::"That's why he gave me the bottle of poison."
+
+Qianye::"Are you insane?! Do you know what you're saying?"
+
+Zhunei::"I know. But I threw the poison away."
+
+Qianye::"You threw it away..."
+
+Ergong::"I see. No wonder you've been acting strange today."
+
+The president smiles slightly, as if she'd guessed part of it all along.
+
+Xiben::"Idiot."
+
+Xiben's tears finally fall. But this time, there's a smile at the corner of her lips.
+
+Gaotian says nothing.
+
+She simply lowers her head, her shoulders trembling slightly.
+
+Gaotian::"I... I always thought Father just didn't know I existed..."
+
+Gaotian::"So... he did know, and he wanted to..."
+
+Zhunei::"I'm sorry."
+
+Gaotian::"Thank you. For telling me the truth."
+
+She raises her head. Her eyes are blurred with tears, but she forces a smile.
+
+Gaotian::"You threw away the poison, right? That's enough."
+
+I don't know what tomorrow will bring.
+
+Mr. Kitajou won't let me off. The police might come.
+
+But at least today, I told the truth.
+
+At least today, these three people are still standing beside me.
+
+<align="center">— Dedicated to those who seek the truth</align>
+<align="center">Fin</align>
+@<| is_end 'true_end_good' |>
+
+@<|
+label('l_true_dark', 'The Last Chapter')
+|>
 They do mind.
 
 Gaotian is not only refusing. Her tears are about to well up.
@@ -67,7 +154,7 @@ But being too anxious, she can't make her words out.
 
 Xiben stays still, as if she has lost her soul.
 
-The president smiles and looks at me. She must have guessed out something.
+The president smiles and looks at me. She must have guessed something.
 
 Qianye looks at me as well.
 
@@ -77,7 +164,7 @@ The raindrops outside also seem to stop in the air.
 
 With a trembling hand, I take off my sunglasses—
 
-Suddenly, the world turned gray.
+Suddenly, the world turns gray.
 
 It's a rare disease that can take the joy out of life.
 
@@ -89,7 +176,7 @@ But in contrast, some otherwise colorless substances now show wonderful colors.
 
 Normal people can't understand those colors, just like blind people can't understand darkness.
 
-I drain all the milk tea in that cup—I've already seen that color in the toilet.
+I drain all the milk tea in that cup — I've already seen that color in the toilet.
 
 Then I put the cup down.
 
@@ -106,12 +193,12 @@ I stare at the everlasting raindrops.
 In my eyes, the colorless raindrops are shining like rainbows.
 
 <align="center">Fin</align>
-@<||>
+@<| is_end 'true_end_dark' |>
 
 @<|
 label('l_bad', 'The Last Chapter')
 |>
-Because you didn't get the flag of Xiben, we cannot make up the plot…
+Because you didn't get the flag of Xiben, we cannot make up the plot...
 
 BAD END
-@<||>
+@<| is_end 'bad_end' |>

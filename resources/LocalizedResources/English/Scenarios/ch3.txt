@@ -15,7 +15,7 @@ She is looking out the window, not at all interested in talking to me.
 
 But I really want to talk to her.
 
-Zhunei::“You're here too?”
+Zhunei::"You're here too?"
 
 Xiben doesn't answer me.
 
@@ -23,33 +23,33 @@ I walk over to her and repeat what I just asked.
 
 Xiben turns around and looks across at me, then turns back again in disgust.
 
-Xiben::“Why? Only if I watch that girl feeding milk tea to your mouth, you'll be happy?”
+Xiben::"Why? Only if I watch that girl feeding milk tea to your mouth, you'll be happy?"
 
-Zhunei::“You know, Gaotian is not that kind of person.”
+Zhunei::"You know, Gaotian is not that kind of person."
 
-Xiben::“Yeah, she's not that kind of person.”
+Xiben::"Yeah, she's not that kind of person."
 
 Xiben still has her back to me, and I feel like she's going to cry.
 
-Xiben::“It would be nice if she was even worse.”
+Xiben::"It would be nice if she were even worse."
 
 I'm speechless.
 
-Xiben::“Now you had been gone for so many years. Why did you come back wearing those stupid sunglasses?”
+Xiben::"Now you had been gone for so many years. Why did you come back wearing those stupid sunglasses?"
 
-Xiben::“Do you think I won't recognize you if you wear them every day, transfer student?”
+Xiben::"Do you think I won't recognize you if you wear them every day, transfer student?"
 
 As a child, Xiben loved to cry. But as she grew up, she stopped showing her emotions to the outside world.
 
 That might have something to do with me, so I can't let her get involved in all this.
 
-Zhunei::“The hallway is so cold. Let's go back.”
+Zhunei::"The hallway is so cold. Let's go back."
 
 Xiben holds her shoulders, staring at me.
 
 Her feeble body is shivering in her uniform.
 
-Xiben::“Is that what you want to say?”
+Xiben::"Is that what you want to say?"
 
 I gaze at her in silence.
 
@@ -59,13 +59,86 @@ Compared to when she was a child, Xiben has grown taller, and her face has lost 
 
 But she still has the ribbon I gave her tied around her head.
 
-I look at the ribbon for a long time, then speaks.
+I look at the ribbon for a long time, then speak.
 
-Zhunei::“Yes, Xiben.”
+Zhunei::"Yes, Xiben."
 
-Xiben::“You bastard!”
+Xiben::"You bastard!"
 
-Having been slammed, I can only stare at Xiben running away.
+Having been slapped, I can only stare at Xiben running away.
 
-I still clutch the glass vial firmly in my hand.
-@<||>
+My cheek burns with the sting.
+
+But what hurts more is knowing I broke her heart.
+
+The hallway falls silent — only the rain and my ragged breathing remain.
+
+I look down at the glass vial in my hand.
+
+*(She's gone.)*
+
+*(No matter what I say, that won't change.)*
+
+*(But... there's one last thing I have to decide.)*
+
+I clutch the small bottle tighter.
+
+The cold glass seems to pierce my palm.
+
+What do I do now?
+
+Follow Kitajou's orders and pour the poison into Gaotian's milk tea?
+
+Or... while there's still time, throw it away and face the consequences?
+
+*— Make your choice —*
+@<|
+branch {
+    { dest = 'l_throw_away', text = 'Throw away the poison' },
+    { dest = 'l_use_poison', text = 'Follow orders' },
+}
+|>
+
+@<| label 'l_throw_away' |>
+I open the hallway window.
+
+A cold autumn wind blows in, mixed with drizzle.
+
+I unscrew the cap and let the poison flow out into the rain.
+
+Rainwater mixes with the colorless liquid, running down the outer wall of the school building.
+
+I don't know if I made the right choice.
+
+But at least I know — this is the first time I've acted on my own will.
+
+Tomorrow may be terrible.
+
+Mr. Kitajou will be furious. I might be "dealt with."
+
+But at least tonight, I can go back to the student council room and watch Gaotian finish her milk tea.
+
+At least tonight, I'm still myself.
+@<| jump_to 'ch4' |>
+
+@<| label 'l_use_poison' |>
+I slip the vial back into my pocket.
+
+Mr. Kitajou's orders are absolute.
+
+I am a tool sent here.
+
+A tool shouldn't have feelings. Shouldn't hesitate.
+
+I take a deep breath and straighten my tie.
+
+Xiben's slap still stings my cheek.
+
+Maybe this is for the best.
+
+Better she hates me than gets dragged into this.
+
+Tomorrow, everything will end.
+
+At least I'll complete my mission.
+@<| jump_to 'ch4' |>

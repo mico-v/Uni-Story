@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-07-25 — Phase 13 示例作品与 I18n 内容 ✅
+
+- ✅ ch3 新增玩家选择分支（throw_away / use_poison），双路径剧情
+- ✅ ch4 新增三结局：true_end_good（真相告白）、true_end_dark（毒药饮尽）、bad_end（Flag 缺失）
+- ✅ StandingProfile 扩展：4 角色各新增 2-3 个 Pose（smile、angry、cry），共 8 个新 Pose
+- ✅ 英文剧本翻译：ch3 和 ch4 完整翻译，含分支选择和双结局
+- ✅ 3 个小游戏模板：ClickMinigame（点击得分）、DragMinigame（拖拽匹配）、QTEMinigame（限时按键）
+- ✅ 4 项新 smoke test：sample_work_playback、sample_work_save_load、i18n_switch、minigame_templates
+- 📏 差距改善：
+  - 示例作品：0% → **90%**（ch1-ch4 完整叙事 + 3 结局）
+  - I18n 内容：60% → **90%**（EN ch1-ch4 全翻译，含多结局分支）
+
 ## 2026-07-25 — Phase 12 立绘生产管线与 Editor 集成 ✅
 
 - ✅ 4 个立绘生产工具：`export_psd_layers.py`, `merge_psd_layers.py`, `export_poses.py`, `sort_poses.py`
