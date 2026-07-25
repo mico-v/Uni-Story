@@ -109,7 +109,7 @@ func _test_box_tint(nova: Node) -> void:
 		return
 
 	# Test with Color value
-	var box_before: Control = ctx._resolve_dbox()
+	var box_before: Variant = ctx._resolve_dbox()
 	if box_before is Panel:
 		# Test with numeric greyscale
 		ctx.box_tint(0.5)
@@ -395,35 +395,35 @@ func _test_input_prompt(nova: Node) -> void:
 func _test_compile_all_apis(nova: Node) -> void:
 	print("  test_compile_all_apis ...")
 	# Compile a GDScript block that exercises all newly implemented APIs
-	var block := """
-box_tint(0.8)
-box_anchor([0.1, 0.9, 0.72, 0.96])
-box_alignment("left")
-box_offset([0, 0, 0, 0])
-new_page()
-stop_auto_ff()
-stop_ff()
-immediate_step()
-input_on()
-input_off()
-ff_shortcut_on()
-ff_shortcut_off()
-auto_fade_on()
-auto_fade_off()
-auto_time(0.15)
-set_text_speed(35.0)
-text_delay(0.04)
-text_duration(2.0)
-text_scroll(0, 20)
-text_easing("linear")
-skip_mode_custom(true)
-skip_mode_custom(false)
-anim_hold_begin()
-anim_hold_end()
-volume("bgm", 0.75)
-volume("voice", 0.9)
-"""
-	var script: GDScript = nova.runtime.compile_block(block)
+	var block := _wrap_block("""
+	box_tint(0.8)
+	box_anchor([0.1, 0.9, 0.72, 0.96])
+	box_alignment("left")
+	box_offset([0, 0, 0, 0])
+	new_page()
+	stop_auto_ff()
+	stop_ff()
+	immediate_step()
+	input_on()
+	input_off()
+	ff_shortcut_on()
+	ff_shortcut_off()
+	auto_fade_on()
+	auto_fade_off()
+	auto_time(0.15)
+	set_text_speed(35.0)
+	text_delay(0.04)
+	text_duration(2.0)
+	text_scroll(0, 20)
+	text_easing("linear")
+	skip_mode_custom(true)
+	skip_mode_custom(false)
+	anim_hold_begin()
+	anim_hold_end()
+	volume("bgm", 0.75)
+	volume("voice", 0.9)
+	""")
+	var script: Script = nova.runtime.compile_block(block)
 	if script == null:
 		_failures.append("compile_all_apis: block compilation failed")
 		return
@@ -437,12 +437,16 @@ volume("voice", 0.9)
 
 func _block_ctx(nova: Node) -> Object:
 	# Instantiate a minimal compiled-block context for testing BaseBlock APIs.
-	var script: GDScript = nova.runtime.compile_block("")
+	var script: Script = nova.runtime.compile_block(_wrap_block(""))
 	if script == null:
 		return null
 	var inst = script.new()
 	inst._ctx = nova
 	return inst
+
+
+func _wrap_block(body: String) -> String:
+	return "func __eval() -> Variant:\n\t%s\n\treturn null\n" % body.replace("\n", "\n\t")
 
 
 func _load_main_scene() -> Node:

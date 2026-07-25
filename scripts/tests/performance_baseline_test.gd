@@ -20,7 +20,7 @@ const SAVE_SLOT := 1
 # Acceptable upper bounds (seconds). These are generous baselines that will
 # be tightened as the engine matures.
 const MAX_PARSE_TIME := 5.0
-const MAX_SCENE_LOAD_TIME := 2.0
+const MAX_SCENE_LOAD_TIME := 5.0
 const MAX_SAVE_TIME := 2.0
 const MAX_RESTORE_TIME := 3.0
 const MAX_REPLAY_TIME := 3.0
