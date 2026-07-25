@@ -446,7 +446,8 @@ func _block_ctx(nova: Node) -> Object:
 
 
 func _wrap_block(body: String) -> String:
-	return "func __eval() -> Variant:\n\t%s\n\treturn null\n" % body.replace("\n", "\n\t")
+	# compile_block/_wrap_statements already wraps in extends BaseBlock / func __eval()
+	return body
 
 
 func _load_main_scene() -> Node:
