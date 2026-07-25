@@ -221,15 +221,15 @@ func clear_post_fx(duration: float = 0.3):
 func shake(intensity: float = 10.0, duration: float = 0.5):
 	return _ctx.vfx.shake(intensity, duration)
 
-## Clear only a specific named effect from a target, leaving other stacked effects intact.
+# Clear only a specific named effect from a target, leaving other stacked effects intact.
 func clear_effect(effect_name: String, target: Variant, duration: float = 0.3):
 	return _ctx.vfx.clear_effect(effect_name, target, duration)
 
-## Capture the current game screen to a texture (for script-driven transitions).
+# Capture the current game screen to a texture (for script-driven transitions).
 func capture_screen():
 	return _ctx.vfx.capture_screen()
 
-## Capture screen then play a shader-based transition.
+# Capture screen then play a shader-based transition.
 func capture_transition(effect_name: String, duration: float = 0.5):
 	return _ctx.vfx.transition_with_capture(effect_name, duration)
 
