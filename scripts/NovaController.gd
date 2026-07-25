@@ -127,6 +127,7 @@ var _settings_return_to := "title"
 var _auto_fade_off_count: int = 0
 var _input_enabled: bool = true
 var _ff_shortcut_enabled: bool = true
+var _text_easing: String = ""
 
 # ── Public accessor for BaseBlock → GameViewController ───────────────
 var game_view_controller: GameViewController:
