@@ -97,8 +97,8 @@ func _append_text(line: String) -> void:
 	_current_node.add_entry(entry)
 
 
-# A lazy block with no following text becomes a silent entry (presentation
-# only) so it still executes in sequence.
+## A lazy block with no following text becomes a silent entry (presentation
+## only) so it still executes in sequence.
 func _flush_pending_lazy_as_silent() -> void:
 	if _pending_lazy_by_stage.is_empty():
 		return

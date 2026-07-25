@@ -506,7 +506,7 @@ func _on_game_title_requested() -> void:
 	_show_title_hints()
 
 
-# Quick smoke check: verify that all critical subsystems initialized successfully.
+## Quick smoke check: verify that all critical subsystems initialized successfully.
 func subsystems_ok() -> bool:
 	var critical := [
 		script_loader, game_state, variables, save_system, view_manager,
@@ -560,7 +560,7 @@ func _setup_mobile_ui_support() -> void:
 	mobile_ui_support.setup(self)
 
 
-# Called by the scenario engine when a CG is displayed in-game.
+## Called by the scenario engine when a CG is displayed in-game.
 func unlock_cg_by_path(tex_path: String) -> void:
 	if gallery_coordinator:
 		gallery_coordinator.unlock_cg_by_path(tex_path)

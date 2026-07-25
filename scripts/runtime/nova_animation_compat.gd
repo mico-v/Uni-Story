@@ -226,6 +226,7 @@ func _nova_color_value(name: String) -> Color:
 			return Color.BLACK
 		_:
 			return Color.WHITE
+
 func _play_vfx(target: Variant, effect: Variant, range_or_duration: Variant = null, duration: Variant = 0.5, params: Variant = {}) -> void:
 	if _ctx == null or _ctx.vfx == null:
 		return
