@@ -43,9 +43,9 @@ func run() -> void:
 
 
 func _load_scene() -> void:
-	var main_scene: PackedScene = load("res://scenes/main.tscn")
+	var main_scene: PackedScene = load("res://scene/game.tscn")
 	if not main_scene:
-		_fail("Failed to load main.tscn")
+		_fail("Failed to load game.tscn")
 		return
 	var root := main_scene.instantiate()
 	root.set_meta("headless", true)

@@ -114,8 +114,8 @@ func _test_scenario_files() -> void:
 	]
 
 	for i in range(zh_files.size()):
-		var zh_path := zh_files[i]
-		var en_path := en_files[i]
+		var zh_path: String = zh_files[i]
+		var en_path: String = en_files[i]
 		var zh_exists := _file_exists(zh_path)
 		var en_exists := _file_exists(en_path)
 		_assert(zh_exists, "ZH scenario exists: %s" % zh_path.get_file())
@@ -131,7 +131,7 @@ func _test_scenario_files() -> void:
 
 func _test_i18n_class() -> void:
 	print("\n-- 13.2c: I18n class functional --")
-	var i18n := load("res://scripts/core/i18n.gd").new()
+	var i18n: I18n = load("res://scripts/core/i18n.gd").new()
 
 	# Default locale
 	_assert(i18n.locale == "zh", "Default locale is zh")
@@ -147,12 +147,12 @@ func _test_i18n_class() -> void:
 	# t() method works
 	i18n._load_locale("en")
 	var key := "title.menu.start"
-	var result := i18n.t(key)
+	var result: String = i18n.t(key)
 	_assert(result != "" and result != key, "t('%s') returns a translated string" % key)
 
 	# Fallback
 	i18n.set_locale("fr")
-	var fallback := i18n.t("title.menu.start")
+	var fallback: String = i18n.t("title.menu.start")
 	_assert(fallback != "", "Fallback locale works for unknown locale")
 
 	i18n.free()

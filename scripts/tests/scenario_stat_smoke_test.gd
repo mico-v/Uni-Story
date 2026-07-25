@@ -329,36 +329,36 @@ func _test_default_corpus_baseline() -> void:
 	var summary: Dictionary = report.get("summary", {})
 	var expected := {
 		"files": 28,
-		"blocks": 360,
-		"eager_blocks": 106,
-		"lazy_blocks": 254,
-		"nodes": 53,
-		"local_nodes": 23,
-		"dialogues": 731,
+		"blocks": 387,
+		"eager_blocks": 114,
+		"lazy_blocks": 273,
+		"nodes": 57,
+		"local_nodes": 27,
+		"dialogues": 798,
 		"silent_entries": 1,
-		"runtime_entries": 732,
-		"spoken": 111,
-		"narration": 620,
+		"runtime_entries": 799,
+		"spoken": 127,
+		"narration": 671,
 		"speakers": 8,
 		"display_speakers": 9,
 		"dynamic_speaker_entries": 1,
-		"total_characters": 15434,
+		"total_characters": 16426,
 		"empty": 2,
 		"min": 0,
 		"max": 179,
 		"median": 14,
 		"p90": 47,
-		"p95": 62,
+		"p95": 61,
 		"starts": 9,
 		"unlocked_starts": 2,
 		"debug_nodes": 18,
-		"jumps": 23,
-		"branch_options": 24,
-		"transitions": 47,
+		"jumps": 24,
+		"branch_options": 28,
+		"transitions": 52,
 	}
 	for key in expected.keys():
 		_expect(summary.get(key) == expected[key], "default corpus %s should be %s, got %s" % [key, expected[key], summary.get(key)])
-	_expect(summary.get("node_types", {}) == {"normal": 23, "chapter": 9, "end": 21}, "default corpus node type totals should remain stable")
+	_expect(summary.get("node_types", {}) == {"normal": 27, "chapter": 9, "end": 21}, "default corpus node type totals should remain stable")
 
 
 func _test_godot_cli() -> void:
