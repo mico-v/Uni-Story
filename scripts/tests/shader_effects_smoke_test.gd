@@ -107,7 +107,7 @@ func _test_new_object_effects(vfx: Variant, scene: Node) -> void:
 	vfx.play("invert", world, 0.0, {"amount": 0.5})
 	await process_frame
 	await process_frame
-	var stacked := vfx.snapshot()
+	var stacked: Dictionary = vfx.snapshot()
 	var world_effects: Array = stacked.get("effects", {}).get("world", [])
 	_expect(world_effects.size() == 2, "stacked world effects should be 2")
 	vfx.clear(world, 0.0)
@@ -160,7 +160,7 @@ func _test_snapshot_restore_new(vfx: Variant, scene: Node) -> void:
 	await process_frame
 	await process_frame
 
-	var restored := vfx.snapshot()
+	var restored: Dictionary = vfx.snapshot()
 	var restored_map: Dictionary = restored.get("effects", {})
 	var r_world: Array = restored_map.get("world", [])
 	_expect(r_world.size() == 1, "restore should recreate edge_detect effect")
