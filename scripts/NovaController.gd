@@ -496,6 +496,20 @@ func _on_game_title_requested() -> void:
 	_show_title_hints()
 
 
+## Quick smoke check: verify that all critical subsystems initialized successfully.
+func subsystems_ok() -> bool:
+	var critical := [
+		script_loader, game_state, variables, save_system, view_manager,
+		graphics, animation, audio, camera, transition, vfx,
+		composer, video_system, dialog_system, preload_system,
+		interrupt_manager, theme_manager, restorables, checkpoint_manager,
+	]
+	for sub in critical:
+		if sub == null:
+			return false
+	return script_loader.load_ok
+
+
 func cleanup_display() -> void:
 	if _game_vc:
 		_game_vc.cleanup_display()

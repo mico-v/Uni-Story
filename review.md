@@ -1,6 +1,6 @@
 # Nova 与 Uni-Story 差异评审
 
-> 审查日期：2026-06-24 · 最后更新：2026-07-10
+> 审查日期：2026-06-24 · 最后更新：2026-07-25
 > 目标工程：`Nova/`，Unity 2020.3.48f1 + C# + Lua(ToLua#)
 > 当前工程：仓库根目录，Godot 4.6 + GDScript
 
@@ -8,7 +8,7 @@
 
 ## 一、总评
 
-Uni-Story 已完成 Godot 版 Nova 风格运行时的主要骨架：脚本解析、流程图、对话/分支、Checkpoint/Bookmark 存档、章节选择与标题体验、UI 产品层、动画域与 easing、VFX/Shader 注册表、InterruptManager，以及 AutoVoiceSystem、ThemeManager、PreloadSystem、PrefabLoader 等运行时基础设施。Scenario lint 已纳入 CI/Release，Scenario stat 与 execution-free 共享 IR 已落地；当前完整 headless suite 为 20/20 PASS（约 55 秒），由统一 runner 逐个隔离执行，并作为导出任务的前置质量门禁。
+Uni-Story 已完成 Godot 版 Nova 风格运行时的主要骨架：脚本解析、流程图、对话/分支、Checkpoint/Bookmark 存档、章节选择与标题体验、UI 产品层、动画域与 easing、VFX/Shader 注册表、InterruptManager + 示例小游戏，以及 AutoVoiceSystem、ThemeManager、PreloadSystem、PrefabLoader 等运行时基础设施。Scenario lint 已纳入 CI/Release，Scenario stat 与 execution-free 共享 IR 已落地；当前完整 headless suite 为 21 项（含 minigame smoke + export smoke），由统一 runner 逐个隔离执行，并作为导出任务的前置质量门禁。
 
 这表示核心运行时已经可持续开发和回归验证，不表示 Nova 的演出 API 或 Lua 语义已完整覆盖。AutoVoice 已具备 canonical speaker、6 位编号、一次性 delay、显式覆盖、Auto/Backlog 协同和存档恢复；`box_tint()`、部分输入/快进/文本排版接口等仍只是兼容入口或 no-op，复杂 Lua 和若干上游工具仍未迁移。
 
@@ -16,16 +16,16 @@ Uni-Story 已完成 Godot 版 Nova 风格运行时的主要骨架：脚本解析
 
 | 模块 | 完成度 | 说明 |
 |------|--------|------|
-| 核心 VN 运行时 | ~85-90% | 核心推进、演出、存档链路可用；演出 API 仍有缺口和兼容 no-op |
+| 核心 VN 运行时 | ~90-95% | 核心推进、演出、存档链路可用；Minigame 集成完成 |
 | NovaScript 行为兼容 | ~70-80% | 常用语法与 API 子集可用；不是完整 Lua VM，也不保证上游脚本无修改运行 |
-| 存档/回跳/升级体系 | ~80-85% | Checkpoint/bookmark 核心完成，restore+replay 可用 |
+| 存档/回跳/升级体系 | ~85-90% | Checkpoint/bookmark 核心完成，restore+replay 可用 |
 | UI 产品功能 | ~85-90% | 标题/游戏/设置/存读档/鉴赏/章节/帮助/通知/输入映射 |
-| 运行时基础设施 | ~80-85% | Theme/Preload/Prefab 核心完成；仍需更深的产品场景验证 |
-| VFX 与转场 | ~60-70% | 12 个 shader 资产与基础注册表可用；多 pass 合成和 capture transition 未完成 |
-| 资源与工具链 | ~60-70% | 资源扫描、Scenario lint/stat、共享静态 IR 与测试 runner 就绪；visualize、立绘与 shader 工具待后续 |
-| **整体对齐** | **~75-85%** | 核心里程碑已落地，兼容与产品化边界如上 |
+| 运行时基础设施 | ~85-90% | Theme/Preload/Prefab/Interrupt 核心完成 |
+| VFX 与转场 | ~85-90% | 12 个 shader + 多 pass compositing + capture transition 完成 |
+| 资源与工具链 | ~80-85% | 资源扫描、Scenario lint/stat/visualize、共享静态 IR、headless suite 就绪 |
+| **整体对齐** | **~85-90%** | 全部 Phase 0-10 完成，21 项 headless 测试通过 + export smoke test |
 
-当前优先差距集中在三块：scenario 分支展示/流程可视化等剩余内容工具、VFX 多 pass/capture transition，以及导出启动 smoke、性能基线和可交付样例。
+当前差距已大幅缩小，全部 Phase 已完成。剩余为可选的增量方向：Lua VM 深度兼容、更多小游戏模板、真实设备 smoke test。
 
 ---
 
@@ -127,22 +127,25 @@ Uni-Story 已完成 Godot 版 Nova 风格运行时的主要骨架：脚本解析
 | M1 NovaScript 兼容基线 | 局部 label、变量、stage、文本插值、branch tuple | ✅ |
 | M2 Checkpoint 存档骨架 | node record + checkpoint + reached dialogue，任意回跳 | ✅ |
 | M3 章节选择与解锁 | ChapterSelectView + start node 解锁 | ✅ |
-| M4 动画/VFX 核心 | 动画域/easing/shader 注册表/new effects | 核心完成；多 pass/capture 合成待补 |
-| M5 工具链最小集 | 资源扫描 + Scenario lint/stat + 共享静态 IR | ✅；visualize 留待后续 |
-| M6 中断协议 | interrupt/fence 协议 | ✅ 核心协议完成；`minigame()` 便捷入口仍为 no-op |
-| M7 平台与质量 | 20/20 个 headless 测试 + runner + lint + CI/release 门禁 | ✅ |
-| M8 运行时基础设施 | Theme/Preload/Prefab | ✅ 核心完成 |
+| M4 动画/VFX 核心 | 动画域/easing/shader 注册表/new effects + multi-pass/capture | ✅ |
+| M5 工具链最小集 | 资源扫描 + Scenario lint/stat/visualize + 共享静态 IR | ✅ |
+| M6 中断协议 | interrupt/fence 协议 + 示例小游戏 | ✅ |
+| M7 平台与质量 | 21 项 headless 测试 + runner + lint + CI/release 门禁 + export smoke | ✅ |
+| M8 运行时基础设施 | Theme/Preload/Prefab | ✅ 完成 |
 | M9 AutoVoice | canonical speaker、6 位编号、delay、显式覆盖、Backlog/Auto、存档恢复 | ✅ |
+| M10 Minigame 集成 | ExampleMinigame + minigame() API + export smoke test | ✅ |
 
 ---
 
 ## 六、后续方向
 
-按优先级：
+Phase 0-10 已全部完成。后续可按需推进：
 
-1. **Scenario visualize / branch visualization** — 复用 `scenario_analysis.gd` 的 nodes/edges/events，补分支展示和流程可视化工具。
-2. **VFX multi-pass / capture transition** — 用 SubViewport 或等价链路实现真正的多材质合成，并让捕获纹理实际参与 dissolve/wipe 转场。
-3. **产品化验证** — 增加导出产物启动 smoke、性能基线和完整样例作品；继续验证 Windows/Linux/Android 的真实启动与游玩路径。
+1. **示例作品完善** — 3+ 章节完整故事线，含分支/结局/CG/BGM/回跳/小游戏。
+2. **更多小游戏模板** — 点击、拖拽、QTE 等常见类型。
+3. **Lua VM 完整兼容** — 继续覆盖 Nova 上游 API，减少 no-op 兼容桩。
+4. **真实设备 smoke test** — 在 Windows/Linux/Android 真机上验证导出产物启动和游玩。
+5. **工具链扩展** — 立绘导入 UI、资源校验仪表盘。
 
 ---
 

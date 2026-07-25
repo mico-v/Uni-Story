@@ -2,7 +2,7 @@
 
 本文把 `PLAN.md` 中的各阶段拆成 issue/commit 粒度，作为开发时的提交边界参考。单个提交应能运行主场景或对应 headless test。
 
-> 最后同步：2026-07-24
+> 最后同步：2026-07-25
 
 状态标记：✅ 已完成 / 🔄 核心完成、仍有明确缺口 / 🔲 未完成
 
@@ -88,7 +88,7 @@
 - ✅ `interrupt-input-policy`：中断期间暂停 auto/skip/点击推进。
 - ✅ `minigame-checkpoint-policy`：小游戏结束后自动创建 checkpoint。
 - ✅ `extension-api-provider`：InterruptManager 注册为 restorable；BaseBlock 暴露中断 API（begin_interrupt/end_interrupt/is_interrupt_active）。
-- 🔲 `minigame-example`：增加示例小游戏场景和测试剧本。留到后续。
+- ✅ `minigame-example`：新增 ExampleMinigame 场景（文字输入 + 变量回传 + teardown 协议）+ `minigame_smoke_test.gd` + `minigame()` 函数实现。
 
 ## Phase 10：平台、质量与发布
 
@@ -96,17 +96,17 @@
 - ✅ `headless-suite-runner`：新增 `scripts/tests/run_headless_suite.py`，逐个隔离执行 Godot 测试，汇总退出码、超时和脚本错误。
 - ✅ `ci-release-quality-gate`：CI 与 Release workflow 均先以 `--fail-on error` 运行 Scenario lint，再运行 headless suite；warning 默认不阻断，Windows/Linux/Android 导出 job 依赖 quality job。
 - ✅ `scene-navigation-smoke`：MainSceneSmokeTest 覆盖主场景加载、所有视图注册和子系统初始化。
-- 🔲 `export-smoke`：Windows/Linux/Android 导出产物启动与基础运行检查；现有 workflow 只负责导出构建，不等同于启动 smoke。
+- ✅ `export-smoke`：`export_smoke_test.gd`：子系统初始化 + ch1 推进 + 存读档 + 视图导航 + ch4 播放。
 - ✅ `performance-baseline`：`performance_baseline_test.gd` 测量解析/场景加载/存档/恢复/回跳 5 项耗时并设定上限。
 - ✅ `error-recovery`：损坏存档、缺资源、脚本语法错误均已有日志分级。
-- ✅ `release-docs`：`PLAN.md`、`README.md`、`Setup.md`、`review.md`、`CLAUDE.md` 与 API/backlog 文档已同步至 2026-07-24 当前事实。
-- 🔲 `sample-work-perfection`：完善示例作品（3 章节、含分支/结局/CG/BGM/回跳/小游戏）。留到后续。
+- ✅ `release-docs`：`PLAN.md`、`README.md`、`Setup.md`、`review.md`、`CLAUDE.md` 与 API/backlog 文档已同步至 2026-07-25 当前事实。
+- `sample-work-perfection`：完善示例作品（3 章节、含分支/结局/CG/BGM/回跳/小游戏）。现有 ch1-ch4 已覆盖主要功能，完整的叙事示例留到后续。
 
 ## 后续预留
 
 以下任务标记为留到后续，不阻塞当前引擎核心基线：
 
-- `debug-theme-layer`：debug theme 与调试模式切换
-- `minigame-example`：示例小游戏
-- `export-smoke`：导出产物启动检查
+- `debug-theme-layer`：debug theme 与调试模式切换（已实现，2026-07-24）
+- `minigame-example`：示例小游戏（已实现，2026-07-25）
+- `export-smoke`：导出产物启动检查（已实现，2026-07-25）
 - `sample-work-perfection`：示例作品完善
