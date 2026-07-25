@@ -6,7 +6,7 @@ class_name NovaAnimationCompat extends RefCounted
 ## without crashing. Methods map simple operations to current runtime systems and
 ## return `self` so Nova-style chained calls keep compiling.
 
-var _ctx: Node
+var _ctx
 
 
 func _init(ctx: Node) -> void:
@@ -222,6 +222,7 @@ func _nova_color_value(name: String) -> Color:
 			return Color.BLACK
 		_:
 			return Color.WHITE
+
 func _play_vfx(target: Variant, effect: Variant, range_or_duration: Variant = null, duration: Variant = 0.5, params: Variant = {}) -> void:
 	if _ctx == null or _ctx.vfx == null:
 		return
@@ -278,7 +279,7 @@ func _is_profile_character(char_name: String) -> bool:
 func _composer() -> Object:
 	if _ctx == null:
 		return null
-	return _ctx.get("composer") as Object
+	return _ctx.composer as Object
 
 
 func _nova_image_path(obj_name: String, image_path: String) -> String:

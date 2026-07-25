@@ -11,7 +11,7 @@ const NovaAnimationCompatScript := preload("res://scripts/runtime/nova_animation
 ##
 ## `_ctx` is the NovaController instance, injected right after `.new()`.
 
-var _ctx: Node
+var _ctx
 
 
 func run() -> Variant:
@@ -741,13 +741,13 @@ func _is_default_effect_value(value: Variant) -> bool:
 func _composer() -> Object:
 	if _ctx == null:
 		return null
-	return _ctx.get("composer") as Object
+	return _ctx.composer as Object
 
 
 func _auto_voice_system() -> Object:
 	if _ctx == null:
 		return null
-	return _ctx.get("auto_voice") as Object
+	return _ctx.auto_voice as Object
 
 
 func _is_runtime_voice_suppressed() -> bool:
