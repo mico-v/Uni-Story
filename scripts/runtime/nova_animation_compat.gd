@@ -279,7 +279,10 @@ func _is_profile_character(char_name: String) -> bool:
 func _composer() -> Object:
 	if _ctx == null:
 		return null
-	return _ctx.get("composer") as Object
+	var composer = _ctx.call("get", "composer")
+	if composer == null:
+		return null
+	return composer as Object
 
 
 func _nova_image_path(obj_name: String, image_path: String) -> String:
