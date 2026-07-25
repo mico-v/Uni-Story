@@ -160,12 +160,27 @@ func _await_possible_async_result(value: Variant):
 
 func _wrap_statements(source: String) -> String:
 	# Indent every line by one tab so it nests under __eval().
-	# Strip leading whitespace from each line first to avoid double-indenting
-	# when the caller includes its own indentation (e.g. triple-quoted strings).
+	# Preserve relative indentation so that multi-line constructs
+	# (if/elif/else blocks, etc.) stay valid.
 	var body := source.strip_edges()
 	if body.is_empty():
 		body = "pass"
+	var lines := body.split("\n")
+
+	# Find the minimum indentation across non-empty lines so we can
+	# strip only the common prefix and keep relative nesting.
+	var min_indent := 999
+	for line in lines:
+		if line.strip_edges().is_empty():
+			continue
+		var indent_len := 0
+		while indent_len < line.length() and (line[indent_len] == "\t" or line[indent_len] == " "):
+			indent_len += 1
+		min_indent = mini(min_indent, indent_len)
+	if min_indent == 999:
+		min_indent = 0
+
 	var indented := ""
-	for line in body.split("\n"):
-		indented += "\t" + line.lstrip("\t ") + "\n"
+	for line in lines:
+		indented += "\t" + line.substr(min_indent) + "\n"
 	return "extends BaseBlock\nfunc __eval():\n%s" % indented
