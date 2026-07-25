@@ -14,7 +14,9 @@ characters = {
 "directory": "Standings/Ergong",
 "layer_order": ["body", "blush", "mouth", "eye", "eyebrow", "hair", "sweat", "effect"],
 "poses": {
-"normal": ["body", "mouth_smile", "eye_normal", "eyebrow_normal", "hair"]
+"normal": ["body", "mouth_smile", "eye_normal", "eyebrow_normal", "hair"],
+"smile": ["body", "mouth_smile", "eye_smile", "eyebrow_happy", "hair"],
+"angry": ["body", "mouth_close", "eye_squint", "eyebrow_angry", "hair"]
 },
 "offsets": {
 "body": Vector2(-56, 186),
@@ -29,7 +31,8 @@ characters = {
 "layer_order": ["body", "blush", "mouth", "eye", "eyebrow", "hair", "sweat", "effect"],
 "poses": {
 "normal": ["body", "mouth_smile", "eye_normal", "eyebrow_normal", "hair"],
-"cry": ["body", "mouth_smile", "eye_cry", "eyebrow_normal", "hair"]
+"cry": ["body", "mouth_smile", "eye_cry", "eyebrow_normal", "hair"],
+"smile": ["body", "mouth_smile", "eye_smile", "eyebrow_normal", "hair"]
 },
 "offsets": {
 "body": Vector2(-8, 246),
@@ -45,7 +48,9 @@ characters = {
 "directory": "Standings/Qianye",
 "layer_order": ["body", "blush", "mouth", "eye", "eyebrow", "hair", "sweat", "effect"],
 "poses": {
-"normal": ["body", "mouth_close", "eye_normal", "eyebrow_normal", "hair"]
+"normal": ["body", "mouth_close", "eye_normal", "eyebrow_normal", "hair"],
+"smile": ["body", "mouth_smile", "eye_smile", "eyebrow_normal", "hair"],
+"angry": ["body", "mouth_close", "eye_squint", "eyebrow_angry", "hair"]
 },
 "offsets": {
 "body": Vector2(34, 106),
@@ -59,7 +64,10 @@ characters = {
 "directory": "Standings/Xiben",
 "layer_order": ["body", "blush", "mouth", "eye", "eyebrow", "hair", "sweat", "effect"],
 "poses": {
-"normal": ["body", "mouth_close", "eye_normal", "eyebrow_normal", "hair"]
+"normal": ["body", "mouth_close", "eye_normal", "eyebrow_normal", "hair"],
+"smile": ["body", "mouth_smile", "eye_smile", "eyebrow_normal", "hair"],
+"angry": ["body", "mouth_close", "eye_squint", "eyebrow_angry", "hair"],
+"cry": ["body", "mouth_smile", "eye_down", "eyebrow_down", "hair"]
 },
 "offsets": {
 "body": Vector2(16, 204),

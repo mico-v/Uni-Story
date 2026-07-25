@@ -1,0 +1,85 @@
+[gd_scene load_steps=2 format=3 uid="uid://minigame_qte"]
+
+[ext_resource type="Script" path="res://scripts/minigame/qte_minigame.gd" id="1_script"]
+
+[node name="QTEMinigame" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 0
+offset_right = 1280.0
+offset_bottom = 720.0
+color = Color(0.08, 0.05, 0.12, 0.85)
+
+[node name="Panel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="Panel"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="Panel/VBox"]
+layout_mode = 2
+text = "⌨️ Quick-Time Event!"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 24
+theme_override_colors/font_color = Color(0.9, 0.85, 0.5, 1)
+
+[node name="Header" type="HBoxContainer" parent="Panel/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="ScoreLabel" type="Label" parent="Panel/VBox/Header"]
+layout_mode = 2
+text = "Score: 0"
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.9, 0.9, 0.9, 1)
+
+[node name="RoundLabel" type="Label" parent="Panel/VBox/Header"]
+layout_mode = 2
+text = "Round: 0 / 5"
+horizontal_alignment = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.7, 0.7, 0.7, 1)
+
+[node name="PromptLabel" type="Label" parent="Panel/VBox"]
+layout_mode = 2
+text = "Press the key!"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 18
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+
+[node name="KeyLabel" type="Label" parent="Panel/VBox"]
+layout_mode = 2
+text = "?"
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 48
+theme_override_colors/font_color = Color(1, 0.85, 0.3, 1)
+
+[node name="TimerBar" type="ProgressBar" parent="Panel/VBox"]
+layout_mode = 2
+max_value = 2.0
+value = 2.0
+show_percentage = false
+
+[node name="FeedbackLabel" type="Label" parent="Panel/VBox"]
+layout_mode = 2
+text = ""
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 16
+
+[node name="CountdownTimer" type="Timer" parent="."]
+wait_time = 0.05
+one_shot = false
