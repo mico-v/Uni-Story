@@ -13,7 +13,7 @@ const NovaAnimationCompatScript := preload("res://scripts/runtime/nova_animation
 
 var _ctx: Node
 
-var _gvc  # GameViewController; accessed via _ctx.get() for dynamic compat
+var _gvc:  # GameViewController; accessed via _ctx.get() for dynamic compat
 	get: return _ctx.get("game_view_controller") if _ctx else null
 
 
