@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-07-25 — Phase 12 立绘生产管线与 Editor 集成 ✅
+
+- ✅ 4 个立绘生产工具：`export_psd_layers.py`, `merge_psd_layers.py`, `export_poses.py`, `sort_poses.py`
+- ✅ Godot 立绘编辑器插件 (`addons/standing_editor/`)：Inspector 集成 + 实时预览 + 图层可视编辑
+- ✅ SaveViewer：存档 JSON 查看器，支持 metadata 显示、语法高亮、导出
+- ✅ 资源校验仪表盘：Editor 面板聚合资源扫描结果，缺失资源可点击跳转
+- ✅ 34 项 Phase 12 smoke test 全部通过
+- 📏 差距改善：
+  - 立绘生产管线：0% → **100%**（4/4 工具）
+  - Editor 集成：3% → **23%**（1/31 → 7/31 脚本）
+  - 工具链覆盖率：19% → **52%**（7/27 → 14/27 工具已覆盖）
+
+## 2026-07-25 — Phase 11 协作编剧工具链
+
+- ✅ 8 个协作编剧工具：merge, split_chara, strip_code ×4, add_soft_hyphens, generate_sample_script
+- ✅ Phase 11 smoke test：6/6 test cases passed
+- 工具链覆盖率：19% → 52%
+
 ## 2026-07-25 — 全方位成熟度对比分析
 
 - 基于 ISSUE #14 发起，拉取 Nova gitlink 进行全方位代码成熟度对比

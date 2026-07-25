@@ -161,45 +161,45 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 
 #### 12.1 PSD 图层导出工具 `export_psd_layers.py`
 
-- [ ] 实现 `scripts/tools/standing/export_psd_layers.py`：从 PSD 文件导出各图层为独立 PNG
-- [ ] 支持 `--input`、`--output-dir`、`--scale` 参数
-- [ ] 支持图层分组（body/eye/eyebrow/mouth 等），按 `docs/StandingImportGuide.md` 约定命名
-- [ ] smoke test：对示例 PSD 导出，验证图层文件数量、命名和尺寸正确
+- [x] 实现 `scripts/tools/standing/export_psd_layers.py`：从 PSD 文件导出各图层为独立 PNG
+- [x] 支持 `--input`、`--output-dir`、`--scale` 参数
+- [x] 支持图层分组（body/eye/eyebrow/mouth 等），按 `docs/StandingImportGuide.md` 约定命名
+- [x] smoke test：对示例 PSD 导出，验证图层文件数量、命名和尺寸正确
 
 #### 12.2 PSD 图层合并工具 `merge_psd_layers.py`
 
-- [ ] 实现 `scripts/tools/standing/merge_psd_layers.py`：按 Pose 配置合并图层为单张立绘
-- [ ] 读取 `StandingProfile` 中的 offset/scale 配置
-- [ ] 支持 `--profile` 指定 Profile 资源路径
-- [ ] 输出合并后的 PNG，保持与运行时 `SpriteComposer` 一致的合成结果
-- [ ] smoke test：合并结果与运行时立绘渲染做像素级对比
+- [x] 实现 `scripts/tools/standing/merge_psd_layers.py`：按 Pose 配置合并图层为单张立绘
+- [x] 读取 `StandingProfile` 中的 offset/scale 配置
+- [x] 支持 `--profile` 指定 Profile 资源路径
+- [x] 输出合并后的 PNG，保持与运行时 `SpriteComposer` 一致的合成结果
+- [x] smoke test：合并结果与运行时立绘渲染做像素级对比
 
 #### 12.3 姿态导出与排序工具 `export_poses.py` / `sort_poses.py`
 
-- [ ] 实现 `scripts/tools/standing/export_poses.py`：从 `StandingProfile` 导出所有 Pose 定义（JSON/YAML）
-- [ ] 实现 `scripts/tools/standing/sort_poses.py`：按命名规则排序 Pose 列表
-- [ ] smoke test：验证导出和排序后的 Pose 列表与 Profile 一致
+- [x] 实现 `scripts/tools/standing/export_poses.py`：从 `StandingProfile` 导出所有 Pose 定义（JSON/YAML）
+- [x] 实现 `scripts/tools/standing/sort_poses.py`：按命名规则排序 Pose 列表
+- [x] smoke test：验证导出和排序后的 Pose 列表与 Profile 一致
 
 #### 12.4 立绘编辑器 Godot Plugin（基础版）
 
-- [ ] 创建 `addons/standing_editor/` Godot EditorPlugin
-- [ ] 在 Inspector 中可视化编辑 `StandingProfile` 的图层 offset/scale
-- [ ] 实时预览立绘合成效果
-- [ ] 支持拖拽调整图层顺序
-- [ ] Editor 场景测试：在 Godot 编辑器中加载并操作
+- [x] 创建 `addons/standing_editor/` Godot EditorPlugin
+- [x] 在 Inspector 中可视化编辑 `StandingProfile` 的图层 offset/scale
+- [x] 实时预览立绘合成效果
+- [x] 支持拖拽调整图层顺序
+- [x] Editor 场景测试：在 Godot 编辑器中加载并操作
 
 #### 12.5 SaveViewer
 
-- [ ] 创建 `scripts/editor/save_viewer.gd`：在 Editor 中查看和解析存档文件
-- [ ] 显示 bookmark 元数据（章节、时间、缩略图）和 checkpoint 状态
-- [ ] 支持存档 JSON 语法高亮和折叠
+- [x] 创建 `scripts/editor/save_viewer.gd`：在 Editor 中查看和解析存档文件
+- [x] 显示 bookmark 元数据（章节、时间、缩略图）和 checkpoint 状态
+- [x] 支持存档 JSON 语法高亮和折叠
 
 #### 12.6 资源校验仪表盘
 
-- [ ] 创建 `scripts/editor/resource_dashboard.gd`：Editor 面板聚合资源扫描结果
-- [ ] 显示 referenced/found/missing/virtual 统计
-- [ ] 缺失资源列表可点击跳转到对应剧本位置
-- [ ] 一键运行 Scenario lint，结果内嵌显示
+- [x] 创建 `scripts/editor/resource_dashboard.gd`：Editor 面板聚合资源扫描结果
+- [x] 显示 referenced/found/missing/virtual 统计
+- [x] 缺失资源列表可点击跳转到对应剧本位置
+- [x] 一键运行 Scenario lint，结果内嵌显示
 
 #### Phase 12 验收标准
 
@@ -357,7 +357,7 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 | 9 | 小游戏、中断与扩展接口 | ✅ 完成 |
 | 10 | 平台、质量与发布 | ✅ 完成 |
 | **11** | **协作编剧工具链** | ✅ 完成 |
-| **12** | **立绘生产管线与 Editor 集成** | 🔲 未开始 |
+| **12** | **立绘生产管线与 Editor 集成** | ✅ 完成 |
 | **13** | **示例作品与 I18n 内容** | 🔲 未开始 |
 | **14** | **Shader/VFX 丰富度提升** | 🔲 未开始 |
 | **15** | **Lua VM 深度兼容与设备验证** | 🔲 未开始 |
@@ -371,11 +371,11 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 **当前差距**（按优先级，源自 `review.md`）：
 
 ```
-工具链完整性  ████████░░░░░░░░░░░░  19%  (7/27 工具已覆盖)
-立绘生产管线  ░░░░░░░░░░░░░░░░░░░░   0%  (0/4 工具)
-Editor 集成   █░░░░░░░░░░░░░░░░░░░   3%  (1/31 脚本)
-I18n 内容     ████████████░░░░░░░░  60%  (框架就绪，缺英文剧本翻译)
-Shader 丰富度 ████░░░░░░░░░░░░░░░░  12%  (12/176 shader，缺 164)
+工具链完整性  ████████████████████░░  52%  (14/27 工具已覆盖)
+立绘生产管线  ██████████████████████  100%  (4/4 工具)
+Editor 集成   ██████████░░░░░░░░░░░░  23%  (7/31 脚本)
+I18n 内容     ████████████░░░░░░░░░░  60%  (框架就绪，缺英文剧本翻译)
+Shader 丰富度 ████░░░░░░░░░░░░░░░░░░  12%  (12/176 shader，缺 164)
 示例作品      ░░░░░░░░░░░░░░░░░░░░   0%  (无完整叙事示例)
 Lua 兼容      ████████████████░░░░  78%  (部分 API 仍为 no-op)
 ```

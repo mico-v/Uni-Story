@@ -116,13 +116,13 @@
 
 ## Phase 12：立绘生产管线与 Editor 集成
 
-- 🔲 `psd-export`：新增 `scripts/tools/standing/export_psd_layers.py`，从 PSD 导出图层为独立 PNG，按 `StandingImportGuide.md` 约定命名。
-- 🔲 `psd-merge`：新增 `scripts/tools/standing/merge_psd_layers.py`，按 Pose 配置合并图层，输出与 SpriteComposer 一致的结果。
-- 🔲 `pose-export-sort`：新增 `scripts/tools/standing/export_poses.py` 和 `sort_poses.py`。
-- 🔲 `standing-editor-plugin`：创建 `addons/standing_editor/` Godot EditorPlugin，Inspector 可视化编辑 offset/scale + 实时预览。
-- 🔲 `save-viewer`：新增 `scripts/editor/save_viewer.gd`，Editor 中查看存档 JSON，显示 bookmark 元数据和 checkpoint 状态。
-- 🔲 `resource-dashboard`：新增 `scripts/editor/resource_dashboard.gd`，Editor 面板聚合资源扫描结果，缺失项可跳转。
-- 🔲 `standing-tool-tests`：新增 `standing_tool_smoke_test.gd`，覆盖 PSD 导出、合并、Pose 排序全链路。
+- ✅ `psd-export`：新增 `scripts/tools/standing/export_psd_layers.py`，从 PSD 导出图层为独立 PNG，按 `StandingImportGuide.md` 约定命名。
+- ✅ `psd-merge`：新增 `scripts/tools/standing/merge_psd_layers.py`，按 Pose 配置合并图层，输出与 SpriteComposer 一致的结果。
+- ✅ `pose-export-sort`：新增 `scripts/tools/standing/export_poses.py` 和 `sort_poses.py`。
+- ✅ `standing-editor-plugin`：创建 `addons/standing_editor/` Godot EditorPlugin，Inspector 可视化编辑 offset/scale + 实时预览。
+- ✅ `save-viewer`：新增 `scripts/editor/save_viewer.gd` + `save_viewer_panel.gd`，Editor 中查看存档 JSON，显示 bookmark 元数据和 checkpoint 状态。
+- ✅ `resource-dashboard`：新增 `scripts/editor/resource_dashboard.gd` + `resource_dashboard_panel.gd`，Editor 面板聚合资源扫描结果，缺失项可跳转。
+- ✅ `standing-tool-tests`：新增 `scripts/tests/phase12_standing_tools_smoke_test.py`，覆盖 PSD 导出、合并、Pose 排序全链路（34/34 PASS）。
 - 🔲 `save-viewer-test`：新增 `save_viewer_smoke_test.gd`，验证解析至少 3 个存档文件。
 - 🔲 `phase12-docs`：更新 `PLAN.md`、`review.md`、`PhaseBacklog.md`。
 
