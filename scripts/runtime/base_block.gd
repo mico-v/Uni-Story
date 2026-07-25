@@ -11,7 +11,7 @@ const NovaAnimationCompatScript := preload("res://scripts/runtime/nova_animation
 ##
 ## `_ctx` is the NovaController instance, injected right after `.new()`.
 
-var _ctx: Node
+var _ctx  # Node (NovaController); untyped for Godot 4.6 dynamic dispatch compat
 
 
 func run() -> Variant:
