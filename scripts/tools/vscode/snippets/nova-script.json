@@ -1,0 +1,116 @@
+{
+  "Chapter label": {
+    "prefix": "chapter",
+    "body": [
+      "@<|",
+      "label('${1:ch1}', '${2:章节名}')",
+      "is_unlocked_start()",
+      "|>",
+      "<|",
+      "$0",
+      "|>"
+    ],
+    "description": "Start a new chapter with label"
+  },
+  "Dialogue line": {
+    "prefix": "say",
+    "body": [
+      "${1:角色名}：：\"${2:对话内容}\""
+    ],
+    "description": "Add a dialogue line"
+  },
+  "Show character": {
+    "prefix": "show",
+    "body": [
+      "<|",
+      "show(${1:角色}, '${2:pose}', ${3:pos_c})",
+      "|>"
+    ],
+    "description": "Show a character standing"
+  },
+  "Play BGM": {
+    "prefix": "bgm",
+    "body": [
+      "<|",
+      "play(bgm, '${1:track}')",
+      "|>"
+    ],
+    "description": "Play background music"
+  },
+  "Branch": {
+    "prefix": "branch",
+    "body": [
+      "<|",
+      "branch('${1:label1}', '${2:选项1}', '${3:label2}', '${4:选项2}')",
+      "|>"
+    ],
+    "description": "Create a branching choice"
+  },
+  "Jump": {
+    "prefix": "jump",
+    "body": [
+      "<|",
+      "jump_to('${1:label}')",
+      "|>"
+    ],
+    "description": "Jump to a label"
+  },
+  "Ending": {
+    "prefix": "end",
+    "body": [
+      "<|",
+      "is_end()",
+      "ending('${1:ending_name}')",
+      "|>"
+    ],
+    "description": "Mark an ending"
+  },
+  "Transition fade": {
+    "prefix": "trans",
+    "body": [
+      "<|",
+      "anim:trans_fade(cam, function()",
+      "    $0",
+      "end, ${1:2})",
+      "|>"
+    ],
+    "description": "Fade transition with camera"
+  },
+  "VFX": {
+    "prefix": "vfx",
+    "body": [
+      "<|",
+      "vfx('${1:effect_name}', ${2:duration})",
+      "|>"
+    ],
+    "description": "Apply a visual effect"
+  },
+  "Variable set": {
+    "prefix": "vset",
+    "body": [
+      "<|",
+      "set_var('${1:v_var_name}', ${2:value})",
+      "|>"
+    ],
+    "description": "Set a game variable"
+  },
+  "Minigame": {
+    "prefix": "minigame",
+    "body": [
+      "<|",
+      "minigame('${1:MinigameName}')",
+      "|>"
+    ],
+    "description": "Launch a minigame"
+  },
+  "Auto voice": {
+    "prefix": "av",
+    "body": [
+      "<|",
+      "auto_voice_on('${1:角色显示名}', ${2:001001})",
+      "set_auto_voice_delay(${3:2})",
+      "|>"
+    ],
+    "description": "Enable auto voice for a character"
+  }
+}

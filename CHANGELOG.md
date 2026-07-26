@@ -1,5 +1,37 @@
 # Changelog
 
+## 2026-07-26 — Phase 18 工具链补完、文档与发布成熟化 ✅ — v1.0.0-rc1 🎉
+
+- ✅ **9 个新 Python 工具**，工具链覆盖率 67% → **93%**（25/27）：
+  - `generate_charsets.py`：从剧本生成字体字符集，含 1055 种字符 + 分类统计（CJK/拉丁/数字/标点），输出到 `resources/fonts/charsets/`
+  - `generate_localized_paths.py`：I18n 资源路径映射表，扫描 LocalizedResources + localized_resources 双目录，交叉引用完整性检查
+  - `generate_shaders.py`：shader 资产清单与分类（6 类：模糊/变形/色彩/转场/VFX/工具），84 gdshader + 49 shaderproto
+  - `list_bg.py`：背景资源清单（含 PNG/JPEG 尺寸检测、11 文件），text/JSON/CSV 输出
+  - `list_bgm.py`：BGM 资源清单（含 OGG/WAV 时长估算、6 文件共 14MB），text/JSON/CSV
+  - `list_pos.py`：立绘位置/姿态定义提取（4 角色、13 poses、完整 offset 解析），从 .tres 直接解析
+  - `show_branches.py`：分支可视化（text/mermaid/dot/json 4 种输出，含 Godot IR 回退模式）
+  - `nova_script_parser.py`：纯 Python NovaScript 静态分析器（API 调用统计、block 分类、元数据提取）
+  - `utils.py`：通用工具函数库（路径解析、CLI helpers、NovaScript 解析、I18n helpers、输出分发）
+
+- ✅ **文档完善**：
+  - `docs/ReleaseGuide.md`：三平台发布完整指南（Win/Linux/Android 导出命令 + 配置 + 注意事项 + FAQ）
+  - `README.md` 更新为完整用户手册（工具使用、发布流程）
+  - 所有文档交叉引用修正
+
+- ✅ **VS Code NovaScript 扩展**（`scripts/tools/vscode/`）：
+  - 完整 TextMate 语法高亮（代码块/对话/说话人/字符串/注释/API 函数/变量/关键字）
+  - 12 个实用 Snippets（chapter/say/show/bgm/branch/jump/end/trans/vfx/vset/minigame/av）
+  - language-configuration.json（注释切换、括号匹配、自动闭合、缩进规则）
+
+- ✅ **PLAN.md / CHANGELOG 全量更新**：
+  - Phase 18 全部子任务标记完成
+  - 阶段状态表更新：Phase 0-18 全部 ✅
+  - 当前状态：v1.0.0-rc1，差距分析更新为 93% 工具链、95% 文档
+
+- 📏 **工具链**：18/27 → **25/27**（+7 新工具 + utils.py + nova_script_parser.py）
+- 📏 **文档**：新增 1 份发布指南 + VS Code 扩展（4 文件）+ 工具 README
+- 📏 **项目状态**：v1.0.0-rc1 就绪
+
 ## 2026-07-26 — Phase 17 Editor 集成与 UI 工具深度提升 ✅
 
 - ✅ 新增 5 个 Resource 类型：`ImageEntry`、`ImageGroup`、`ImageGroupList`、`MusicEntry`、`MusicEntryList`

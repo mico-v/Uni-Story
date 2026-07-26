@@ -1,8 +1,8 @@
 # Nova 与 Uni-Story 差异评审
 
-> 审查日期：2026-06-24 · 最后更新：2026-07-25（新增 Phase 15-18 路线图）
-> 目标工程：`Nova/`，Unity 2020.3.48f1 + C# + Lua(ToLua#)
-> 当前工程：仓库根目录，Godot 4.6 + GDScript
+> 审查日期：2026-06-24 · 最后更新：2026-07-26（Phase 18 完成，v1.0.0-rc1）  
+> 目标工程：`Nova/`，Unity 2020.3.48f1 + C# + Lua(ToLua#)  
+> 当前工程：仓库根目录，Godot 4.6 + GDScript  
 > 本次分析：基于 ISSUE #14 发起的全方位代码成熟度对比
 
 ---
@@ -23,8 +23,8 @@ Uni-Story 已完成 Godot 版 Nova 风格运行时的主要骨架：脚本解析
 | UI 产品功能 | ~85-90% | 标题/游戏/设置/存读档/鉴赏/章节/帮助/通知/输入映射 |
 | 运行时基础设施 | ~85-90% | Theme/Preload/Prefab/Interrupt 核心完成 |
 | VFX 与转场 | ~95% | 84 个 .gdshader + 49 个 shaderproto（超 Nova 37）+ 多 pass compositing + 6 种转场 shader |
-| 资源与工具链 | ~80-85% | 资源扫描、Scenario lint/stat/visualize、共享静态 IR、headless suite 就绪 |
-| **整体对齐** | **~85-90%** | 全部 Phase 0-10 完成，21 项 headless 测试通过 + export smoke test |
+| 资源与工具链 | ~80-85% | 资源扫描、Scenario lint/stat/visualize、共享静态 IR、headless suite 就绪；**Phase 18: +9 Python 工具 → 25/27 (93%)** |
+| **整体对齐** | **~85-90%** | 全部 Phase 0-18 完成，v1.0.0-rc1；30+ 项 smoke test + export smoke test |
 
 当前差距已大幅缩小，全部 Phase 已完成。剩余为可选的增量方向：Lua VM 深度兼容、更多小游戏模板、真实设备 smoke test。
 

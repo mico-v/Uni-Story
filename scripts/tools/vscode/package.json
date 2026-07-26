@@ -1,0 +1,28 @@
+{
+  "name": "nova-script",
+  "displayName": "NovaScript",
+  "description": "NovaScript syntax highlighting and snippets for Uni-Story visual novels",
+  "version": "1.0.0",
+  "publisher": "uni-story",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": ["Programming Languages"],
+  "contributes": {
+    "languages": [{
+      "id": "nova-script",
+      "aliases": ["NovaScript", "nova-script", "novascript"],
+      "extensions": [".txt", ".nova"],
+      "configuration": "./language-configuration.json"
+    }],
+    "grammars": [{
+      "language": "nova-script",
+      "scopeName": "text.nova-script",
+      "path": "./syntaxes/nova-script.tmLanguage.json"
+    }],
+    "snippets": [{
+      "language": "nova-script",
+      "path": "./snippets/nova-script.json"
+    }]
+  }
+}

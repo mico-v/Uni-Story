@@ -1,0 +1,143 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "NovaScript",
+  "scopeName": "text.nova-script",
+  "patterns": [
+    {
+      "include": "#code-blocks"
+    },
+    {
+      "include": "#dialogue"
+    },
+    {
+      "include": "#comments"
+    },
+    {
+      "include": "#strings"
+    }
+  ],
+  "repository": {
+    "code-blocks": {
+      "patterns": [
+        {
+          "name": "meta.embedded.block.nova-script",
+          "begin": "(<\\|)",
+          "beginCaptures": {
+            "1": { "name": "punctuation.definition.tag.nova-script" }
+          },
+          "end": "(\\|>)",
+          "endCaptures": {
+            "1": { "name": "punctuation.definition.tag.nova-script" }
+          },
+          "patterns": [
+            { "include": "#expressions" }
+          ]
+        },
+        {
+          "name": "meta.embedded.block.lazy.nova-script",
+          "begin": "(@<\\|)",
+          "beginCaptures": {
+            "1": { "name": "punctuation.definition.tag.nova-script" }
+          },
+          "end": "(\\|>)",
+          "endCaptures": {
+            "1": { "name": "punctuation.definition.tag.nova-script" }
+          },
+          "patterns": [
+            { "include": "#expressions" }
+          ]
+        }
+      ]
+    },
+    "dialogue": {
+      "patterns": [
+        {
+          "name": "markup.heading.nova-script",
+          "match": "^(#.*)$"
+        },
+        {
+          "name": "text.nova-script.dialogue.speaker",
+          "match": "^(.+?)([：:][：:])(.*)$",
+          "captures": {
+            "1": { "name": "entity.name.tag.nova-script" },
+            "2": { "name": "keyword.operator.nova-script" },
+            "3": { "name": "string.quoted.double.nova-script" }
+          }
+        },
+        {
+          "name": "comment.line.narration.nova-script",
+          "match": "^[^<#：:].*$"
+        }
+      ]
+    },
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.block.nova-script",
+          "begin": "--\\[\\[",
+          "end": "\\]\\]"
+        },
+        {
+          "name": "comment.line.double-dash.nova-script",
+          "match": "--.*$"
+        }
+      ]
+    },
+    "strings": {
+      "patterns": [
+        {
+          "name": "string.quoted.double.nova-script",
+          "begin": "\"",
+          "end": "\""
+        },
+        {
+          "name": "string.quoted.single.nova-script",
+          "begin": "'",
+          "end": "'"
+        }
+      ]
+    },
+    "expressions": {
+      "patterns": [
+        {
+          "name": "support.function.nova-script",
+          "match": "\\b(label|jump_to|jump_if|branch|is_start|is_end|ending|show|hide|move|tint|show_char|set_layer|hide_char|set_avatar|clear_avatar|play_bgm|stop_bgm|play_se|play_voice|say|auto_voice_on|auto_voice_off|auto_voice_off_all|set_auto_voice_delay|auto_voice_skip|cam|trans|set_box|box_tint|box_anchor|box_alignment|box_offset|new_page|vfx|clear_vfx|clear_effect|capture_screen|post_fx|clear_post_fx|shake|load_prefab|load_ui_prefab|load_persistent_prefab|show_prefab|hide_prefab|destroy_prefab|play_video|show_toast|show_confirm|set_var|get_var|has_var|add_var|begin_interrupt|end_interrupt|is_interrupt_active|wait|print|timeline|preload_asset|cancel_preload|cancel_all_preloads|set_box_pos|anim:trans_fade|box_hide_show|sync|anim:volume|anim:move_to|anim:fade_to|anim:rotate_to|animate|is_unlocked_start|is_unlocked_end|minigame|input_on|input_off|ff_shortcut_on|ff_shortcut_off|stop_auto_ff|stop_ff|immediate_step|auto_time|text_delay|text_duration|text_scroll|set_text_speed|skip_mode_custom|auto_fade_on|auto_fade_off|anim_hold_begin|anim_hold_end|volume|get_current_position|text_easing)\\s*\\("
+        },
+        {
+          "name": "variable.other.nova-script",
+          "match": "\\b(v_|gv_)[a-zA-Z_]\\w*\\b"
+        },
+        {
+          "name": "constant.numeric.nova-script",
+          "match": "\\b-?\\d+\\.?\\d*\\b"
+        },
+        {
+          "name": "keyword.control.nova-script",
+          "match": "\\b(if|then|else|elseif|end|for|while|do|repeat|until|function|return|local|nil|true|false)\\b"
+        },
+        {
+          "name": "variable.language.nova-script",
+          "match": "\\b(pos_c|pos_l|pos_r|pos_cl|pos_cr|normal|smile|angry|cry|bg|bgm|bgs)\\b"
+        },
+        {
+          "name": "keyword.operator.nova-script",
+          "match": "[,\\.;:=#+\\-*/%<>!&|~^]"
+        },
+        {
+          "name": "string.quoted.double.nova-script",
+          "begin": "\"",
+          "end": "\""
+        },
+        {
+          "name": "string.quoted.single.nova-script",
+          "begin": "'",
+          "end": "'"
+        },
+        {
+          "name": "comment.line.double-dash.nova-script",
+          "match": "--.*$"
+        }
+      ]
+    }
+  }
+}
