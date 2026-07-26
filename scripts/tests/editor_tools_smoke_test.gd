@@ -1,12 +1,11 @@
-@tool
-extends Node
+extends SceneTree
 
 ## Smoke test for Phase 17 Editor tools.
 ##
 ## Validates that all new Resource types, Inspector plugins,
 ## Editor Panels, and Standing Editor enhancements are correctly defined.
 ##
-## Run in headless mode: godot --headless --script scripts/tests/editor_tools_smoke_test.gd
+## Run in headless mode: godot --headless --path . --script res://scripts/tests/editor_tools_smoke_test.gd
 
 
 # ── Test state ──
@@ -16,9 +15,7 @@ var _fails := 0
 var _test_name := ""
 
 
-func _ready() -> void:
-	await get_tree().process_frame
-
+func _init() -> void:
 	print("=".repeat(60))
 	print("Phase 17 Editor Tools Smoke Test")
 	print("=".repeat(60))
@@ -41,9 +38,9 @@ func _ready() -> void:
 	print("-".repeat(60))
 
 	if _fails > 0:
-		get_tree().quit(1)
+		quit(1)
 	else:
-		get_tree().quit(0)
+		quit(0)
 
 
 func _test(msg: String, condition: bool) -> void:
