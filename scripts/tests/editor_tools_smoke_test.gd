@@ -53,6 +53,13 @@ func _test(msg: String, condition: bool) -> void:
 		printerr("  FAIL  %s" % msg)
 
 
+func _has_prop(obj: Object, prop_name: String) -> bool:
+	for p in obj.get_property_list():
+		if p["name"] == prop_name:
+			return true
+	return false
+
+
 # ── 17.1 + 17.2: Resource Types ──
 
 func _test_resource_types() -> void:
@@ -61,8 +68,8 @@ func _test_resource_types() -> void:
 	var ie := ImageEntry.new()
 	_test("ImageEntry class exists", ie != null)
 	_test("ImageEntry has display_name", ie.get("display_name") != null)
-	_test("ImageEntry has thumbnail", ie.get("thumbnail") != null)
-	_test("ImageEntry has full_image", ie.get("full_image") != null)
+	_test("ImageEntry has thumbnail", _has_prop(ie, "thumbnail"))
+	_test("ImageEntry has full_image", _has_prop(ie, "full_image"))
 	_test("ImageEntry has category", ie.get("category") != null)
 	_test("ImageEntry is_valid returns false for empty", not ie.is_valid())
 	ie.display_name = "test"
@@ -87,8 +94,8 @@ func _test_resource_types() -> void:
 	_test("MusicEntry class exists", me != null)
 	_test("MusicEntry has display_name", me.get("display_name") != null)
 	_test("MusicEntry has composer", me.get("composer") != null)
-	_test("MusicEntry has audio_stream", me.get("audio_stream") != null)
-	_test("MusicEntry has cover_image", me.get("cover_image") != null)
+	_test("MusicEntry has audio_stream", _has_prop(me, "audio_stream"))
+	_test("MusicEntry has cover_image", _has_prop(me, "cover_image"))
 	_test("MusicEntry has loop_start", me.get("loop_start") != null)
 	_test("MusicEntry has loop_end", me.get("loop_end") != null)
 	_test("MusicEntry is_valid returns false for empty", not me.is_valid())
