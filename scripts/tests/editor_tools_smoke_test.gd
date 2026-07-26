@@ -128,8 +128,10 @@ func _test_build_hooks() -> void:
 
 	# NOTE: run_tests() invokes the headless suite which includes this file;
 	# calling it here would cause infinite recursion, so we only verify the method exists.
-	_test("BuildHooks.run_tests is callable", BuildHooks.has_method("run_tests"))
-	_test("BuildHooks.pre_export_quality_gate is callable", BuildHooks.has_method("pre_export_quality_gate"))
+	# has_method() is an instance method, not a class/static method in Godot 4.
+	var bh := BuildHooks.new()
+	_test("BuildHooks.run_tests is callable", bh.has_method("run_tests"))
+	_test("BuildHooks.pre_export_quality_gate is callable", bh.has_method("pre_export_quality_gate"))
 
 
 # ── 17.4: Standing Editor Enhancement Checks ──
