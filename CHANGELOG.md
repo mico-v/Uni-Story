@@ -14,6 +14,13 @@
   - Lua 兼容：78% → **96%**
   - no-op 桩：22 → **1**（仅 avatar_show）
 
+## 2026-07-25 — Phase 15-18 路线图制定
+
+- 📋 基于精准差距分析，重新规划 Phase 15-18（原 Phase 15 内容拆分为 4 个阶段）
+- 📊 差距重新校准：工具链 67%、Editor 集成 23%、Shader 丰富度 24%（shaderproto 9/37）、Lua 兼容 ~70%
+- 🎯 目标对齐 Nova 完整成熟引擎能力：95%+ Lua 兼容、37/37 shaderproto、18+ Editor 脚本、93%+ 工具链
+- 📁 更新 PLAN.md / review.md / docs/PhaseBacklog.md
+
 ## 2026-07-25 — Phase 14 Shader/VFX 丰富度提升 ✅
 
 - ✅ 新增 8 个基础 shader 效果：pixelate、mosaic、kaleidoscope、swirl、radial_blur、zoom_blur、edge_detect、invert
