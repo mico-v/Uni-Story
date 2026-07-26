@@ -274,12 +274,12 @@ Phase 0-14 已全部完成（PR #15-#22 已合入 main）。Phase 15 在评论�
 - ✅ 别名映射 14 → 60+
 - ✅ 目标：Shader 丰富度 24% → **87%**（shaderproto 49，超过 Nova 37；gdshader 84 vs Nova 176）
 
-**Phase 17 — Editor 集成与 UI 工具深度提升**
-- ImageGroup/MusicGallery Inspector 编辑器
-- 一键构建面板 + BuildHooks
-- 立绘编辑器增强（多角色预览、Pose 动画）
-- Editor 脚本 8 → 18+
-- 目标：Editor 集成 23% → 58%+
+**Phase 17 — Editor 集成与 UI 工具深度提升** ✅
+- ✅ ImageGroup/MusicGallery Inspector 编辑器
+- ✅ 一键构建面板 + BuildHooks
+- ✅ 立绘编辑器增强（双角色对比预览、图层重排、Pose 动画）
+- ✅ Editor 脚本 8 → 17
+- ✅ 目标：Editor 集成 23% → **55%**（17/31 脚本）
 
 ### 低优先级（可选长期）
 

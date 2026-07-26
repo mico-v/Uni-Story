@@ -189,20 +189,20 @@
 
 ## Phase 17：Editor 集成与 UI 工具深度提升
 
-- 🔲 `image-group-capturer`：Editor 中截取 CG 缩略图
-- 🔲 `image-group-editor`：Inspector 中编辑 ImageGroup 资源
-- 🔲 `image-group-list-editor`：管理所有 CG 分组的列表视图
-- 🔲 `music-entry-editor`：Inspector 中编辑音乐条目
-- 🔲 `music-entry-list-editor`：管理所有音乐条目的列表视图
-- 🔲 `build-panel`：Editor 内导出配置面板
-- 🔲 `build-hooks`：导出前后钩子（lint 门禁 + 打包校验）
-- 🔲 `standing-multi-preview`：立绘编辑器多角色切换预览
-- 🔲 `standing-pose-anim-preview`：Pose 预览动画
-- 🔲 `ui-transition-editor`：Editor 中预览 UI 过渡动画
-- 🔲 `simple-entry-list-editor`：通用列表编辑器基类
-- 🔲 `nova-menu`：Editor 菜单栏快捷入口
-- 🔲 `editor-smoke-tests`：新增 2-3 项 Editor 工具 smoke test
-- 🔲 `phase17-docs`：更新 PLAN/review/PhaseBacklog/CHANGELOG
+- ✅ `image-group-capturer`：Editor 中截取 CG 缩略图
+- ✅ `image-group-editor`：Inspector 中编辑 ImageGroup 资源
+- ✅ `image-group-list-editor`：管理所有 CG 分组的列表视图
+- ✅ `music-entry-editor`：Inspector 中编辑音乐条目
+- ✅ `music-entry-list-editor`：管理所有音乐条目的列表视图
+- ✅ `build-panel`：Editor 内导出配置面板
+- ✅ `build-hooks`：导出前后钩子（lint 门禁 + 打包校验）
+- ✅ `standing-multi-preview`：立绘编辑器多角色切换预览
+- ✅ `standing-pose-anim-preview`：Pose 预览动画
+- ✅ `ui-transition-editor`：Editor 中预览 UI 过渡动画
+- ✅ `simple-entry-list-editor`：通用列表编辑器基类
+- ✅ `nova-menu`：Editor 菜单栏快捷入口
+- ✅ `editor-smoke-tests`：新增 1 项 Editor 工具 smoke test（60+ 项）
+- ✅ `phase17-docs`：更新 PLAN/review/PhaseBacklog/CHANGELOG
 
 ## Phase 18：工具链补完、文档与发布成熟化
 

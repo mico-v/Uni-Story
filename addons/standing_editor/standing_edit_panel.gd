@@ -30,6 +30,17 @@ var _refresh_timer: Timer
 var _layer_textures: Dictionary = {}  # "layer_name" → Texture2D
 var _layer_previews: Array[Node] = []  # Sprite2D nodes in preview
 
+# Enhanced features (Phase 17)
+var _dual_preview: bool = false
+var _dual_character: String = ""
+var _dual_preview_texture_rect: TextureRect
+var _dual_preview_btn: Button
+var _move_up_btn: Button
+var _move_down_btn: Button
+var _cycle_poses_btn: Button
+var _cycle_poses_timer: Timer
+var _cycle_index: int = 0
+
 
 func _ready() -> void:
 	custom_minimum_size = Vector2(0, 350)
@@ -110,24 +121,83 @@ func _ready() -> void:
 	_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	control_panel.add_child(_status_label)
 
-	# Right: preview area
-	var preview_panel := PanelContainer.new()
-	preview_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	preview_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	main_hbox.add_child(preview_panel)
+	# Right: preview area (supports dual preview with split)
+	var preview_split := HSplitContainer.new()
+	preview_split.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	preview_split.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	main_hbox.add_child(preview_split)
 
-	var preview_bg := ColorRect.new()
-	preview_bg.color = Color(0.15, 0.15, 0.15, 1.0)
-	preview_bg.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	preview_bg.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	preview_panel.add_child(preview_bg)
+	# Primary preview (always visible)
+	var primary_panel := PanelContainer.new()
+	primary_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	primary_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	preview_split.add_child(primary_panel)
+
+	var primary_bg := ColorRect.new()
+	primary_bg.color = Color(0.15, 0.15, 0.15, 1.0)
+	primary_bg.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	primary_bg.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	primary_panel.add_child(primary_bg)
 
 	_preview_texture_rect = TextureRect.new()
 	_preview_texture_rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
 	_preview_texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_preview_texture_rect.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_preview_texture_rect.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	preview_panel.add_child(_preview_texture_rect)
+	primary_panel.add_child(_preview_texture_rect)
+
+	# Secondary preview (dual, hidden by default)
+	var secondary_panel := PanelContainer.new()
+	secondary_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	secondary_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	secondary_panel.visible = false
+	preview_split.add_child(secondary_panel)
+
+	var secondary_bg := ColorRect.new()
+	secondary_bg.color = Color(0.12, 0.12, 0.18, 1.0)
+	secondary_bg.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	secondary_bg.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	secondary_panel.add_child(secondary_bg)
+
+	_dual_preview_texture_rect = TextureRect.new()
+	_dual_preview_texture_rect.expand_mode = TextureRect.EXPAND_FIT_WIDTH_PROPORTIONAL
+	_dual_preview_texture_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_dual_preview_texture_rect.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_dual_preview_texture_rect.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	secondary_panel.add_child(_dual_preview_texture_rect)
+
+	# Store reference for toggling
+	_dual_preview_texture_rect.get_parent().visible = false
+
+	# Layer reorder buttons
+	var reorder_hbox := HBoxContainer.new()
+	control_panel.add_child(reorder_hbox)
+
+	_move_up_btn = Button.new()
+	_move_up_btn.text = "▲ Move Up"
+	_move_up_btn.tooltip_text = "Move selected layer up in the order"
+	_move_up_btn.pressed.connect(_move_layer_up)
+	reorder_hbox.add_child(_move_up_btn)
+
+	_move_down_btn = Button.new()
+	_move_down_btn.text = "▼ Move Down"
+	_move_down_btn.tooltip_text = "Move selected layer down in the order"
+	_move_down_btn.pressed.connect(_move_layer_down)
+	reorder_hbox.add_child(_move_down_btn)
+
+	# Dual preview toggle
+	_dual_preview_btn = Button.new()
+	_dual_preview_btn.text = "Toggle Dual Preview"
+	_dual_preview_btn.tooltip_text = "Show side-by-side comparison with another character"
+	_dual_preview_btn.pressed.connect(_toggle_dual_preview)
+	control_panel.add_child(_dual_preview_btn)
+
+	# Cycle poses
+	_cycle_poses_btn = Button.new()
+	_cycle_poses_btn.text = "Cycle All Poses"
+	_cycle_poses_btn.tooltip_text = "Automatically cycle through all poses (1.5s each)"
+	_cycle_poses_btn.pressed.connect(_toggle_cycle_poses)
+	control_panel.add_child(_cycle_poses_btn)
 
 	# Refresh timer (debounce)
 	_refresh_timer = Timer.new()
@@ -135,6 +205,12 @@ func _ready() -> void:
 	_refresh_timer.one_shot = true
 	_refresh_timer.timeout.connect(_refresh_preview)
 	add_child(_refresh_timer)
+
+	# Cycle poses timer
+	_cycle_poses_timer = Timer.new()
+	_cycle_poses_timer.wait_time = 1.5
+	_cycle_poses_timer.timeout.connect(_on_cycle_tick)
+	add_child(_cycle_poses_timer)
 
 
 func edit_profile(profile: Resource) -> void:
@@ -301,3 +377,130 @@ func _layer_order_index(order: Array[String], layer_name: String) -> int:
 		if not group_name.is_empty() and layer_name.begins_with(group_name + "_"):
 			return i
 	return order.size()
+
+
+# ── Enhanced features (Phase 17) ──
+
+func _move_layer_up() -> void:
+	var selected := _layer_list.get_selected_items()
+	if selected.is_empty():
+		return
+	var idx := selected[0]
+	if idx <= 0:
+		return
+	var item_text := _layer_list.get_item_text(idx)
+	var item_icon := _layer_list.get_item_icon(idx)
+	_layer_list.remove_item(idx)
+	_layer_list.insert(idx - 1, item_text, item_icon, true)
+	_layer_list.select(idx - 1)
+	_status_label.text = "Moved '%s' up" % item_text
+	_refresh_timer.start()
+
+
+func _move_layer_down() -> void:
+	var selected := _layer_list.get_selected_items()
+	if selected.is_empty():
+		return
+	var idx := selected[0]
+	if idx >= _layer_list.item_count - 1:
+		return
+	var item_text := _layer_list.get_item_text(idx)
+	var item_icon := _layer_list.get_item_icon(idx)
+	_layer_list.remove_item(idx)
+	_layer_list.insert(idx + 1, item_text, item_icon, true)
+	_layer_list.select(idx + 1)
+	_status_label.text = "Moved '%s' down" % item_text
+	_refresh_timer.start()
+
+
+func _toggle_dual_preview() -> void:
+	_dual_preview = not _dual_preview
+	var secondary := _dual_preview_texture_rect.get_parent()
+	secondary.visible = _dual_preview
+	_dual_preview_btn.text = "Dual Preview: ON" if _dual_preview else "Toggle Dual Preview"
+
+	if _dual_preview:
+		# Pick the next character for comparison
+		if _character_option.item_count > 1:
+			var cur_idx := _character_option.selected
+			var next_idx := (cur_idx + 1) % _character_option.item_count
+			_dual_character = _character_option.get_item_text(next_idx).to_lower()
+			_refresh_dual_preview()
+		_status_label.text = "Dual Preview: %s ↔ %s" % [_current_character, _dual_character]
+
+
+func _refresh_dual_preview() -> void:
+	if not _profile or _dual_character.is_empty():
+		return
+
+	if not _profile.has_character(_dual_character):
+		return
+
+	var root_dir: String = "res://resources/"
+	var char_dir: String = _profile.character_directory(_dual_character)
+	var full_dir: String = root_dir.path_join(char_dir)
+	var pose_layers: Array[String] = _profile.resolve_pose_layers(_dual_character, "normal")
+	var layer_order: Array[String] = _profile.layer_order(_dual_character)
+
+	var dual_textures: Dictionary = {}
+	for layer_name in pose_layers:
+		var tex_path := full_dir.path_join(layer_name + ".png")
+		if ResourceLoader.exists(tex_path):
+			var tex: Texture2D = load(tex_path)
+			if tex:
+				dual_textures[layer_name] = tex
+
+	if dual_textures.is_empty():
+		return
+
+	var sorted_layers: Array[String] = pose_layers.duplicate()
+	sorted_layers.sort_custom(func(a: String, b: String) -> bool:
+		return a.naturalnocasecmp_to(b) < 0
+	)
+
+	var max_w := 0
+	var max_h := 0
+	for layer_name in sorted_layers:
+		if dual_textures.has(layer_name):
+			var tex: Texture2D = dual_textures[layer_name]
+			max_w = max(max_w, tex.get_width())
+			max_h = max(max_h, tex.get_height())
+
+	if max_w == 0 or max_h == 0:
+		return
+
+	var img := Image.create(max_w, max_h, false, Image.FORMAT_RGBA8)
+	img.fill(Color(0, 0, 0, 0))
+	for layer_name in sorted_layers:
+		if dual_textures.has(layer_name):
+			var tex: Texture2D = dual_textures[layer_name]
+			var layer_img := tex.get_image()
+			if layer_img:
+				img.blend_rect(layer_img, Rect2i(0, 0, layer_img.get_width(), layer_img.get_height()), Vector2i(0, 0))
+
+	var tex := ImageTexture.create_from_image(img)
+	_dual_preview_texture_rect.texture = tex
+	_dual_preview_texture_rect.scale = Vector2(_scale_slider.value, _scale_slider.value)
+
+
+func _toggle_cycle_poses() -> void:
+	if _cycle_poses_timer.is_stopped():
+		if _pose_option.item_count <= 1:
+			_status_label.text = "Only 1 pose available for cycling."
+			return
+		_cycle_index = 0
+		_cycle_poses_timer.start()
+		_cycle_poses_btn.text = "⏸ Stop Cycling"
+		_status_label.text = "Cycling poses..."
+	else:
+		_cycle_poses_timer.stop()
+		_cycle_poses_btn.text = "Cycle All Poses"
+		_status_label.text = "Pose cycling stopped."
+
+
+func _on_cycle_tick() -> void:
+	_cycle_index = (_cycle_index + 1) % _pose_option.item_count
+	_pose_option.select(_cycle_index)
+	_current_pose = _pose_option.get_item_text(_cycle_index)
+	_refresh_preview()
+	_status_label.text = "Cycling: %s / %s" % [_current_character, _current_pose]
