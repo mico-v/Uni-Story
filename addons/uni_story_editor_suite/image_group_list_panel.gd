@@ -173,12 +173,12 @@ func _snapshot_all() -> void:
 	var count := 0
 	for group in _current_list.groups:
 		if group and group.entry_count() > 0:
-			var entry := group.get_entry(0)
+			var entry = group.get_entry(0)
 			if entry and entry.full_image:
-				var img := entry.full_image.get_image()
+				var img: Image = entry.full_image.get_image()
 				if img:
-					var w := img.get_width()
-					var h := img.get_height()
+					var w: int = img.get_width()
+					var h: int = img.get_height()
 					var max_size := 256
 					var scale := min(float(max_size) / w, float(max_size) / h)
 					img.resize(int(w * scale), int(h * scale), Image.INTERPOLATE_LANCZOS)

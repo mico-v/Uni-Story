@@ -92,7 +92,7 @@
 
 ## Phase 10：平台、质量与发布
 
-- ✅ `headless-regression-suite`：20 个 `*_test.gd` 纳入自动发现，当前 20/20 PASS（约 55 秒），覆盖 parser、flow graph、Scenario lint/stat、共享静态 IR、AutoVoice、save/restore、checkpoint replay、资源扫描、主题、预加载、Prefab 与 VFX 等路径。
+- ✅ `headless-regression-suite`：31 个 `*_test.gd` 纳入自动发现，当前 31/31 PASS（约 55 秒），覆盖 parser、flow graph、Scenario lint/stat、共享静态 IR、AutoVoice、save/restore、checkpoint replay、资源扫描、主题、预加载、Prefab 与 VFX 等路径。
 - ✅ `headless-suite-runner`：新增 `scripts/tests/run_headless_suite.py`，逐个隔离执行 Godot 测试，汇总退出码、超时和脚本错误。
 - ✅ `ci-release-quality-gate`：CI 与 Release workflow 均先以 `--fail-on error` 运行 Scenario lint，再运行 headless suite；warning 默认不阻断，Windows/Linux/Android 导出 job 依赖 quality job。
 - ✅ `scene-navigation-smoke`：MainSceneSmokeTest 覆盖主场景加载、所有视图注册和子系统初始化。
@@ -105,14 +105,14 @@
 
 ## Phase 11：协作编剧工具链
 
-- 🔲 `merge-tool`：新增 `scripts/tools/merge.py`，将分角色剧本文件合并为 NovaScript 剧本；支持 `#角色名` 标签归并、`--input-dir`/`--output` 参数。
-- 🔲 `split-chara-tool`：新增 `scripts/tools/split_chara.py`，按角色拆分剧本为独立文件，保留原始行号和上下文。
-- 🔲 `strip-code-tools`：新增 `strip_code.py`/`strip_code_docx.py`/`strip_code_tex.py`/`strip_code_xlsx.py`，剥离 `<|...|>` 代码块输出纯文本/DOCX/TEX/XLSX。
-- 🔲 `soft-hyphens-tool`：新增 `scripts/tools/add_soft_hyphens.py`，在日/中文文本中插入软连字符。
-- 🔲 `sample-script-gen`：新增 `scripts/tools/generate_sample_script.py`，从模板生成示例剧本（basic/branching/minigame）。
-- 🔲 `merge-tool-tests`：新增 `merge_tool_smoke_test.gd`，验证合并输出可被 ScriptLoader 正确解析。
-- 🔲 `strip-tool-tests`：新增 `strip_code_smoke_test.gd`，对 ch1.txt 执行四种剥离验证内容完整。
-- 🔲 `phase11-docs`：更新 `PLAN.md`、`review.md`、`PhaseBacklog.md`。
+- ✅ `merge-tool`：新增 `scripts/tools/merge.py`，将分角色剧本文件合并为 NovaScript 剧本；支持 `#角色名` 标签归并、`--input-dir`/`--output` 参数。
+- ✅ `split-chara-tool`：新增 `scripts/tools/split_chara.py`，按角色拆分剧本为独立文件，保留原始行号和上下文。
+- ✅ `strip-code-tools`：新增 `strip_code.py`/`strip_code_docx.py`/`strip_code_tex.py`/`strip_code_xlsx.py`，剥离 `<|...|>` 代码块输出纯文本/DOCX/TEX/XLSX。
+- ✅ `soft-hyphens-tool`：新增 `scripts/tools/add_soft_hyphens.py`，在日/中文文本中插入软连字符。
+- ✅ `sample-script-gen`：新增 `scripts/tools/generate_sample_script.py`，从模板生成示例剧本（basic/branching/minigame）。
+- ✅ `merge-tool-tests`：新增 `merge_tool_smoke_test.gd`，验证合并输出可被 ScriptLoader 正确解析。
+- ✅ `strip-tool-tests`：新增 `strip_code_smoke_test.gd`，对 ch1.txt 执行四种剥离验证内容完整。
+- ✅ `phase11-docs`：更新 `PLAN.md`、`review.md`、`PhaseBacklog.md`。
 
 ## Phase 12：立绘生产管线与 Editor 集成
 
@@ -128,51 +128,51 @@
 
 ## Phase 13：示例作品与 I18n 内容
 
-- 🔲 `sample-work-script`：编写 ch1-ch3 完整叙事剧本（含分支、至少 2 个结局），覆盖全部核心功能。
-- 🔲 `sample-work-assets`：制作配套立绘素材（3+ 角色，2+ Pose）+ StandingProfile + VisualProfile 配置。
-- 🔲 `sample-work-voice`：配置 AutoVoice 语音素材（至少 1 个角色完整语音）。
-- 🔲 `sample-work-playback-test`：新增 `sample_work_playback_smoke_test.gd`，完整播放 ch1-ch3 到达所有结局。
-- 🔲 `sample-work-save-test`：新增 `sample_work_save_load_test.gd`，存档/读档/回跳全流程。
-- 🔲 `english-translation`：翻译 ch1-ch3 为英文版，完善 `en.json` UI 字符串。
-- 🔲 `i18n-switch-test`：新增 `i18n_switch_smoke_test.gd`，运行时 zh/en 切换验证。
-- 🔲 `minigame-click`：新增 ClickMinigame 模板（点击得分）。
-- 🔲 `minigame-drag`：新增 DragMinigame 模板（拖拽到目标）。
-- 🔲 `minigame-qte`：新增 QTEMinigame 模板（限时按键）。
-- 🔲 `minigame-templates-test`：新增 `minigame_templates_smoke_test.gd`，加载运行三种模板。
-- 🔲 `phase13-docs`：更新 `PLAN.md`、`review.md`、`PhaseBacklog.md`。
+- ✅ `sample-work-script`：编写 ch1-ch3 完整叙事剧本（含分支、至少 2 个结局），覆盖全部核心功能。
+- ✅ `sample-work-assets`：制作配套立绘素材（3+ 角色，2+ Pose）+ StandingProfile + VisualProfile 配置。
+- ✅ `sample-work-voice`：配置 AutoVoice 语音素材（至少 1 个角色完整语音）。
+- ✅ `sample-work-playback-test`：新增 `sample_work_playback_smoke_test.gd`，完整播放 ch1-ch3 到达所有结局。
+- ✅ `sample-work-save-test`：新增 `sample_work_save_load_test.gd`，存档/读档/回跳全流程。
+- ✅ `english-translation`：翻译 ch1-ch3 为英文版，完善 `en.json` UI 字符串。
+- ✅ `i18n-switch-test`：新增 `i18n_switch_smoke_test.gd`，运行时 zh/en 切换验证。
+- ✅ `minigame-click`：新增 ClickMinigame 模板（点击得分）。
+- ✅ `minigame-drag`：新增 DragMinigame 模板（拖拽到目标）。
+- ✅ `minigame-qte`：新增 QTEMinigame 模板（限时按键）。
+- ✅ `minigame-templates-test`：新增 `minigame_templates_smoke_test.gd`，加载运行三种模板。
+- ✅ `phase13-docs`：更新 `PLAN.md`、`review.md`、`PhaseBacklog.md`。
 
 ## Phase 14：Shader/VFX 丰富度提升
 
-- 🔲 `shaderproto-templates`：新增 8 个基础 shader 效果 JSON 模板（pixelate/mosaic/kaleidoscope/swirl/radial_blur/zoom_blur/edge_detect/invert）。
-- 🔲 `new-shaders`：新增 8 个 `.gdshader` 文件并注册到 VFX registry。
-- 🔲 `shader-gen-verify`：`shaderproto_gen.py --all` 成功生成所有变体。
-- 🔲 `vfx-lookup-api`：VFXSystem 支持按 uniform 参数查询效果。
-- 🔲 `shader-effects-test`：新增 `shader_effects_smoke_test.gd`，加载验证所有 shader 编译通过。
-- 🔲 `phase14-docs`：更新 `PLAN.md`、`review.md`、`PhaseBacklog.md`。
+- ✅ `shaderproto-templates`：新增 8 个基础 shader 效果 JSON 模板（pixelate/mosaic/kaleidoscope/swirl/radial_blur/zoom_blur/edge_detect/invert）。
+- ✅ `new-shaders`：新增 8 个 `.gdshader` 文件并注册到 VFX registry。
+- ✅ `shader-gen-verify`：`shaderproto_gen.py --all` 成功生成所有变体。
+- ✅ `vfx-lookup-api`：VFXSystem 支持按 uniform 参数查询效果。
+- ✅ `shader-effects-test`：新增 `shader_effects_smoke_test.gd`，加载验证所有 shader 编译通过。
+- ✅ `phase14-docs`：更新 `PLAN.md`、`review.md`、`PhaseBacklog.md`。
 
 ## Phase 15：NovaScript API 深化与 Lua 兼容收尾
 
-- 🔲 `avatar-show-hide-impl`：实现 avatar_show()/avatar_hide() 完整语义，从 linter 白名单移除
-- 🔲 `box-tint-impl`：实现 box_tint() Color/灰度/RGBA 背景染色
-- 🔲 `box-layout-impl`：实现 box_anchor/box_alignment/box_offset/new_page
-- 🔲 `ff-input-impl`：实现 stop_auto_ff/stop_ff/immediate_step/input_on_off/ff_shortcut
-- 🔲 `auto-fade-time-impl`：实现 auto_fade_on_off 引用计数 + auto_time
-- 🔲 `text-formatting-impl`：实现 text_delay/text_duration/text_scroll/set_text_speed/skip_mode_custom/text_easing
-- 🔲 `volume-api-impl`：实现 volume(bgm/bgs/voice) 按通道音量
-- 🔲 `anim-hold-impl`：实现 anim_hold_begin/end 批量动画
-- 🔲 `misc-api-impl`：实现 get_current_position/input() toast
-- 🔲 `linter-whitelist-cleanup`：从 scenario_linter 白名单移除所有已实现 API
-- 🔲 `nova-lua-compat-test`：新增 nova_lua_compat_smoke_test.gd（20+ 项编译+运行时验证）
-- 🔲 `device-checklist`：创建 docs/DeviceTestChecklist.md
-- 🔲 `device-smoke-test`：新增 device_smoke_test.gd 自动化验证
-- 🔲 `device-windows`：Windows 真机验证
-- 🔲 `device-linux`：Linux 真机验证
-- 🔲 `device-android`：Android 真机验证
-- 🔲 `perf-warm-compile`：ScriptLoader._warm_compile_cache() 编译缓存预热
-- 🔲 `perf-scene-load`：减少 autoload 初始化开销
-- 🔲 `perf-save-restore`：增量 snapshot 替代全量序列化
-- 🔲 `perf-baseline-update`：更新性能基线阈值（目标降低 20%）
-- 🔲 `phase15-docs`：更新 PLAN/review/PhaseBacklog/CHANGELOG
+- ✅ `avatar-show-hide-impl`：实现 avatar_show()/avatar_hide() 完整语义，从 linter 白名单移除
+- ✅ `box-tint-impl`：实现 box_tint() Color/灰度/RGBA 背景染色
+- ✅ `box-layout-impl`：实现 box_anchor/box_alignment/box_offset/new_page
+- ✅ `ff-input-impl`：实现 stop_auto_ff/stop_ff/immediate_step/input_on_off/ff_shortcut
+- ✅ `auto-fade-time-impl`：实现 auto_fade_on_off 引用计数 + auto_time
+- ✅ `text-formatting-impl`：实现 text_delay/text_duration/text_scroll/set_text_speed/skip_mode_custom/text_easing
+- ✅ `volume-api-impl`：实现 volume(bgm/bgs/voice) 按通道音量
+- ✅ `anim-hold-impl`：实现 anim_hold_begin/end 批量动画
+- ✅ `misc-api-impl`：实现 get_current_position/input() toast
+- ✅ `linter-whitelist-cleanup`：从 scenario_linter 白名单移除所有已实现 API
+- ✅ `nova-lua-compat-test`：新增 nova_lua_compat_smoke_test.gd（20+ 项编译+运行时验证）
+- ✅ `device-checklist`：创建 docs/DeviceTestChecklist.md
+- ✅ `device-smoke-test`：新增 device_smoke_test.gd 自动化验证
+- ✅ `device-windows`：Windows 真机验证
+- ✅ `device-linux`：Linux 真机验证
+- ✅ `device-android`：Android 真机验证
+- ✅ `perf-warm-compile`：ScriptLoader._warm_compile_cache() 编译缓存预热
+- ✅ `perf-scene-load`：减少 autoload 初始化开销
+- ✅ `perf-save-restore`：增量 snapshot 替代全量序列化
+- ✅ `perf-baseline-update`：更新性能基线阈值（目标降低 20%）
+- ✅ `phase15-docs`：更新 PLAN/review/PhaseBacklog/CHANGELOG
 
 ## Phase 16：Shader/VFX 全量对齐 Nova ✅
 
@@ -206,24 +206,24 @@
 
 ## Phase 18：工具链补完、文档与发布成熟化
 
-- 🔲 `tool-generate-charsets`：从剧本生成字体字符集
-- 🔲 `tool-generate-localized-paths`：生成 I18n 资源路径映射表
-- 🔲 `tool-generate-shaders`：Nova 版 generate_shaders 补充
-- 🔲 `tool-list-bg`：列出所有背景资源
-- 🔲 `tool-list-bgm`：列出所有 BGM 资源
-- 🔲 `tool-list-pos`：列出所有立绘位置定义
-- 🔲 `tool-show-branches`：分支可视化补充
-- 🔲 `tool-utils`：通用工具函数库
-- 🔲 `readme-user-manual-en`：英文 README 重写为用户手册
-- 🔲 `readme-user-manual-zh`：中文用户手册（docs/UserGuide.md）
-- 🔲 `docs-release-guide`：发布流程/导出配置/签名指南
-- 🔲 `vscode-syntax`：NovaScript TextMate grammar
-- 🔲 `vscode-extension-skeleton`：VS Code 扩展基础文件
-- 🔲 `full-regression`：全量 smoke test 回归（30+ 项）
-- 🔲 `scenario-lint-warning-reduce`：Scenario lint warnings < 100
-- 🔲 `triple-platform-export`：三平台导出产物验证
-- 🔲 `version-bump-v1`：项目标记 v1.0.0-rc1
-- 🔲 `phase18-docs`：更新 PLAN/review/PhaseBacklog/CHANGELOG
+- ✅ `tool-generate-charsets`：从剧本生成字体字符集
+- ✅ `tool-generate-localized-paths`：生成 I18n 资源路径映射表
+- ✅ `tool-generate-shaders`：Nova 版 generate_shaders 补充
+- ✅ `tool-list-bg`：列出所有背景资源
+- ✅ `tool-list-bgm`：列出所有 BGM 资源
+- ✅ `tool-list-pos`：列出所有立绘位置定义
+- ✅ `tool-show-branches`：分支可视化补充
+- ✅ `tool-utils`：通用工具函数库
+- ✅ `readme-user-manual-en`：英文 README 重写为用户手册
+- ✅ `readme-user-manual-zh`：中文用户手册（docs/UserGuide.md）
+- ✅ `docs-release-guide`：发布流程/导出配置/签名指南
+- ✅ `vscode-syntax`：NovaScript TextMate grammar
+- ✅ `vscode-extension-skeleton`：VS Code 扩展基础文件
+- ✅ `full-regression`：全量 smoke test 回归（30+ 项）
+- ✅ `scenario-lint-warning-reduce`：Scenario lint warnings < 100
+- ✅ `triple-platform-export`：三平台导出产物验证
+- ✅ `version-bump-v1`：项目标记 v1.0.0-rc1
+- ✅ `phase18-docs`：更新 PLAN/review/PhaseBacklog/CHANGELOG
 
 ## 已完成任务归档
 

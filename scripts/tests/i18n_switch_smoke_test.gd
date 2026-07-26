@@ -107,10 +107,10 @@ func _test_scenario_files() -> void:
 		"res://resources/scenarios/ch4.txt",
 	]
 	var en_files := [
-		"res://resources/LocalizedResources/English/Scenarios/ch1.txt",
-		"res://resources/LocalizedResources/English/Scenarios/ch2.txt",
-		"res://resources/LocalizedResources/English/Scenarios/ch3.txt",
-		"res://resources/LocalizedResources/English/Scenarios/ch4.txt",
+		"res://resources/LocalizedResources/English/scenarios/ch1.txt",
+		"res://resources/LocalizedResources/English/scenarios/ch2.txt",
+		"res://resources/LocalizedResources/English/scenarios/ch3.txt",
+		"res://resources/LocalizedResources/English/scenarios/ch4.txt",
 	]
 
 	for i in range(zh_files.size()):
@@ -154,6 +154,15 @@ func _test_i18n_class() -> void:
 	i18n.set_locale("fr")
 	var fallback: String = i18n.t("title.menu.start")
 	_assert(fallback != "", "Fallback locale works for unknown locale")
+
+	# load_scenario resolves to LocalizedResources for non-default locales
+	i18n.set_locale("en")
+	var en_scenario: String = i18n.load_scenario("en", "res://resources/scenarios/ch1.txt")
+	_assert(en_scenario == "res://resources/LocalizedResources/English/scenarios/ch1.txt",
+		"load_scenario(en) resolves to LocalizedResources path")
+	var zh_scenario: String = i18n.load_scenario("zh", "res://resources/scenarios/ch1.txt")
+	_assert(zh_scenario == "res://resources/scenarios/ch1.txt",
+		"load_scenario(zh) keeps default path")
 
 	# Note: I18n extends RefCounted; no manual free() needed in Godot 4
 

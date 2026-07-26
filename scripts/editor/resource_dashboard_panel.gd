@@ -118,13 +118,13 @@ func _clear_summary() -> void:
 	for child in _summary_grid.get_children():
 		child.queue_free()
 
-	var defaults := {
-		"Referenced": ("0", Color.WHITE),
-		"Found": ("0", Color.WHITE),
-		"Missing": ("0", Color.RED),
-		"Virtual": ("0", Color(0.5, 0.5, 1.0)),
-		"Errors": ("0", Color.RED),
-		"Warnings": ("0", Color.YELLOW),
+	var defaults: Dictionary = {
+		"Referenced": ["0", Color.WHITE],
+		"Found": ["0", Color.WHITE],
+		"Missing": ["0", Color.RED],
+		"Virtual": ["0", Color(0.5, 0.5, 1.0)],
+		"Errors": ["0", Color.RED],
+		"Warnings": ["0", Color.YELLOW],
 	}
 	for key in defaults:
 		var entry := defaults[key]

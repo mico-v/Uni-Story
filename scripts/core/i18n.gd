@@ -10,6 +10,7 @@ class_name I18n
 
 var supported_locales: Array = ["zh", "en"]
 var localized_resources_path: String = "res://resources/localized_resources/localized_strings/"
+var localized_asset_root: String = "res://resources/LocalizedResources/"
 var fallback_locale: String = "en"
 var locale: String = "zh"
 
@@ -91,13 +92,23 @@ func t(key: String, default_value: String = "") -> String:
 
 
 ## Return a scenario path that is locale-specific when exists.
-## e.g. res://resources/scenarios/ch1.txt + locale "en" =>
-## res://resources/scenarios/ch1_en.txt (if file exists)
+## Lookup order:
+##   1. Nova-style asset localization: res://resources/LocalizedResources/{Locale}/{relative_path}
+##      (e.g. res://resources/scenarios/ch1.txt + "en" =>
+##       res://resources/LocalizedResources/English/scenarios/ch1.txt)
+##   2. Suffix form in the same directory: ch1_en.txt
+##   3. Fallback locale suffix, then the original path.
 func load_scenario(locale_name: String, source_path: String) -> String:
 	var loc := _resolve_locale(locale_name)
 	if loc.is_empty() or source_path.is_empty():
 		return source_path
 
+	# 1. Nova-style LocalizedResources/{display_name}/{relative_path}.
+	var asset_localized := _try_localized_asset_path(loc, source_path)
+	if not asset_localized.is_empty():
+		return asset_localized
+
+	# 2. Suffix form: basename_locale.ext in the same directory.
 	var ext := source_path.get_extension()
 	if ext.is_empty():
 		return source_path
@@ -108,9 +119,39 @@ func load_scenario(locale_name: String, source_path: String) -> String:
 	if FileAccess.file_exists(localized):
 		return localized
 
-	# Fall back to default if localized file is missing.
+	# 3. Fall back to default-locale suffix if present.
 	var fallbacked := base + "_%s.%s" % [fallback_locale, ext]
 	if loc != fallback_locale and FileAccess.file_exists(fallbacked):
 		return fallbacked
 
 	return source_path
+
+
+## Resolve a locale-specific asset path under the LocalizedResources root.
+## Returns an empty string when no localized override exists.
+func _try_localized_asset_path(loc: String, source_path: String) -> String:
+	# The default locale ships assets in-place; no LocalizedResources override.
+	if loc == locale and loc == supported_locales[0]:
+		return ""
+	var display_name := _locale_display_name(loc)
+	if display_name.is_empty():
+		return ""
+	var prefix := "res://resources/"
+	if not source_path.begins_with(prefix):
+		return ""
+	var rel_path := source_path.substr(prefix.length())
+	var candidate := localized_asset_root.trim_suffix("/") + "/" + display_name + "/" + rel_path
+	if FileAccess.file_exists(candidate):
+		return candidate
+	return ""
+
+
+## Map a locale code to the LocalizedResources sub-directory name used by Nova.
+func _locale_display_name(loc: String) -> String:
+	match loc.to_lower():
+		"en":
+			return "English"
+		"zh", "chinesesimplified":
+			return "Chinese"
+		_:
+			return loc.capitalize()

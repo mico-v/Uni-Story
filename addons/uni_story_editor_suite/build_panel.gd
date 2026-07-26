@@ -160,14 +160,9 @@ func _on_export_pressed() -> void:
 			_append_status("  ERROR: No export preset found for %s" % platform)
 			continue
 
-		# Set version
-		var preset := EditorExport.get_export_preset(preset_idx)
-		if preset:
-			_append_status("  Preset: %s" % preset.get_name())
-
-			# Attempt export
-			var result := _do_export(preset_idx, platform, version)
-			_append_status("  Result: " + result)
+		_append_status("  Preset index: %d" % preset_idx)
+		var result := _do_export(preset_idx, platform, version)
+		_append_status("  Result: " + result)
 
 	_append_status("=== Export complete ===")
 	_reset_export_button()
@@ -180,30 +175,9 @@ func _reset_export_button() -> void:
 
 
 func _do_export(preset_idx: int, platform: String, version: String) -> String:
-	# Use EditorExportPlatform to trigger the export
-	var preset := EditorExport.get_export_preset(preset_idx)
-	if preset == null:
-		return "Preset not found"
-
-	# Build output path
-	var default_path := "user://export/"
-	match platform:
-		"Windows":
-			default_path += "windows/Uni-Story.exe"
-		"Linux":
-			default_path += "linux/Uni-Story.x86_64"
-		"Android":
-			default_path += "android/Uni-Story.apk"
-
-	# Save preset path
-	preset.set("export_path", default_path)
-
-	# Trigger export via the preset's platform
-	var platform_obj: EditorExportPlatform = preset.get_platform()
-	if platform_obj == null:
-		return "Platform object not available"
-
-	# For CI integration: write a marker file that CI picks up
+	# For CI integration: write a marker file that CI picks up.
+	# Direct in-editor export via EditorExportPlatform is not exposed in
+	# Godot 4.6's public API; CI watches for this trigger file instead.
 	var trigger_path := "user://export_trigger_%s_%s.txt" % [platform.to_lower(), version]
 	var f := FileAccess.open(trigger_path, FileAccess.WRITE)
 	if f:
@@ -216,20 +190,32 @@ func _do_export(preset_idx: int, platform: String, version: String) -> String:
 	return "Failed to write export trigger"
 
 
-func _find_export_preset(name: String) -> int:
-	for i in range(EditorExport.get_export_preset_count()):
-		var preset := EditorExport.get_export_preset(i)
-		if preset and preset.get_name() == name:
+## Parse export_presets.cfg to list preset names without relying on the
+## EditorExport singleton (not exposed in Godot 4.6 public API).
+func _read_preset_names() -> Array[String]:
+	var names: Array[String] = []
+	var cfg := ConfigFile.new()
+	var err := cfg.load("res://export_presets.cfg")
+	if err != OK:
+		return names
+	for section in cfg.get_sections():
+		if str(section).begins_with("preset."):
+			var pname: String = cfg.get_value(str(section), "name", "")
+			if not pname.is_empty():
+				names.append(pname)
+	return names
+
+
+func _find_export_preset(preset_name: String) -> int:
+	var names := _read_preset_names()
+	for i in range(names.size()):
+		if names[i] == preset_name:
 			return i
 	return -1
 
 
 func _list_available_presets() -> String:
-	var names: Array[String] = []
-	for i in range(EditorExport.get_export_preset_count()):
-		var preset := EditorExport.get_export_preset(i)
-		if preset:
-			names.append(preset.get_name())
+	var names := _read_preset_names()
 	if names.is_empty():
 		return "(none)"
 	return ", ".join(names)

@@ -148,7 +148,7 @@
 - Phase 8：资源加载、预加载与内容生产工具
 - Phase 9：小游戏、中断与扩展接口
 - Phase 10：平台、质量与发布
-- 21 项 headless 测试通过 + 完整 CI/Release pipeline
+- 31 项 headless 测试通过 + 完整 CI/Release pipeline
 
 ## Release
 

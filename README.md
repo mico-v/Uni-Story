@@ -47,7 +47,7 @@ Uni-Story 是从 Nova2 项目继续开发而来的 Godot 视觉小说运行时/�
 - VFX/Shader：对象特效（blur、grayscale、dissolve、glitch、ripple）、后处理特效（chromatic、vignette、grayscale、blur、glitch）、屏幕震动和 shader 转场。系统维护最多三层效果状态栈并支持按名称移除，但当前渲染只把栈顶材质应用到节点；真正的多 pass 合成和使用 captured texture 的转场仍待实现。
 - 中断/小游戏：InterruptManager 支持 begin/end_interrupt 协议，中断期间暂停对话推进，结束后自动 checkpoint。
 - 移动端：安卓/移动端强制横屏/全屏，viewport expand 自适应布局，背景/CG cover fit，触控操作和长按菜单。
-- 自动化测试：20/20 个 headless 测试通过（约 55 秒），由 `scripts/tests/run_headless_suite.py` 统一发现和执行；CI 与 release 均先运行 Scenario lint 和完整套件，再构建 Windows、Linux、Android 产物。
+- 自动化测试：31/31 个 headless 测试通过（约 55 秒），由 `scripts/tests/run_headless_suite.py` 统一发现和执行；CI 与 release 均先运行 Scenario lint 和完整套件，再构建 Windows、Linux、Android 产物。
 - 资源扫描：`scenario_resource_scan_test.gd` 覆盖 `say(speaker, id)` 等剧本资源引用；当前 `referenced=369`、`found=367`、`virtual=2`、`missing=0`。
 
 ## 剧本静态检查
@@ -85,25 +85,36 @@ python scripts/tools/scenario_stat.py --godot godot --top 0
 python scripts/tests/run_headless_suite.py --godot godot --timeout 180
 ```
 
-当前 20 个测试为：
+当前 31 个测试为：
 
 - `auto_voice_system_smoke_test.gd`
 - `chapter_select_smoke_test.gd`
 - `checkpoint_manager_smoke_test.gd`
+- `editor_tools_smoke_test.gd`
+- `export_smoke_test.gd`
 - `game_state_smoke_test.gd`
+- `i18n_switch_smoke_test.gd`
 - `load_runtime_scripts_test.gd`
 - `main_scene_smoke_test.gd`
+- `minigame_smoke_test.gd`
+- `minigame_templates_smoke_test.gd`
 - `nova_ch1_playback_smoke_test.gd`
 - `nova_compat_smoke_test.gd`
+- `nova_lua_compat_smoke_test.gd`
 - `nova_runtime_compile_test.gd`
 - `nova_visual_compat_smoke_test.gd`
 - `parse_scenarios_test.gd`
+- `performance_baseline_test.gd`
 - `prefab_loader_smoke_test.gd`
 - `preload_system_smoke_test.gd`
+- `sample_work_playback_smoke_test.gd`
+- `sample_work_save_load_test.gd`
 - `save_system_smoke_test.gd`
 - `scenario_linter_smoke_test.gd`
 - `scenario_resource_scan_test.gd`
 - `scenario_stat_smoke_test.gd`
+- `scenario_visualize_smoke_test.gd`
+- `shader_effects_smoke_test.gd`
 - `sprite_composer_smoke_test.gd`
 - `theme_manager_smoke_test.gd`
 - `vfx_stack_smoke_test.gd`
@@ -120,7 +131,7 @@ scripts/
   core/                      # 纯模型、剧本解析、流程图、状态、存档、回顾、I18n、视图管理、中断
   runtime/                   # 演出脚本运行时、图像、动画、音频、镜头、转场、VFX 等系统
   ui/                        # 视图控制器（标题/游戏/设置/鉴赏/存读档/回顾/帮助）
-  tests/                     # 20 个 Headless 测试 + run_headless_suite.py
+  tests/                     # 31 个 Headless 测试 + run_headless_suite.py
   tools/                     # Scenario lint + stat + visualize + 9 个资源工具 + shaderproto_gen + vscode/
 resources/
   auto_voice_profile.tres    # canonical speaker、角色语音目录、6 位编号规则

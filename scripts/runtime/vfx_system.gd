@@ -54,6 +54,15 @@ const OBJECT_EFFECTS := {
 	"gray_wave":    { "shader": "res://resources/shaders/gray_wave.gdshader",    "params": { "wave_amount": 0.5 } },
 	"water":        { "shader": "res://resources/shaders/water.gdshader",        "params": { "intensity": 0.3 } },
 	"default":      { "shader": "res://resources/shaders/default.gdshader",      "params": {} },
+	"mix_add":          { "shader": "res://resources/shaders/mix_add.gdshader",          "params": { "strength": 0.5 } },
+	"dissolve_blue":    { "shader": "res://resources/shaders/dissolve_example_blue.gdshader",  "params": { "threshold": 1.0, "edge_color": Color(0.0, 0.3, 1.0, 1.0), "edge_width": 0.03 } },
+	"dissolve_fast":    { "shader": "res://resources/shaders/dissolve_example_fast.gdshader",  "params": { "threshold": 1.0, "edge_color": Color(1.0, 0.5, 0.0, 1.0), "edge_width": 0.01 } },
+	"edge_detect_red":    { "shader": "res://resources/shaders/edge_detect_red.gdshader",    "params": { "amount": 1.0, "threshold": 0.3, "edge_color": Color(1.0, 0.0, 0.0, 1.0) } },
+	"edge_detect_strong": { "shader": "res://resources/shaders/edge_detect_strong.gdshader", "params": { "amount": 1.0, "threshold": 0.1 } },
+	"edge_detect_subtle": { "shader": "res://resources/shaders/edge_detect_subtle.gdshader", "params": { "amount": 0.3, "threshold": 0.5 } },
+	"invert_partial":   { "shader": "res://resources/shaders/invert_partial.gdshader",   "params": { "amount": 0.5 } },
+	"kaleidoscope_hex":  { "shader": "res://resources/shaders/kaleidoscope_hex.gdshader",  "params": { "segments": 3.0, "amount": 1.0 } },
+	"kaleidoscope_octo": { "shader": "res://resources/shaders/kaleidoscope_octo.gdshader", "params": { "segments": 8.0, "amount": 1.0 } },
 }
 
 const POST_EFFECTS := {
@@ -844,8 +853,6 @@ func _normalize_effect_name(effect_name: String) -> String:
 			return "ripple_move"
 		"rotate", "barrel_roll":
 			return "roll"
-		"color":
-			return ""
 		_:
 			return effect_name
 

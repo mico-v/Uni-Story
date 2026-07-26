@@ -1,7 +1,7 @@
 [gd_resource type="Theme" load_steps=20 format=3 uid="uid://btheme_debug_unistory"]
 
 [ext_resource type="Theme" uid="uid://btheme_base_unistory" path="res://resources/themes/base_theme.tres" id="2_base"]
-[ext_resource type="FontFile" uid="uid://d2vo4pkh6yd03" path="res://resources/fonts/NotoSansSC-Regular.ttf" id="1_noto"]
+[ext_resource type="FontFile" uid="uid://bnwc5nf87qnnj" path="res://resources/fonts/NotoSansSC-Regular.ttf" id="1_noto"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_disabled"]
 content_margin_left = 12.0

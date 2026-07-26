@@ -145,7 +145,7 @@ python scripts/tools/scenario_stat.py --godot godot --top 0
 
 ## 自动化测试
 
-项目包含 20 个 headless 测试脚本（`scripts/tests/`），当前完整套件为 20/20 PASS（约 55 秒），由跨平台 Python runner 统一执行：
+项目包含 31 个 headless 测试脚本（`scripts/tests/`），当前完整套件为 31/31 PASS（约 55 秒），由跨平台 Python runner 统一执行：
 
 | 测试 | 覆盖范围 |
 |------|----------|
@@ -169,6 +169,17 @@ python scripts/tools/scenario_stat.py --godot godot --top 0
 | `preload_system_smoke_test.gd` | 分类型缓存、优先级、取消、进度与恢复 |
 | `theme_manager_smoke_test.gd` | base/work theme 加载、应用与恢复 |
 | `vfx_stack_smoke_test.gd` | 效果状态栈、按名清理、捕获接口与恢复 |
+| `editor_tools_smoke_test.gd` | Editor Resource 类型、Inspector 插件、Editor Panel、立绘编辑器增强 |
+| `export_smoke_test.gd` | 子系统初始化 + ch1 推进 + 存读档 + 视图导航 + ch4 播放 |
+| `i18n_switch_smoke_test.gd` | zh/en JSON 文件完整性、I18n locale 切换 |
+| `minigame_smoke_test.gd` | ExampleMinigame 文字输入 + 变量回传 + teardown 协议 |
+| `minigame_templates_smoke_test.gd` | Click/Drag/QTE 三种小游戏模板加载与方法签名 |
+| `nova_lua_compat_smoke_test.gd` | 20+ 项 NovaScript API 编译+运行时验证（no-op 桩 → 完整实现） |
+| `performance_baseline_test.gd` | 解析/场景加载/存档/恢复/回跳 5 项耗时与上限 |
+| `sample_work_playback_smoke_test.gd` | ch1-ch4 结构、分支标签、结局定义验证 |
+| `sample_work_save_load_test.gd` | 存档系统就绪、所有结局可达 |
+| `scenario_visualize_smoke_test.gd` | 分支可视化 text/JSON/DOT/Mermaid 输出 |
+| `shader_effects_smoke_test.gd` | 所有 shader 编译、registry、stack/snapshot/restore、uniform 查询 |
 
 严格资源扫描包含 `say(speaker, id)` 引用；当前结果为 `referenced=369`、`found=367`、`virtual=2`、`missing=0`。
 

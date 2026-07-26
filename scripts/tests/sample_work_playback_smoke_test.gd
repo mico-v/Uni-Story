@@ -86,18 +86,18 @@ func _test_path_1() -> void:
 
 func _test_path_2() -> void:
 	# Verify English translations exist
-	var en_ch3 := _file_exists("res://resources/LocalizedResources/English/Scenarios/ch3.txt")
-	var en_ch4 := _file_exists("res://resources/LocalizedResources/English/Scenarios/ch4.txt")
+	var en_ch3 := _file_exists("res://resources/LocalizedResources/English/scenarios/ch3.txt")
+	var en_ch4 := _file_exists("res://resources/LocalizedResources/English/scenarios/ch4.txt")
 	_assert(en_ch3, "English ch3.txt exists")
 	_assert(en_ch4, "English ch4.txt exists")
 
 	# Verify English ch3 has the same branch labels
-	var en_ch3_text := _read_file("res://resources/LocalizedResources/English/Scenarios/ch3.txt")
+	var en_ch3_text := _read_file("res://resources/LocalizedResources/English/scenarios/ch3.txt")
 	_assert("l_throw_away" in en_ch3_text, "EN ch3 has l_throw_away label")
 	_assert("l_use_poison" in en_ch3_text, "EN ch3 has l_use_poison label")
 
 	# Verify English ch4 has endings
-	var en_ch4_text := _read_file("res://resources/LocalizedResources/English/Scenarios/ch4.txt")
+	var en_ch4_text := _read_file("res://resources/LocalizedResources/English/scenarios/ch4.txt")
 	_assert("true_end_good" in en_ch4_text, "EN ch4 has true_end_good ending")
 	_assert("true_end_dark" in en_ch4_text, "EN ch4 has true_end_dark ending")
 

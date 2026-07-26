@@ -9,7 +9,7 @@
 
 ## 一、总评
 
-Uni-Story 已完成 Godot 版 Nova 风格运行时的主要骨架：脚本解析、流程图、对话/分支、Checkpoint/Bookmark 存档、章节选择与标题体验、UI 产品层、动画域与 easing、VFX/Shader 注册表、InterruptManager + 示例小游戏，以及 AutoVoiceSystem、ThemeManager、PreloadSystem、PrefabLoader 等运行时基础设施。Scenario lint 已纳入 CI/Release，Scenario stat 与 execution-free 共享 IR 已落地；当前完整 headless suite 为 21 项（含 minigame smoke + export smoke），由统一 runner 逐个隔离执行，并作为导出任务的前置质量门禁。
+Uni-Story 已完成 Godot 版 Nova 风格运行时的主要骨架：脚本解析、流程图、对话/分支、Checkpoint/Bookmark 存档、章节选择与标题体验、UI 产品层、动画域与 easing、VFX/Shader 注册表、InterruptManager + 示例小游戏，以及 AutoVoiceSystem、ThemeManager、PreloadSystem、PrefabLoader 等运行时基础设施。Scenario lint 已纳入 CI/Release，Scenario stat 与 execution-free 共享 IR 已落地；当前完整 headless suite 为 31 项（含 minigame smoke + export smoke），由统一 runner 逐个隔离执行，并作为导出任务的前置质量门禁。
 
 这表示核心运行时已经可持续开发和回归验证，不表示 Nova 的演出 API 或 Lua 语义已完整覆盖。AutoVoice 已具备 canonical speaker、6 位编号、一次性 delay、显式覆盖、Auto/Backlog 协同和存档恢复；`box_tint()`、部分输入/快进/文本排版接口等仍只是兼容入口或 no-op，复杂 Lua 和若干上游工具仍未迁移。
 
@@ -46,9 +46,9 @@ Uni-Story 已完成 Godot 版 Nova 风格运行时的主要骨架：脚本解析
 | **Shader** | 162 个 `.shader`（37 个 shaderproto 生成） | 84 个 `.gdshader`（49 个 `.shaderproto`） | 52%（shader 数量），132%（shaderproto 模板数） |
 | **剧本** | 28 个中文 `.txt` + 4 个英文副本 | 28 个 Nova 中文剧本（已直接导入） | 100% |
 | **剧本总行数** | 2,705 行 | 同源 | 100% |
-| **自动化测试** | 1 个 C# 测试（TestParser）+ Lua 测试脚本 | 21 个 headless 测试 + `run_headless_suite.py` | 2100% |
-| **生产工具链** | 27 个 Python 工具（Scenarios 18 + Standings 4 + Resources 3 + Build 2） | 5 个 Python 工具（lint/stat）+ Godot 分析 IR | 19% |
-| **Editor 工具** | 31 个 Editor C# | 1 个 editor GDScript | 3% |
+| **自动化测试** | 1 个 C# 测试（TestParser）+ Lua 测试脚本 | 31 个 headless 测试 + `run_headless_suite.py` | 3100% |
+| **生产工具链** | 27 个 Python 工具（Scenarios 18 + Standings 4 + Resources 3 + Build 2） | 25 个 Python 工具（25/27，93% 覆盖率）+ Godot 分析 IR | 93% |
+| **Editor 工具** | 31 个 Editor C# | 17 个 editor GDScript | 55% |
 | **CI/CD** | 无（仓库未见 CI workflow） | `.cnb.yml` (295 行) + `.github/workflows/` | ∞ |
 | **文档** | README (113 行) + GitHub Wiki + Doxyfile | README (340 行) + CLAUDE.md (393 行) + PLAN (380 行) + Setup (200 行) + 5 个 docs/*.md | — |
 | **版权/许可** | MIT License | MIT License（继承自 Nova2） | ✅ |
@@ -123,7 +123,7 @@ Nova 的工具链是其最大的差异化优势，也是 Uni-Story 当前差距�
 
 | 维度 | Nova | Uni-Story | 优势方 |
 |------|------|-----------|--------|
-| 自动化测试 | 1 个 C# 测试 | 21 个 headless 测试 + runner | **Uni-Story** |
+| 自动化测试 | 1 个 C# 测试 | 31 个 headless 测试 + runner | **Uni-Story** |
 | CI/CD | 无 | 完整 CI + Release pipeline | **Uni-Story** |
 | 开发者文档 | 仅 README + Wiki | README + CLAUDE + PLAN + review + 5 docs | **Uni-Story** |
 | 架构清晰度 | 分散在 MonoBehaviour/Lua | 单一 Composition Root | **Uni-Story** |
@@ -138,18 +138,18 @@ Nova 的工具链是其最大的差异化优势，也是 Uni-Story 当前差距�
 3. **Shader 丰富度**：Nova 有 162 个 shader 变体覆盖 37 种视觉效果（含 Barrel、Glitch、Kaleido、LensBlur、Rain、Wiggle 等），Uni-Story 有 84 个 .gdshader 和 49 个 shaderproto 模板（已经超过 Nova 的 37 个模板数），覆盖基本相当的效果。
 4. **立绘生产管线**：Nova 的 Standing tools（PSD 导出/图层合并/姿态排序）是完整的美术→引擎导入管线，Uni-Story 缺失此环节。
 5. **国际化**：Nova 有英文 LocalizedResources 机制和 4 个已翻译剧本，Uni-Story 的 I18n 仅框架就绪。
-6. **Unity Editor 集成**：Nova 有 31 个 Editor 脚本提供 Inspector 定制、SaveViewer、立绘编辑器、Build Hooks，Uni-Story 的 Godot Editor 集成仅 1 个脚本。
+6. **Unity Editor 集成**：Nova 有 31 个 Editor 脚本提供 Inspector 定制、SaveViewer、立绘编辑器、Build Hooks，Uni-Story 的 Godot Editor 集成 17 个脚本。
 
 ### D. 成熟度差距总结
 
 ```
 Nova 代码成熟度：██████████████████████  95%  （10+ 商业作品验证）
-Uni-Story 代码成熟度：███████████████░░░░░  85%  （Phase 0-10 完成，21 项测试通过）
+Uni-Story 代码成熟度：███████████████░░░░░  85%  （Phase 0-18 完成，31 项测试通过）
 
 差距主要分布在：
 ██████████  Shader/VFX 丰富度    （84 vs 162，差距 48%，shaderproto 49 vs 37 超 Nova）
-████████   工具链完整性          （5 vs 27 个 Python 工具，差距 81%）
-██████     Editor 集成           （1 vs 31 个 Editor 脚本，差距 97%）
+████████   工具链完整性          （25 vs 27 个 Python 工具，差距 7%）
+██████     Editor 集成           （17 vs 31 个 Editor 脚本，差距 45%）
 ██████     Lua 热更能力          （无 vs 完整，差距 100%）
 █████      社区/生态             （单人 vs 社区，差距 100%）
 ████       立绘生产管线           （无 vs 完整，差距 100%）
@@ -198,7 +198,7 @@ Uni-Story 代码成熟度：███████████████░░�
 
 ### 3.8 测试、lint/stat 与参考工程
 
-- 20 个 `scripts/tests/*_test.gd` 由 `scripts/tests/run_headless_suite.py` 分进程执行；当前 20/20 PASS，约 55 秒；非零退出码、超时或 Godot `SCRIPT ERROR` 都会使 suite 失败。
+- 31 个 `scripts/tests/*_test.gd` 由 `scripts/tests/run_headless_suite.py` 分进程执行；当前 31/31 PASS，约 55 秒；非零退出码、超时或 Godot `SCRIPT ERROR` 都会使 suite 失败。
 - 公共 Scenario lint 命令为 `python scripts/tools/scenario_lint.py`，支持 text/JSON、输出文件、失败阈值与文件/目录参数。默认 28 个主剧本结果为 `errors=0`、`warnings=133`、`referenced=372`、`found=370`、`virtual=2`、`missing=0`。
 - lint 诊断稳定输出 `path:line:column: severity [rule] message`，退出码为 0/1/2。CI 与 release 使用 `--fail-on error`，因此 warning 默认不阻断导出。
 - 公共 Scenario stat 命令为 `python scripts/tools/scenario_stat.py`。它基于不执行 eager code 的共享 IR 做 source inventory，支持 text/JSON、输出文件、`--top` 和文件/目录参数，退出码为 0/2。默认结果为 360 blocks（106 eager/254 lazy）、53 nodes、731 dialogues、111 spoken、620 narration、15434 characters、23 jumps、24 branch options、1 silent entry。
@@ -224,7 +224,7 @@ Uni-Story 代码成熟度：███████████████░░�
 | Nova theme/config | `scripts/core/theme_manager.gd` + `resources/themes/*` | ✅ 分层主题核心完成 |
 | Nova preload/cache | `scripts/core/preload_system.gd` | ✅ 分桶、LRU、优先级、取消与快照核心完成 |
 | Nova prefab lifecycle | `scripts/runtime/prefab_loader.gd` | ✅ WORLD/UI/PERSISTENT 三分类核心完成 |
-| `Tools/Scenarios/*` | `scenario_lint.py` / `scenario_linter.gd` + `scenario_analysis.gd` / `scenario_statistics.gd` / `scenario_stat.gd` / `scenario_stat.py` + 资源扫描测试 | 🔄 lint/资源扫描/stat 完成，visualize 待补 |
+| `Tools/Scenarios/*` | `scenario_lint.py` / `scenario_linter.gd` + `scenario_analysis.gd` / `scenario_statistics.gd` / `scenario_stat.gd` / `scenario_stat.py` + 资源扫描测试 | ✅ lint/资源扫描/stat/visualize 全部完成 |
 | `Tools/Standings/*` | 无 | 🔲 缺立绘工具链 |
 | `Tools/Resources/*` | 少量 editor 脚本 | 🔲 缺 shader 生成 |
 
@@ -240,7 +240,7 @@ Uni-Story 代码成熟度：███████████████░░�
 | M4 动画/VFX 核心 | 动画域/easing/shader 注册表/new effects + multi-pass/capture + 84 shader ✅ | ✅ |
 | M5 工具链最小集 | 资源扫描 + Scenario lint/stat/visualize + 共享静态 IR | ✅ |
 | M6 中断协议 | interrupt/fence 协议 + 示例小游戏 | ✅ |
-| M7 平台与质量 | 21 项 headless 测试 + runner + lint + CI/release 门禁 + export smoke | ✅ |
+| M7 平台与质量 | 31 项 headless 测试 + runner + lint + CI/release 门禁 + export smoke | ✅ |
 | M8 运行时基础设施 | Theme/Preload/Prefab | ✅ 完成 |
 | M9 AutoVoice | canonical speaker、6 位编号、delay、显式覆盖、Backlog/Auto、存档恢复 | ✅ |
 | M10 Minigame 集成 | ExampleMinigame + minigame() API + export smoke test | ✅ |

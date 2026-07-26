@@ -133,11 +133,23 @@ func cam_punch() -> NovaAnimationCompat:
 	return self
 
 
-func box_anchor(_anchor: Variant = null, _duration: Variant = null, _easing: Variant = null) -> NovaAnimationCompat:
+func box_anchor(anchor: Variant = null, _duration: Variant = null, _easing: Variant = null) -> NovaAnimationCompat:
+	if anchor is Array and (anchor as Array).size() >= 4:
+		var arr: Array = anchor as Array
+		var box := _resolve_dbox()
+		if box:
+			box.anchor_left = float(arr[0])
+			box.anchor_right = float(arr[1])
+			box.anchor_top = float(arr[2])
+			box.anchor_bottom = float(arr[3])
 	return self
 
 
-func box_tint(_color: Variant = null, _duration: Variant = null) -> NovaAnimationCompat:
+func box_tint(color: Variant = null, _duration: Variant = null) -> NovaAnimationCompat:
+	if color != null:
+		var box := _resolve_dbox()
+		if box:
+			box.color = _to_color(color)
 	return self
 
 
@@ -229,6 +241,7 @@ func _play_vfx(target: Variant, effect: Variant, range_or_duration: Variant = nu
 	var effect_name := _effect_name(effect)
 	var seconds := _to_float(duration, _to_float(range_or_duration, 0.5))
 	var dict: Dictionary = params if params is Dictionary else {}
+	dict = _resolve_mask_param(dict)
 	if _is_camera_target(target):
 		if effect == null or effect_name.is_empty():
 			_ctx.vfx.clear_post(seconds)
@@ -321,3 +334,54 @@ func _to_float(value: Variant, fallback: float) -> float:
 	if value is int or value is float:
 		return float(value)
 	return fallback
+
+
+## Resolve the active dialogue box node (mirrors BaseBlock._resolve_dbox).
+func _resolve_dbox() -> Node:
+	var gvc = _ctx.call("get", "game_view_controller") if _ctx else null
+	if gvc == null:
+		return null
+	return gvc.call("get", "_dialogue_box") if gvc.has_method("get") else null
+
+
+## Convert a Nova color shorthand or Color value to a Godot Color.
+func _to_color(value: Variant) -> Color:
+	if value is Color:
+		return value
+	if value is int or value is float:
+		var g := clampf(float(value), 0.0, 1.0)
+		return Color(g, g, g, 1.0)
+	match str(value).to_lower():
+		"black":
+			return Color.BLACK
+		"white":
+			return Color.WHITE
+		"red":
+			return Color.RED
+		"green":
+			return Color.GREEN
+		"blue":
+			return Color.BLUE
+	return Color.WHITE
+
+
+## Translate Nova's `_Mask = "Masks/xxx"` parameter into a sampler2D the
+## shader can consume. The mask texture is loaded from res://resources/Masks/.
+func _resolve_mask_param(params: Dictionary) -> Dictionary:
+	if not params.has("_Mask"):
+		return params
+	var out := params.duplicate()
+	var mask_path := str(out["_Mask"])
+	var full_path := _resolve_mask_path(mask_path)
+	if not full_path.is_empty() and ResourceLoader.exists(full_path):
+		out["mask"] = load(full_path)
+	out.erase("_Mask")
+	return out
+
+
+func _resolve_mask_path(mask_name: String) -> String:
+	if mask_name.begins_with("res://"):
+		return mask_name
+	if mask_name.begins_with("Masks/"):
+		return "res://resources/" + mask_name + ".png"
+	return ""

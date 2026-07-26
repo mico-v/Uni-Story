@@ -191,7 +191,7 @@ func _display_metadata(data: Dictionary) -> void:
 	for child in _meta_grid.get_children():
 		child.queue_free()
 
-	func _add_row(key: String, value: String):
+	var _add_row = func(key: String, value: String):
 		var kl := Label.new()
 		kl.text = key + ":"
 		kl.add_theme_color_override("font_color", Color(0.6, 0.6, 0.6))
@@ -205,19 +205,19 @@ func _display_metadata(data: Dictionary) -> void:
 
 	var bookmark := data.get("bookmark", {})
 	if bookmark is Dictionary:
-		_add_row("Format", str(data.get("format", "bookmark")))
-		_add_row("Version", str(data.get("version", "?")))
-		_add_row("Chapter", str(bookmark.get("chapter", "")))
-		_add_row("Display Name", str(bookmark.get("display_name", "")))
-		_add_row("Entry Index", str(bookmark.get("entry_index", "")))
+		_add_row.call("Format", str(data.get("format", "bookmark")))
+		_add_row.call("Version", str(data.get("version", "?")))
+		_add_row.call("Chapter", str(bookmark.get("chapter", "")))
+		_add_row.call("Display Name", str(bookmark.get("display_name", "")))
+		_add_row.call("Entry Index", str(bookmark.get("entry_index", "")))
 		var ts := float(bookmark.get("created_at_unix", 0.0))
 		if ts > 0:
 			var dt := Time.get_datetime_dict_from_unix_time(int(ts))
-			_add_row("Created", "%04d-%02d-%02d %02d:%02d:%02d" % [
+			_add_row.call("Created", "%04d-%02d-%02d %02d:%02d:%02d" % [
 				dt["year"], dt["month"], dt["day"],
 				dt["hour"], dt["minute"], dt["second"],
 			])
-		_add_row("Screenshot", str(bookmark.get("screenshot_path", "(none)")).replace("user:/", "user://"))
+		_add_row.call("Screenshot", str(bookmark.get("screenshot_path", "(none)")).replace("user:/", "user://"))
 
 		# Checkpoint summary
 		var checkpoint := bookmark.get("checkpoint", {})
@@ -226,8 +226,8 @@ func _display_metadata(data: Dictionary) -> void:
 		if checkpoint is Dictionary:
 			var state := checkpoint.get("state", {})
 			if state is Dictionary:
-				_add_row("---", "")
-				_add_row("Checkpoint state keys", str(state.keys()))
+				_add_row.call("---", "")
+				_add_row.call("Checkpoint state keys", str(state.keys()))
 				var dial_count := 0
 				if state.has("reached_dialogues"):
 					var rd = state["reached_dialogues"]
@@ -238,15 +238,15 @@ func _display_metadata(data: Dictionary) -> void:
 					var re = state["reached_endings"]
 					if re is Array:
 						end_count = re.size()
-				_add_row("Reached Dialogues", str(dial_count))
-				_add_row("Reached Endings", str(end_count))
+				_add_row.call("Reached Dialogues", str(dial_count))
+				_add_row.call("Reached Endings", str(end_count))
 	else:
-		_add_row("Format", str(data.get("format", "snapshot")))
-		_add_row("Version", str(data.get("version", "?")))
-		_add_row("Chapter", str(data.get("chapter", "")))
+		_add_row.call("Format", str(data.get("format", "snapshot")))
+		_add_row.call("Version", str(data.get("version", "?")))
+		_add_row.call("Chapter", str(data.get("chapter", "")))
 		var state := data.get("state", {})
 		if state is Dictionary:
-			_add_row("State Index", str(state.get("index", "?")))
+			_add_row.call("State Index", str(state.get("index", "?")))
 
 
 func _display_json(data: Dictionary) -> void:

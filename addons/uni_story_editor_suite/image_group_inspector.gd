@@ -30,12 +30,12 @@ func _parse_begin(object: Object) -> void:
 		if object.has_method("get_entry"):
 			var entry = object.get_entry(0)
 			if entry and entry.full_image:
-				var img := entry.full_image.get_image()
+				var img: Image = entry.full_image.get_image()
 				if img:
 					# Resize to thumbnail maintaining aspect ratio
 					var max_size := 256
-					var w := img.get_width()
-					var h := img.get_height()
+					var w: int = img.get_width()
+					var h: int = img.get_height()
 					var scale_x := float(max_size) / float(w)
 					var scale_y := float(max_size) / float(h)
 					var scale := min(scale_x, scale_y)
@@ -54,7 +54,7 @@ func _parse_begin(object: Object) -> void:
 	validate_btn.tooltip_text = "Check that all entries have valid images"
 	validate_btn.pressed.connect(func():
 		if object.has_method("entry_count"):
-			var count := object.entry_count()
+			var count: int = object.entry_count()
 			var valid := 0
 			var invalid := 0
 			for i in range(count):

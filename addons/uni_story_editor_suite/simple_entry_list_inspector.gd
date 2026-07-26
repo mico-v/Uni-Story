@@ -52,7 +52,7 @@ func remove_entry(index: int) -> void:
 
 func move_entry_up(index: int) -> void:
 	if index > 0 and index < entries.size():
-		var tmp := entries[index]
+		var tmp = entries[index]
 		entries[index] = entries[index - 1]
 		entries[index - 1] = tmp
 		if on_changed.is_valid():
@@ -61,7 +61,7 @@ func move_entry_up(index: int) -> void:
 
 func move_entry_down(index: int) -> void:
 	if index >= 0 and index < entries.size() - 1:
-		var tmp := entries[index]
+		var tmp = entries[index]
 		entries[index] = entries[index + 1]
 		entries[index + 1] = tmp
 		if on_changed.is_valid():

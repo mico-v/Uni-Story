@@ -54,13 +54,13 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 - Scenario visualize 已提供 text/JSON/DOT/Mermaid 输出，消费共享 IR，21 项 smoke test 覆盖。
 - 资源列表工具 `list_resources.py` 支持 12 种类别输出。
 - shaderproto 生成器 `shaderproto_gen.py` 支持 JSON 模板生成 .gdshader 变体。
-- 24 个 headless 测试通过（约 55 秒），由 `scripts/tests/run_headless_suite.py` 聚合执行。
+- 31 个 headless 测试通过（约 55 秒），由 `scripts/tests/run_headless_suite.py` 聚合执行。
 - CI 与 Release workflow 均先执行 Scenario lint（warning 默认不阻断）和 headless quality gate，通过后才允许 Windows/Linux/Android 导出。
 - Godot export presets + GitHub Actions 发布基础。
 - 性能基线 headless 测试覆盖解析/场景加载/存档/恢复/回跳耗时。
 - 导出产物启动 smoke test（`export_smoke_test.gd`：子系统初始化 + ch1 推进 + 存读档 + 视图导航 + ch4 播放）。
 
-主要短板（源自 `review.md` 差距分析）：
+主要短板（Phase 10 基线快照，Phase 11-18 已逐步解决；当前状态见"六、当前状态"）：
 
 - **工具链完整性**（差距 81%）：Nova 有 27 个 Python 工具围绕「协作编剧工作流」设计——合并/拆分/剥离代码/可视化分支；Uni-Story 当前有 7 个工具侧重工程质量，但缺少 merge、split_chara、strip_code 家族、add_soft_hyphens、generate_sample_script 等面向内容创作者的工具。
 - **立绘生产管线**：Nova 有 PSD 导出/图层合并/姿态排序 4 个工具；Uni-Story 仅有导入约定文档，无自动化工具。

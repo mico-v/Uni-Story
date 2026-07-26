@@ -260,8 +260,8 @@ gv_last_line = "room_intro"
 - 只翻译常见 Nova 剧本形态；复杂多行表达式和动态拼接可能需要手动迁移为 GDScript 写法。
 - Nova Lua runtime API 尚未完整对齐，`__Nova` 仅有少量兼容替换。
 - `anim` / `anim_hold` 当前兼容代理已可用；完整动画系统（域/pause/resume/easing）已通过 AnimationSystem 实现。
-- `box_tint()`、`avatar_show()`、`anim_hold_begin/end()`、`minigame()`、部分输入/快进/自动播放和文本排版方法也仍是兼容 no-op；“可编译调用”不等于语义已实现。
-- 通用中断/fence 协议已实现：`begin_interrupt()` / `end_interrupt()` 可暂停对话推进并在结束后自动 checkpoint；这不代表 `minigame()` 便捷加载器已实现。
+- Phase 15 已将 `box_tint()`、`box_anchor()`、`anim_hold_begin/end()`、`minigame()`、输入/快进/自动播放和文本排版方法从 no-op 升级为完整实现；当前仅 `avatar_show()` 仍是兼容 no-op。
+- 通用中断/fence 协议与 `minigame()` 便捷加载器均已实现：`begin_interrupt()` / `end_interrupt()` 可暂停对话推进并在结束后自动 checkpoint，`minigame()` 可加载预制体小游戏。
 - 存读档 UI 已支持缩略图、章节名、时间和当前位置显示。
 - 回顾面板已支持语音重播和跳转确认。
 
