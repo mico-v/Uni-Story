@@ -16,15 +16,10 @@ const DEFAULT_AUTO_VOICE_PROFILE := "res://resources/auto_voice_profile.tres"
 const RESOURCE_EXTENSIONS := [".png", ".jpg", ".jpeg", ".webp", ".ogg", ".mp3", ".wav", ".tscn", ".tres", ".mp4", ".gdshader"]
 const VIRTUAL_PREFIXES := ["RenderTargets/"]
 const NO_OP_APIS := [
-	"box_tint", "avatar_show", "anim_hold_begin", "anim_hold_end",
-	"stop_auto_ff", "stop_ff", "input_on", "input_off",
-	"ff_shortcut_on", "ff_shortcut_off", "auto_fade_on", "auto_fade_off",
-	"auto_time", "immediate_step", "minigame", "text_delay",
-	"text_duration", "text_scroll", "box_anchor", "box_alignment",
-	"new_page", "volume",
+	"avatar_show",
 ]
 const ANIMATION_NO_OP_APIS := [
-	"volume", "wait", "wait_all", "stop", "loop", "box_anchor", "box_tint",
+	"volume", "wait", "wait_all", "stop", "loop",
 ]
 
 var _options: Dictionary = {}

@@ -23,10 +23,10 @@ const LOCATION_PATH := FIXTURE_DIR + "/leading_blank_location.txt"
 const INLINE_LOCATION_PATH := FIXTURE_DIR + "/inline_location.txt"
 
 const VALID_SOURCE := "@<|\nlabel(\"lint_valid_start\")\nis_start()\n|>\nA quiet narration line.\n@<|\nis_end()\n|>\n"
-const BROKEN_SOURCE := "@<|\nlabel(\"lint_broken_start\")\nis_start()\njump_to(\"missing_destination\")\nlabel(\"lint_broken_start\")\nbox_tint(\"#ffffff\")\n|>\n"
+const BROKEN_SOURCE := "@<|\nlabel(\"lint_broken_start\")\nis_start()\njump_to(\"missing_destination\")\nlabel(\"lint_broken_start\")\navatar_show(\"test\")\n|>\n"
 const UNTERMINATED_SOURCE := "@<|\nlabel(\"lint_unterminated_start\")\nis_start()\n"
 const NO_START_SOURCE := "@<|\nlabel(\"lint_no_start\")\nis_end()\n|>\n"
-const WARNING_SOURCE := "@<|\nlabel(\"lint_warning_start\")\nis_start()\nbox_tint(\"#ffffff\")\nis_end()\n|>\n"
+const WARNING_SOURCE := "@<|\nlabel(\"lint_warning_start\")\nis_start()\navatar_show(\"test\")\nis_end()\n|>\n"
 const CONTENT_SOURCE := "@<|\nlabel(\"lint_content_start\")\nis_start()\nanim_hold_end()\nanim_hold_begin()\nanim_hold_begin()\nbranch {\n    { dest = \"lint_content_start\", mode = \"jump\", cond = \"true\" },\n}\n|>\nAlice::Hello!\nTODO: rewrite\nBad\u0001control\n"
 const COMPILE_SOURCE := "@<|\nlabel(\"lint_compile_start\")\nis_start()\nvar broken =\n|>\n"
 const RESOURCE_SOURCE := "@<|\nlabel(\"lint_resource_start\")\nis_start()\n|>\n<|\nshow(bg, \"lint_definitely_missing_background\")\nset_temp_var(\"lint_key\", \"not/a/resource\")\nvideo_play(\"Videos/lint_explicit_missing.mp4\")\nshow(bg, \"Backgrounds/room\")\nplay(bgm, \"BGM/prelude.ogg\")\nsound(\"Sounds/clap.ogg\")\n|>\nResource check.\n"
@@ -245,7 +245,7 @@ func _test_default_corpus_baseline() -> void:
 		"dialogues": 798,
 		"labels": 57,
 		"errors": 0,
-		"warnings": 134,
+		"warnings": 100,
 		"resource_references": 426,
 		"resource_found": 424,
 		"resource_virtual": 2,
