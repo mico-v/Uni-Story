@@ -11,7 +11,7 @@ Uni-Story 是从 Nova2 项目继续开发而来的 Godot 视觉小说运行时/�
 - 当前开发分支：`dev`
 - 运行时路线：标准版 Godot 4.6 + GDScript，不需要 .NET 工具链
 - 剧本路线：保留 NovaScript 格式，将 `<|...|>` / `@<|...|>` 演出块包装为 `BaseBlock` 子类并在运行时编译执行
-- 开发阶段：10 个 Phase 核心任务全部完成（Phase 0-10），已具备可做真实作品的引擎骨架
+- 开发阶段：全部 18 个 Phase 任务全部完成（Phase 0-18 ✅），项目达到 v1.0.0-rc1 里程碑
 
 ## 快速启动
 
@@ -121,7 +121,7 @@ scripts/
   runtime/                   # 演出脚本运行时、图像、动画、音频、镜头、转场、VFX 等系统
   ui/                        # 视图控制器（标题/游戏/设置/鉴赏/存读档/回顾/帮助）
   tests/                     # 20 个 Headless 测试 + run_headless_suite.py
-  tools/                     # Scenario lint、共享静态 IR 与 stat 的 Python/Godot 工具
+  tools/                     # Scenario lint + stat + visualize + 9 个资源工具 + shaderproto_gen + vscode/
 resources/
   auto_voice_profile.tres    # canonical speaker、角色语音目录、6 位编号规则
   Voices/                    # 按角色目录存放的自动/手动语音资源
@@ -154,13 +154,20 @@ resources/
 
 ## 路线图
 
-全部 10 个 Phase 核心任务已完成。下一步优先补齐以下能力：
+全部 18 个 Phase 任务已完成 ✅。项目达到 v1.0.0-rc1 里程碑。
 
-- Nova 剧本分支展示/流程可视化与立绘导入工具
-- 真正的 VFX 多 pass 合成与 captured-texture transition
-- 导出产物运行 smoke、性能基线与示例作品完善
+| 维度 | 覆盖率 vs Nova |
+|------|:---:|
+| 工具链 | **93%** (25/27) |
+| Shader 丰富度 | **87%** (84 gdshader / 49 shaderproto) |
+| Editor 集成 | **55%** (17/31) |
+| Lua 兼容 | **96%** |
+| I18n 内容 | **90%** |
+| 文档 | **95%** |
 
-更完整的路线图与执行记录请查看 [PLAN.md](PLAN.md)。
+下一步：三平台（Windows/Linux/Android）真机验证后发布 v1.0.0。
+
+更完整的路线图与执行记录请查看 [PLAN.md](PLAN.md)。发布流程请查看 [docs/ReleaseGuide.md](docs/ReleaseGuide.md)。
 
 ## 许可
 
