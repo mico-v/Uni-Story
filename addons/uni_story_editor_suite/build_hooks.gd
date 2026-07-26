@@ -50,16 +50,27 @@ static func pre_export_quality_gate() -> bool:
 	return true
 
 
-## Validate that required export presets exist
+## Validate that required export presets exist.
+## Uses file-based check (works in headless mode where EditorExport is unavailable).
 ## Returns Dictionary with preset name → true/false
 static func validate_export_presets() -> Dictionary:
 	var result := {}
 	for preset_name in REQUIRED_PRESETS:
-		var found := false
-		for i in range(EditorExport.get_export_preset_count()):
-			var preset := EditorExport.get_export_preset(i)
-			if preset and preset.get_name() == preset_name:
-				found = true
-				break
-		result[preset_name] = found
+		result[preset_name] = false
+
+	# Use file-based check to avoid referencing EditorExport (editor-only singleton)
+	# which is not available in headless/CI mode and causes parse errors.
+	var cfg_path := "res://export_presets.cfg"
+	if not FileAccess.file_exists(cfg_path):
+		return result
+
+	var file := FileAccess.open(cfg_path, FileAccess.READ)
+	if not file:
+		return result
+
+	var content := file.get_as_text()
+	for preset_name in REQUIRED_PRESETS:
+		if preset_name in content:
+			result[preset_name] = true
+
 	return result
