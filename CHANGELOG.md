@@ -1,5 +1,19 @@
 # Changelog
 
+## 2026-07-26 — Phase 17 Editor 集成与 UI 工具深度提升 ✅
+
+- ✅ 新增 5 个 Resource 类型：`ImageEntry`、`ImageGroup`、`ImageGroupList`、`MusicEntry`、`MusicEntryList`
+- ✅ CG/Image Gallery 编辑器：`ImageGroupInspector`（Snapshot 生成 + 验证）+ `ImageGroupListPanel`（Load/Create/Refresh/Validate/Snapshot All）
+- ✅ Music Gallery 编辑器：`MusicEntryInspector`（Preview Loop / Preview No Loop / Stop 音频试听）+ `MusicEntryListPanel`（顺序预览 + 验证）
+- ✅ 构建与发布：`BuildPanel`（三平台选择 + 版本号 + lint/test 质量门禁）+ `BuildHooks`（run_lint/run_tests/pre_export_quality_gate/validate_export_presets）
+- ✅ 立绘编辑器增强：双角色对比预览（Toggle Dual Preview）+ ▲ Move Up / ▼ Move Down 图层重排 + Cycle All Poses 自动轮播
+- ✅ UI 编辑器辅助：`CompositeUIViewTransitionInspector`（过渡动画属性扫描）+ `SimpleEntryListInspector`（通用列表编辑器基类）+ `UniStoryEditorPlugin`/NovaMenu（工具栏 Clear Save/Config、Lint、Stat）
+- ✅ 新增 `editor_tools_smoke_test.gd`：60+ 项覆盖所有 Resource 类型、Inspector 插件、Editor Panel、Standing Editor 增强
+- ✅ 新增 `addons/uni_story_editor_suite/plugin.cfg` 插件配置文件
+- ✅ 更新 PLAN.md / PhaseBacklog.md / CHANGELOG
+- 📏 Editor 脚本数量：8 → **17**（新增 9 个）
+- 📏 Editor 集成度：23% (7/31) → **55%** (17/31)
+
 ## 2026-07-26 — Phase 16 Shader/VFX 全量对齐 Nova ✅
 
 - ✅ 新增 22 个基础 shader 效果 + 补全 7 个已有 shader 的 `.shaderproto` 模板
