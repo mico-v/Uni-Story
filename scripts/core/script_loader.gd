@@ -45,6 +45,8 @@ func load_all(file_paths: Array) -> void:
 		_last_display_name = ""
 		_canonical_speaker_by_display = {}
 		_parse_file(FileAccess.get_file_as_string(path))
+	# Phase 15: pre-warm GDScript compilation cache for all lazy blocks.
+	_warm_compile_cache()
 	var errors := graph.sanity_check()
 	if not errors.is_empty():
 		for e in errors:
@@ -267,6 +269,33 @@ func is_end(end_name = null) -> void:
 
 func interpolate_text(text: String) -> String:
 	return NovaCompatScript.interpolate_text(text, _ctx.variables)
+
+
+# Phase 15: pre-compile all lazy blocks in the graph to warm the runtime cache.
+# This avoids first-play compilation pauses on slower platforms.
+func _warm_compile_cache() -> void:
+	if _runtime == null:
+		return
+	var cached := 0
+	for node in graph.nodes.values():
+		var n: FlowChartNode = node as FlowChartNode
+		if n == null:
+			continue
+		for entry in n.entries:
+			var e: DialogueEntry = entry as DialogueEntry
+			if e == null:
+				continue
+			if e.has_lazy() and not e.lazy_source.is_empty():
+				_runtime.compile_block(e.lazy_source)
+				cached += 1
+			if e.has_before_checkpoint() and not e.before_checkpoint_source.is_empty():
+				_runtime.compile_block(e.before_checkpoint_source)
+				cached += 1
+			if e.has_after_dialogue() and not e.after_dialogue_source.is_empty():
+				_runtime.compile_block(e.after_dialogue_source)
+				cached += 1
+	if cached > 0:
+		EngineLogScript.info(EngineLogScript.Category.PARSE, "ScriptLoader", "warmed compile cache: %d blocks" % cached)
 
 
 func _resolve_label_name(name: String) -> String:
