@@ -1,0 +1,12 @@
+{
+  "name": "wipe",
+  "template": "res://resources/shaders/wipe.gdshader",
+  "variants": [
+    {
+      "suffix": "_left",
+      "replacements": {
+        "progress : hint_range(0.0, 1.0) = 0.0": "progress : hint_range(0.0, 1.0) = 0.0"
+      }
+    }
+  ]
+}

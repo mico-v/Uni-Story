@@ -1,0 +1,30 @@
+{
+  "name": "show_second_texture",
+  "template": "res://resources/shaders/show_second_texture.gdshader",
+  "variants": [
+    {
+      "suffix": "_left",
+      "replacements": {
+        "direction : hint_range(0.0, 1.0) = 0.0": "direction : hint_range(0.0, 1.0) = 0.0"
+      }
+    },
+    {
+      "suffix": "_right",
+      "replacements": {
+        "direction : hint_range(0.0, 1.0) = 0.0": "direction : hint_range(0.0, 1.0) = 0.5"
+      }
+    },
+    {
+      "suffix": "_up",
+      "replacements": {
+        "direction : hint_range(0.0, 1.0) = 0.0": "direction : hint_range(0.0, 1.0) = 0.25"
+      }
+    },
+    {
+      "suffix": "_down",
+      "replacements": {
+        "direction : hint_range(0.0, 1.0) = 0.0": "direction : hint_range(0.0, 1.0) = 0.75"
+      }
+    }
+  ]
+}

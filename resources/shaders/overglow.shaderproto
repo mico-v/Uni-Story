@@ -1,0 +1,21 @@
+{
+  "name": "overglow",
+  "template": "res://resources/shaders/overglow.gdshader",
+  "variants": [
+    {
+      "suffix": "_soft",
+      "replacements": {
+        "size : hint_range(0.0, 5.0) = 1.5": "size : hint_range(0.0, 5.0) = 0.8",
+        "strength : hint_range(0.0, 5.0) = 2.0": "strength : hint_range(0.0, 5.0) = 1.0"
+      }
+    },
+    {
+      "suffix": "_extreme",
+      "replacements": {
+        "size : hint_range(0.0, 5.0) = 1.5": "size : hint_range(0.0, 5.0) = 3.0",
+        "strength : hint_range(0.0, 5.0) = 2.0": "strength : hint_range(0.0, 5.0) = 4.0",
+        "threshold : hint_range(0.0, 1.0) = 0.5": "threshold : hint_range(0.0, 1.0) = 0.3"
+      }
+    }
+  ]
+}

@@ -174,18 +174,18 @@
 - 🔲 `perf-baseline-update`：更新性能基线阈值（目标降低 20%）
 - 🔲 `phase15-docs`：更新 PLAN/review/PhaseBacklog/CHANGELOG
 
-## Phase 16：Shader/VFX 全量对齐 Nova
+## Phase 16：Shader/VFX 全量对齐 Nova ✅
 
-- 🔲 `shaderproto-batch1`：Barrel/BarrelHyper/Glitch/Glow/Overglow/Overlay/Rain/Wiggle/FlipGrid（9 个）
-- 🔲 `shaderproto-batch2`：GaussianBlur/LensBlur/MotionBlur/RotationBlur/RadialBlur/Mono/Sharpen/Shake/RandRoll（9 个）
-- 🔲 `shaderproto-batch3`：Default/Fade/FadeGlobal/FadeRadialBlur/FinalBlit/Color/Colorless/Blink/BrokenTV/ChangeTextureWithFade/GrayWave/MaskedMosaic/MixAdd/Ripple/RippleMove/Roll/ShowSecondTexture/Water（18 个）
-- 🔲 `shaderproto-gen-blend`：扩展 shaderproto_gen.py 支持 Nova 风格 blend mode 变体
-- 🔲 `vfx-registry-full`：VFXSystem registry 扩展至完整 37 效果
-- 🔲 `shader-post-variants`：每个新 shader 生成对象版 + POST 全屏版
-- 🔲 `normalize-alias-full`：扩展别名映射覆盖所有 37 效果
-- 🔲 `query-uniforms-full`：扩展 query_uniforms() 覆盖所有新效果
-- 🔲 `shader-full-smoke-test`：新增 smoke test 覆盖 37 shaderproto 编译
-- 🔲 `phase16-docs`：更新 PLAN/review/PhaseBacklog/CHANGELOG
+- ✅ `shaderproto-batch1`：Barrel/BarrelHyper/Glitch/Glow/Overglow/Overlay/Rain/Wiggle/FlipGrid（9 个基础 + 7 个已有补全）
+- ✅ `shaderproto-batch2`：GaussianBlur/LensBlur/MotionBlur/RotationBlur/RadialBlur/Mono/Sharpen/Shake/RandRoll（9 个）
+- ✅ `shaderproto-batch3`：Default/Fade/FadeGlobal/FadeRadialBlur/FinalBlit/Color/Colorless/Blink/BrokenTV/ChangeTextureWithFade/GrayWave/MaskedMosaic/MixAdd/Ripple/RippleMove/Roll/ShowSecondTexture/Water + Blur/Chromatic/Grayscale/Vignette/Wipe（23 个）
+- ✅ `shaderproto-gen`：shaderproto_gen.py 无需改动，已有机制完美支持 49 个 proto
+- ✅ `vfx-registry-full`：VFXSystem registry 扩展 OBJECT_EFFECTS 13→40，POST_EFFECTS 13→37
+- ✅ `shader-post-variants`：每个新 shader 均有对象版 + POST 全屏版
+- ✅ `normalize-alias-full`：扩展别名映射 14→60+
+- ✅ `query-uniforms-full`：扩展 query_uniforms() 覆盖所有新效果
+- ✅ `shader-full-smoke-test`：smoke test 扩展覆盖所有 registry + 编译 + 别名
+- ✅ `phase16-docs`：更新 PLAN/review/PhaseBacklog/CHANGELOG
 
 ## Phase 17：Editor 集成与 UI 工具深度提升
 

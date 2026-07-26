@@ -1,0 +1,5 @@
+{
+  "name": "change_texture_with_fade",
+  "template": "res://resources/shaders/change_texture_with_fade.gdshader",
+  "variants": []
+}

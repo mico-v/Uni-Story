@@ -1,0 +1,18 @@
+{
+  "name": "gaussian_blur",
+  "template": "res://resources/shaders/gaussian_blur.gdshader",
+  "variants": [
+    {
+      "suffix": "_light",
+      "replacements": {
+        "blur_size : hint_range(0.0, 20.0) = vec2(4.0, 0.0)": "blur_size : hint_range(0.0, 20.0) = vec2(2.0, 2.0)"
+      }
+    },
+    {
+      "suffix": "_heavy",
+      "replacements": {
+        "blur_size : hint_range(0.0, 20.0) = vec2(4.0, 0.0)": "blur_size : hint_range(0.0, 20.0) = vec2(8.0, 8.0)"
+      }
+    }
+  ]
+}

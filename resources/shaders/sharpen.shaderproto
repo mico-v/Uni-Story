@@ -1,0 +1,18 @@
+{
+  "name": "sharpen",
+  "template": "res://resources/shaders/sharpen.gdshader",
+  "variants": [
+    {
+      "suffix": "_light",
+      "replacements": {
+        "strength : hint_range(0.0, 3.0) = 1.0": "strength : hint_range(0.0, 3.0) = 0.5"
+      }
+    },
+    {
+      "suffix": "_strong",
+      "replacements": {
+        "strength : hint_range(0.0, 3.0) = 1.0": "strength : hint_range(0.0, 3.0) = 2.5"
+      }
+    }
+  ]
+}

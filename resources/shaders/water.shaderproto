@@ -1,0 +1,20 @@
+{
+  "name": "water",
+  "template": "res://resources/shaders/water.gdshader",
+  "variants": [
+    {
+      "suffix": "_still",
+      "replacements": {
+        "intensity : hint_range(0.0, 1.0) = 0.3": "intensity : hint_range(0.0, 1.0) = 0.1",
+        "speed : hint_range(0.1, 5.0) = 2.0": "speed : hint_range(0.1, 5.0) = 0.5"
+      }
+    },
+    {
+      "suffix": "_turbulent",
+      "replacements": {
+        "intensity : hint_range(0.0, 1.0) = 0.3": "intensity : hint_range(0.0, 1.0) = 0.6",
+        "speed : hint_range(0.1, 5.0) = 2.0": "speed : hint_range(0.1, 5.0) = 3.0"
+      }
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "name": "grayscale",
+  "template": "res://resources/shaders/grayscale.gdshader",
+  "variants": [
+    {
+      "suffix": "_partial",
+      "replacements": {
+        "amount : hint_range(0.0, 1.0) = 1.0": "amount : hint_range(0.0, 1.0) = 0.5"
+      }
+    }
+  ]
+}

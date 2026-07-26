@@ -1,0 +1,18 @@
+{
+  "name": "vignette",
+  "template": "res://resources/shaders/vignette.gdshader",
+  "variants": [
+    {
+      "suffix": "_light",
+      "replacements": {
+        "intensity : hint_range(0.0, 1.0) = 0.5": "intensity : hint_range(0.0, 1.0) = 0.2"
+      }
+    },
+    {
+      "suffix": "_heavy",
+      "replacements": {
+        "intensity : hint_range(0.0, 1.0) = 0.5": "intensity : hint_range(0.0, 1.0) = 0.8"
+      }
+    }
+  ]
+}

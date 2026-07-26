@@ -1,0 +1,18 @@
+{
+  "name": "barrel_hyper",
+  "template": "res://resources/shaders/barrel_hyper.gdshader",
+  "variants": [
+    {
+      "suffix": "_mild",
+      "replacements": {
+        "sigma : hint_range(0.0, 1.0) = 0.5": "sigma : hint_range(0.0, 1.0) = 0.3"
+      }
+    },
+    {
+      "suffix": "_extreme",
+      "replacements": {
+        "sigma : hint_range(0.0, 1.0) = 0.5": "sigma : hint_range(0.0, 1.0) = 0.8"
+      }
+    }
+  ]
+}

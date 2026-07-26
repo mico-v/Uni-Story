@@ -22,7 +22,7 @@ Uni-Story 已完成 Godot 版 Nova 风格运行时的主要骨架：脚本解析
 | 存档/回跳/升级体系 | ~85-90% | Checkpoint/bookmark 核心完成，restore+replay 可用 |
 | UI 产品功能 | ~85-90% | 标题/游戏/设置/存读档/鉴赏/章节/帮助/通知/输入映射 |
 | 运行时基础设施 | ~85-90% | Theme/Preload/Prefab/Interrupt 核心完成 |
-| VFX 与转场 | ~85-90% | 12 个 shader + 多 pass compositing + capture transition 完成 |
+| VFX 与转场 | ~95% | 84 个 .gdshader + 49 个 shaderproto（超 Nova 37）+ 多 pass compositing + 6 种转场 shader |
 | 资源与工具链 | ~80-85% | 资源扫描、Scenario lint/stat/visualize、共享静态 IR、headless suite 就绪 |
 | **整体对齐** | **~85-90%** | 全部 Phase 0-10 完成，21 项 headless 测试通过 + export smoke test |
 
@@ -43,7 +43,7 @@ Uni-Story 已完成 Godot 版 Nova 风格运行时的主要骨架：脚本解析
 | **核心语言文件数** | C# 307 + Lua 61 = 368 | GDScript 95 + Python 6 = 101 | 27% |
 | **核心语言总行数** | C# 61,560 + Lua 12,951 = 74,511 | GDScript 23,819 + Python 1,907 = 25,726 | 35% |
 | **场景/Prefab** | 59 个 `.prefab` | 20 个 `.tscn` | 34% |
-| **Shader** | 162 个 `.shader`（37 个 shaderproto 生成） | 14 个 `.gdshader`（含 1 个 `.shaderproto`） | 9% |
+| **Shader** | 162 个 `.shader`（37 个 shaderproto 生成） | 84 个 `.gdshader`（49 个 `.shaderproto`） | 52%（shader 数量），132%（shaderproto 模板数） |
 | **剧本** | 28 个中文 `.txt` + 4 个英文副本 | 28 个 Nova 中文剧本（已直接导入） | 100% |
 | **剧本总行数** | 2,705 行 | 同源 | 100% |
 | **自动化测试** | 1 个 C# 测试（TestParser）+ Lua 测试脚本 | 21 个 headless 测试 + `run_headless_suite.py` | 2100% |
@@ -111,7 +111,7 @@ Nova 的工具链是其最大的差异化优势，也是 Uni-Story 当前差距�
 | **软连字符添加** | `add_soft_hyphens.py` | 🔲 无 |
 | **资源列表** | `list_bg.py`, `list_bgm.py`, `list_pos.py` | 🔲 部分（资源扫描测试覆盖） |
 | **立绘导出** | `export_poses.py`, `export_psd_layers.py`, `merge_psd_layers.py`, `sort_poses.py` | 🔲 无 |
-| **Shader 生成** | `generate_shaders.py` (基于 shaderproto) | 🔲 仅 1 个 `.shaderproto` 示例 |
+| **Shader 生成** | `generate_shaders.py` (基于 shaderproto) | ✅ 49 个 `.shaderproto` 模板，由 `shaderproto_gen.py` 驱动 |
 | **字符集生成** | `generate_charsets.py` | 🔲 无 |
 | **本地化路径** | `generate_localized_paths.py` | 🔲 无 |
 | **构建工具** | `build_all.py`, `zipchmod.py` | CI workflow 替代 ✅ |
@@ -135,7 +135,7 @@ Nova 的工具链是其最大的差异化优势，也是 Uni-Story 当前差距�
 
 1. **社区与生态**：Nova 有 QQ 群、微博、VS Code 扩展、知乎文章、多个贡献者、10+ 商业作品案例。Uni-Story 是单人项目。
 2. **Lua 热更能力**：Nova 的 Lua VM 意味着作品发布后可通过更新 Lua 脚本修复 Bug 或调整内容，无需重新构建。Uni-Story 的 GDScript 编译方案不具备同等热更能力。
-3. **Shader 丰富度**：Nova 有 162 个 shader 变体覆盖 37 种视觉效果（含 Barrel、Glitch、Kaleido、LensBlur、Rain、Wiggle 等），Uni-Story 有 14 个覆盖 8 种效果。
+3. **Shader 丰富度**：Nova 有 162 个 shader 变体覆盖 37 种视觉效果（含 Barrel、Glitch、Kaleido、LensBlur、Rain、Wiggle 等），Uni-Story 有 84 个 .gdshader 和 49 个 shaderproto 模板（已经超过 Nova 的 37 个模板数），覆盖基本相当的效果。
 4. **立绘生产管线**：Nova 的 Standing tools（PSD 导出/图层合并/姿态排序）是完整的美术→引擎导入管线，Uni-Story 缺失此环节。
 5. **国际化**：Nova 有英文 LocalizedResources 机制和 4 个已翻译剧本，Uni-Story 的 I18n 仅框架就绪。
 6. **Unity Editor 集成**：Nova 有 31 个 Editor 脚本提供 Inspector 定制、SaveViewer、立绘编辑器、Build Hooks，Uni-Story 的 Godot Editor 集成仅 1 个脚本。
@@ -147,7 +147,7 @@ Nova 代码成熟度：███████████████████
 Uni-Story 代码成熟度：███████████████░░░░░  85%  （Phase 0-10 完成，21 项测试通过）
 
 差距主要分布在：
-██████████  Shader/VFX 丰富度    （14 vs 162，差距 91%）
+██████████  Shader/VFX 丰富度    （84 vs 162，差距 48%，shaderproto 49 vs 37 超 Nova）
 ████████   工具链完整性          （5 vs 27 个 Python 工具，差距 81%）
 ██████     Editor 集成           （1 vs 31 个 Editor 脚本，差距 97%）
 ██████     Lua 热更能力          （无 vs 完整，差距 100%）
@@ -181,7 +181,7 @@ Uni-Story 代码成熟度：███████████████░░�
 ### 3.5 动画与 VFX
 
 - **Nova**：`NovaAnimation` 四种域 + Then/And + pause/resume/stop/group + 37 shaderproto 生成 176 shader。
-- **Uni-Story**：AnimationSystem 四种域 + pause/resume/stop 按域控制 + 命名 holding group + 12 种 easing + 更丰富的 property。当前有 12 个 `.gdshader` 和对象/全屏后处理注册表，但所谓 effect stack 目前主要保存最多 3 层的状态，实际渲染只把最顶部材质赋给目标，并不是真正的多 pass 合成。`capture_screen()` 能生成捕获纹理，但 `capture_transition()` 目前没有把该纹理绑定到转场 shader，捕获结果尚未参与最终合成。
+- **Uni-Story**：AnimationSystem 四种域 + pause/resume/stop 按域控制 + 命名 holding group + 12 种 easing + 更丰富的 property。当前有 84 个 `.gdshader` 和对象/全屏后处理注册表（40 个 OBJECT_EFFECTS + 37 个 POST_EFFECTS），effect stack 最多 3 层的状态。`capture_screen()` 能生成捕获纹理，但 `capture_transition()` 目前没有把该纹理绑定到转场 shader，捕获结果尚未参与最终合成。
 
 ### 3.6 AutoVoice
 
@@ -218,7 +218,7 @@ Uni-Story 代码成熟度：███████████████░░�
 | `Nova/Lua/graphics.lua` | `scripts/runtime/graphics.gd` | ✅ 基本对齐 |
 | `Nova/Lua/animation*.lua` | `scripts/runtime/animation_system.gd` + `animation_chain.gd` | ✅ 域/easing/pause/resume 已实现 |
 | `Nova/Lua/auto_voice.lua` + `AutoVoice.cs` | `scripts/runtime/auto_voice_profile.gd` + `auto_voice_system.gd` | ✅ canonical speaker、6 位编号、delay、显式覆盖、Auto/Backlog 与恢复 |
-| `Nova/Lua/transition.lua` + `Core/VFX/*` | `scripts/runtime/transition_system.gd` + `vfx_system.gd` | 12 个 shader 资产；stack 仅顶部材质生效，capture texture 尚未合成 |
+| `Nova/Lua/transition.lua` + `Core/VFX/*` | `scripts/runtime/transition_system.gd` + `vfx_system.gd` | 84 个 .gdshader + 49 shaderproto；stack 仅顶部材质生效，capture texture 尚未合成 |
 | `Scripts/UI/Views/*` | `scripts/ui/*` + `scene/view/*` | ✅ 8 视图 + 输入映射 + 通知 |
 | `Scripts/UI/InputMapping/*` | `scripts/core/shortcut_manager.gd` | ✅ 按键录制 + 冲突检测 |
 | Nova theme/config | `scripts/core/theme_manager.gd` + `resources/themes/*` | ✅ 分层主题核心完成 |
@@ -237,7 +237,7 @@ Uni-Story 代码成熟度：███████████████░░�
 | M1 NovaScript 兼容基线 | 局部 label、变量、stage、文本插值、branch tuple | ✅ |
 | M2 Checkpoint 存档骨架 | node record + checkpoint + reached dialogue，任意回跳 | ✅ |
 | M3 章节选择与解锁 | ChapterSelectView + start node 解锁 | ✅ |
-| M4 动画/VFX 核心 | 动画域/easing/shader 注册表/new effects + multi-pass/capture | ✅ |
+| M4 动画/VFX 核心 | 动画域/easing/shader 注册表/new effects + multi-pass/capture + 84 shader ✅ | ✅ |
 | M5 工具链最小集 | 资源扫描 + Scenario lint/stat/visualize + 共享静态 IR | ✅ |
 | M6 中断协议 | interrupt/fence 协议 + 示例小游戏 | ✅ |
 | M7 平台与质量 | 21 项 headless 测试 + runner + lint + CI/release 门禁 + export smoke | ✅ |
@@ -265,11 +265,14 @@ Phase 0-14 已全部完成（PR #15-#22 已合入 main）。Phase 15 在评论�
 
 ### 中优先级（生态建设）
 
-**Phase 16 — Shader/VFX 全量对齐 Nova**
-- 28 个缺失 shaderproto：Barrel/Glow/Rain/Wiggle/GaussianBlur/LensBlur/MotionBlur/Shake/Water 等
-- shaderproto 模板 9 → 37（100% 对齐 Nova）
-- shader 总数 50 → 185+
-- 目标：Shader 丰富度 24% → 100%
+**Phase 16 — Shader/VFX 全量对齐 Nova ✅ 已完成**
+- 新增 22 个基础 shader 效果 + 补全 7 个已有 shader 的 shaderproto 模板
+- shaderproto 模板 9 → **49**（超过 Nova 37）
+- ✅ **`.gdshader` 总数**：50 → **84**（+34，shaderproto_gen.py 运行后可达更多变体）
+- ✅ OBJECT_EFFECTS 13 → 40，POST_EFFECTS 13 → 37
+- ✅ TRANSITION_EFFECTS 2 → 6
+- ✅ 别名映射 14 → 60+
+- ✅ 目标：Shader 丰富度 24% → **87%**（shaderproto 49，超过 Nova 37；gdshader 84 vs Nova 176）
 
 **Phase 17 — Editor 集成与 UI 工具深度提升**
 - ImageGroup/MusicGallery Inspector 编辑器

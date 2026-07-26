@@ -1,0 +1,5 @@
+{
+  "name": "final_blit",
+  "template": "res://resources/shaders/final_blit.gdshader",
+  "variants": []
+}

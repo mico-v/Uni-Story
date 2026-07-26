@@ -1,0 +1,30 @@
+{
+  "name": "color",
+  "template": "res://resources/shaders/color.gdshader",
+  "variants": [
+    {
+      "suffix": "_warm",
+      "replacements": {
+        "hue : hint_range(-1.0, 1.0) = 0.0": "hue : hint_range(-1.0, 1.0) = 0.05"
+      }
+    },
+    {
+      "suffix": "_cool",
+      "replacements": {
+        "hue : hint_range(-1.0, 1.0) = 0.0": "hue : hint_range(-1.0, 1.0) = -0.08"
+      }
+    },
+    {
+      "suffix": "_vivid",
+      "replacements": {
+        "saturation : hint_range(-1.0, 1.0) = 0.0": "saturation : hint_range(-1.0, 1.0) = 0.3"
+      }
+    },
+    {
+      "suffix": "_dark",
+      "replacements": {
+        "value : hint_range(-1.0, 1.0) = 0.0": "value : hint_range(-1.0, 1.0) = -0.2"
+      }
+    }
+  ]
+}

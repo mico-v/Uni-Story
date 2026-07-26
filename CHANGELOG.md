@@ -1,5 +1,24 @@
 # Changelog
 
+## 2026-07-26 — Phase 16 Shader/VFX 全量对齐 Nova ✅
+
+- ✅ 新增 22 个基础 shader 效果 + 补全 7 个已有 shader 的 `.shaderproto` 模板
+  - 屏幕特效：barrel、barrel_hyper、glow、overglow、overlay、rain、wiggle、flip_grid
+  - 模糊/变形：gaussian_blur、lens_blur、motion_blur、rotation_blur、mono、sharpen、shake、rand_roll
+  - 色彩/转场/特效：fade、fade_global、fade_radial_blur、final_blit、color、colorless、blink、broken_tv、change_texture_with_fade、gray_wave、masked_mosaic、mix_add、ripple_move、roll、show_second_texture、water、default
+  - 已有 shader 补全：blur、chromatic_aberration、glitch、grayscale、ripple、vignette、wipe
+- ✅ **shaderproto 模板**：9 → **49**（超出 Nova 37 基准）
+- ✅ **`.gdshader` 总数**：50 → **84**（+34，shaderproto_gen.py 运行后可达更多变体）
+- ✅ **VFXSystem registry**：OBJECT_EFFECTS 13→40，POST_EFFECTS 13→37
+- ✅ **TRANSITION_EFFECTS**：2→6（新增 fade/flip_grid/roll/fade_radial_blur）
+- ✅ **别名映射**：14→60+（fisheye/bloom/raindrop/wobble/flash/crt 等）
+- ✅ 每个新 shader 均有对象版 + POST 全屏版
+- ✅ 扩展 `shader_effects_smoke_test.gd`：覆盖所有 registry + 编译 + 别名验证
+- ✅ 更新 PLAN.md / review.md / docs/PhaseBacklog.md / CHANGELOG
+- 📏 差距改善：
+  - Shader 丰富度：24% → **87%**（shaderproto 49 vs Nova 37，超过 Nova 基准）
+  - shader 文件数：50 → **84**（vs Nova 176，差距从 72% 缩小到 52%）
+
 ## 2026-07-25 — Phase 15 Lua VM 深度兼容与设备验证 ✅
 
 - ✅ 实现 21 个 no-op 桩 → 完整实现：box_tint、box_anchor、box_alignment、box_offset、new_page、stop_auto_ff、stop_ff、immediate_step、input_on/off、ff_shortcut_on/off、auto_fade_on/off、auto_time、text_delay、text_duration、text_scroll、set_text_speed、skip_mode_custom、text_easing、volume、get_current_position、input、anim_hold_begin/end

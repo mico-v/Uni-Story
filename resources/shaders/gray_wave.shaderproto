@@ -1,0 +1,18 @@
+{
+  "name": "gray_wave",
+  "template": "res://resources/shaders/gray_wave.gdshader",
+  "variants": [
+    {
+      "suffix": "_slow",
+      "replacements": {
+        "speed : hint_range(0.1, 5.0) = 1.0": "speed : hint_range(0.1, 5.0) = 0.4"
+      }
+    },
+    {
+      "suffix": "_fast",
+      "replacements": {
+        "speed : hint_range(0.1, 5.0) = 1.0": "speed : hint_range(0.1, 5.0) = 2.5"
+      }
+    }
+  ]
+}

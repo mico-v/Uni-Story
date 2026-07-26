@@ -1,0 +1,18 @@
+{
+  "name": "ripple",
+  "template": "res://resources/shaders/ripple.gdshader",
+  "variants": [
+    {
+      "suffix": "_gentle",
+      "replacements": {
+        "intensity : hint_range(0.0, 1.0) = 0.3": "intensity : hint_range(0.0, 1.0) = 0.1"
+      }
+    },
+    {
+      "suffix": "_strong",
+      "replacements": {
+        "intensity : hint_range(0.0, 1.0) = 0.3": "intensity : hint_range(0.0, 1.0) = 0.6"
+      }
+    }
+  ]
+}

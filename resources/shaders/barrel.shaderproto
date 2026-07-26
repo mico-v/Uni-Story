@@ -1,0 +1,25 @@
+{
+  "name": "barrel",
+  "template": "res://resources/shaders/barrel.gdshader",
+  "variants": [
+    {
+      "suffix": "_mild",
+      "replacements": {
+        "sigma : hint_range(-0.5, 0.5) = 0.2": "sigma : hint_range(-0.5, 0.5) = 0.1"
+      }
+    },
+    {
+      "suffix": "_strong",
+      "replacements": {
+        "sigma : hint_range(-0.5, 0.5) = 0.2": "sigma : hint_range(-0.5, 0.5) = 0.35"
+      }
+    },
+    {
+      "suffix": "_chroma",
+      "replacements": {
+        "sigma : hint_range(-0.5, 0.5) = 0.2": "sigma : hint_range(-0.5, 0.5) = 0.3",
+        "chroma : hint_range(0.0, 1.0) = 0.0": "chroma : hint_range(0.0, 1.0) = 0.15"
+      }
+    }
+  ]
+}

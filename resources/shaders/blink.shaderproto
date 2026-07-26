@@ -1,0 +1,25 @@
+{
+  "name": "blink",
+  "template": "res://resources/shaders/blink.gdshader",
+  "variants": [
+    {
+      "suffix": "_slow",
+      "replacements": {
+        "speed : hint_range(0.5, 20.0) = 5.0": "speed : hint_range(0.5, 20.0) = 2.0"
+      }
+    },
+    {
+      "suffix": "_fast",
+      "replacements": {
+        "speed : hint_range(0.5, 20.0) = 5.0": "speed : hint_range(0.5, 20.0) = 12.0"
+      }
+    },
+    {
+      "suffix": "_subtle",
+      "replacements": {
+        "speed : hint_range(0.5, 20.0) = 5.0": "speed : hint_range(0.5, 20.0) = 4.0",
+        "strength : hint_range(0.0, 1.0) = 1.0": "strength : hint_range(0.0, 1.0) = 0.3"
+      }
+    }
+  ]
+}

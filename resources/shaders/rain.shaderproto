@@ -1,0 +1,19 @@
+{
+  "name": "rain",
+  "template": "res://resources/shaders/rain.gdshader",
+  "variants": [
+    {
+      "suffix": "_light",
+      "replacements": {
+        "strength : hint_range(0.0, 1.0) = 0.5": "strength : hint_range(0.0, 1.0) = 0.2"
+      }
+    },
+    {
+      "suffix": "_heavy",
+      "replacements": {
+        "strength : hint_range(0.0, 1.0) = 0.5": "strength : hint_range(0.0, 1.0) = 0.8",
+        "speed : hint_range(0.1, 3.0) = 1.0": "speed : hint_range(0.1, 3.0) = 1.5"
+      }
+    }
+  ]
+}

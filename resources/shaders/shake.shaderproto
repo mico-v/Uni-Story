@@ -1,0 +1,19 @@
+{
+  "name": "shake",
+  "template": "res://resources/shaders/shake.gdshader",
+  "variants": [
+    {
+      "suffix": "_gentle",
+      "replacements": {
+        "intensity : hint_range(0.0, 1.0) = vec2(0.05, 0.05)": "intensity : hint_range(0.0, 1.0) = vec2(0.02, 0.02)"
+      }
+    },
+    {
+      "suffix": "_violent",
+      "replacements": {
+        "intensity : hint_range(0.0, 1.0) = vec2(0.05, 0.05)": "intensity : hint_range(0.0, 1.0) = vec2(0.1, 0.1)",
+        "speed : hint_range(0.5, 20.0) = 10.0": "speed : hint_range(0.5, 20.0) = 15.0"
+      }
+    }
+  ]
+}

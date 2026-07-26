@@ -1,0 +1,19 @@
+{
+  "name": "broken_tv",
+  "template": "res://resources/shaders/broken_tv.gdshader",
+  "variants": [
+    {
+      "suffix": "_mild",
+      "replacements": {
+        "intensity : hint_range(0.0, 1.0) = 0.5": "intensity : hint_range(0.0, 1.0) = 0.2"
+      }
+    },
+    {
+      "suffix": "_severe",
+      "replacements": {
+        "intensity : hint_range(0.0, 1.0) = 0.5": "intensity : hint_range(0.0, 1.0) = 0.8",
+        "scanlines : hint_range(0.0, 1.0) = 0.3": "scanlines : hint_range(0.0, 1.0) = 0.6"
+      }
+    }
+  ]
+}

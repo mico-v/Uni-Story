@@ -1,0 +1,18 @@
+{
+  "name": "rotation_blur",
+  "template": "res://resources/shaders/rotation_blur.gdshader",
+  "variants": [
+    {
+      "suffix": "_light",
+      "replacements": {
+        "strength : hint_range(0.0, 10.0) = 2.0": "strength : hint_range(0.0, 10.0) = 1.0"
+      }
+    },
+    {
+      "suffix": "_heavy",
+      "replacements": {
+        "strength : hint_range(0.0, 10.0) = 2.0": "strength : hint_range(0.0, 10.0) = 5.0"
+      }
+    }
+  ]
+}

@@ -28,6 +28,32 @@ const OBJECT_EFFECTS := {
 	"zoom_blur":    { "shader": "res://resources/shaders/zoom_blur.gdshader",    "params": { "amount": 0.3 } },
 	"edge_detect":  { "shader": "res://resources/shaders/edge_detect.gdshader",  "params": { "amount": 1.0, "threshold": 0.3 } },
 	"invert":       { "shader": "res://resources/shaders/invert.gdshader",       "params": { "amount": 1.0 } },
+	"barrel":       { "shader": "res://resources/shaders/barrel.gdshader",       "params": { "sigma": 0.2 } },
+	"barrel_hyper": { "shader": "res://resources/shaders/barrel_hyper.gdshader", "params": { "sigma": 0.5 } },
+	"glow":         { "shader": "res://resources/shaders/glow.gdshader",         "params": { "size": 1.0, "strength": 1.0 } },
+	"overglow":     { "shader": "res://resources/shaders/overglow.gdshader",     "params": { "size": 1.5, "strength": 2.0 } },
+	"overlay":      { "shader": "res://resources/shaders/overlay.gdshader",      "params": { "blend": 0.5 } },
+	"rain":         { "shader": "res://resources/shaders/rain.gdshader",         "params": { "strength": 0.5 } },
+	"wiggle":       { "shader": "res://resources/shaders/wiggle.gdshader",       "params": { "intensity": 0.3 } },
+	"flip_grid":    { "shader": "res://resources/shaders/flip_grid.gdshader",    "params": { "progress": 0.0 } },
+	"gaussian_blur":{ "shader": "res://resources/shaders/gaussian_blur.gdshader","params": { "blur_size": Vector2(4, 4) } },
+	"lens_blur":    { "shader": "res://resources/shaders/lens_blur.gdshader",    "params": { "size": 3.0, "bokeh": 0.5 } },
+	"motion_blur":  { "shader": "res://resources/shaders/motion_blur.gdshader",  "params": { "strength": 3.0 } },
+	"rotation_blur":{ "shader": "res://resources/shaders/rotation_blur.gdshader","params": { "strength": 2.0 } },
+	"mono":         { "shader": "res://resources/shaders/mono.gdshader",         "params": { "amount": 1.0 } },
+	"sharpen":      { "shader": "res://resources/shaders/sharpen.gdshader",      "params": { "strength": 1.0 } },
+	"shake":        { "shader": "res://resources/shaders/shake.gdshader",        "params": { "intensity": Vector2(0.05, 0.05) } },
+	"rand_roll":    { "shader": "res://resources/shaders/rand_roll.gdshader",    "params": { "intensity": 0.1 } },
+	"blink":        { "shader": "res://resources/shaders/blink.gdshader",        "params": { "speed": 5.0, "strength": 1.0 } },
+	"broken_tv":    { "shader": "res://resources/shaders/broken_tv.gdshader",    "params": { "intensity": 0.5 } },
+	"color":        { "shader": "res://resources/shaders/color.gdshader",        "params": { "hue": 0.0, "saturation": 0.0, "value": 0.0 } },
+	"colorless":    { "shader": "res://resources/shaders/colorless.gdshader",    "params": { "amount": 1.0 } },
+	"fade":         { "shader": "res://resources/shaders/fade.gdshader",         "params": { "amount": 0.0 } },
+	"fade_global":  { "shader": "res://resources/shaders/fade_global.gdshader",  "params": { "amount": 0.0 } },
+	"fade_radial_blur": { "shader": "res://resources/shaders/fade_radial_blur.gdshader", "params": { "amount": 0.0, "blur_size": 1.0 } },
+	"gray_wave":    { "shader": "res://resources/shaders/gray_wave.gdshader",    "params": { "wave_amount": 0.5 } },
+	"water":        { "shader": "res://resources/shaders/water.gdshader",        "params": { "intensity": 0.3 } },
+	"default":      { "shader": "res://resources/shaders/default.gdshader",      "params": {} },
 }
 
 const POST_EFFECTS := {
@@ -35,7 +61,7 @@ const POST_EFFECTS := {
 	"vignette":     { "shader": "res://resources/shaders/vignette_post.gdshader",             "params": { "intensity": 0.5 } },
 	"grayscale":    { "shader": "res://resources/shaders/grayscale_post.gdshader",             "params": { "amount": 1.0 } },
 	"blur":         { "shader": "res://resources/shaders/blur_post.gdshader",                  "params": { "amount": 5.0 } },
-	"glitch":       { "shader": "res://resources/shaders/glitch.gdshader",                     "params": { "intensity": 0.5, "speed": 2.0 } },
+	"glitch":       { "shader": "res://resources/shaders/glitch_post.gdshader",                 "params": { "intensity": 0.5, "speed": 2.0 } },
 	"pixelate":     { "shader": "res://resources/shaders/pixelate_post.gdshader",              "params": { "amount": 1.0, "pixel_size": 8.0 } },
 	"mosaic":       { "shader": "res://resources/shaders/mosaic_post.gdshader",                "params": { "amount": 1.0, "tile_size": 8.0 } },
 	"kaleidoscope": { "shader": "res://resources/shaders/kaleidoscope_post.gdshader",          "params": { "amount": 1.0, "segments": 6.0 } },
@@ -44,11 +70,39 @@ const POST_EFFECTS := {
 	"zoom_blur":    { "shader": "res://resources/shaders/zoom_blur_post.gdshader",             "params": { "amount": 0.3 } },
 	"edge_detect":  { "shader": "res://resources/shaders/edge_detect_post.gdshader",           "params": { "amount": 1.0, "threshold": 0.3 } },
 	"invert":       { "shader": "res://resources/shaders/invert_post.gdshader",                "params": { "amount": 1.0 } },
+	"barrel":       { "shader": "res://resources/shaders/barrel.gdshader",                     "params": { "sigma": 0.2 } },
+	"barrel_hyper": { "shader": "res://resources/shaders/barrel_hyper.gdshader",               "params": { "sigma": 0.5 } },
+	"glow":         { "shader": "res://resources/shaders/glow.gdshader",                       "params": { "size": 1.0, "strength": 1.0 } },
+	"overglow":     { "shader": "res://resources/shaders/overglow.gdshader",                   "params": { "size": 1.5, "strength": 2.0 } },
+	"overlay":      { "shader": "res://resources/shaders/overlay.gdshader",                    "params": { "blend": 0.5 } },
+	"rain":         { "shader": "res://resources/shaders/rain.gdshader",                       "params": { "strength": 0.5 } },
+	"wiggle":       { "shader": "res://resources/shaders/wiggle.gdshader",                     "params": { "intensity": 0.3 } },
+	"gaussian_blur":{ "shader": "res://resources/shaders/gaussian_blur.gdshader",              "params": { "blur_size": Vector2(4, 4) } },
+	"lens_blur":    { "shader": "res://resources/shaders/lens_blur.gdshader",                  "params": { "size": 3.0, "bokeh": 0.5 } },
+	"motion_blur":  { "shader": "res://resources/shaders/motion_blur.gdshader",                "params": { "strength": 3.0 } },
+	"rotation_blur":{ "shader": "res://resources/shaders/rotation_blur.gdshader",              "params": { "strength": 2.0 } },
+	"mono":         { "shader": "res://resources/shaders/mono.gdshader",                       "params": { "amount": 1.0 } },
+	"sharpen":      { "shader": "res://resources/shaders/sharpen.gdshader",                    "params": { "strength": 1.0 } },
+	"shake":        { "shader": "res://resources/shaders/shake.gdshader",                      "params": { "intensity": Vector2(0.05, 0.05) } },
+	"rand_roll":    { "shader": "res://resources/shaders/rand_roll.gdshader",                  "params": { "intensity": 0.1 } },
+	"blink":        { "shader": "res://resources/shaders/blink.gdshader",                      "params": { "speed": 5.0, "strength": 1.0 } },
+	"broken_tv":    { "shader": "res://resources/shaders/broken_tv.gdshader",                  "params": { "intensity": 0.5 } },
+	"color":        { "shader": "res://resources/shaders/color.gdshader",                      "params": { "hue": 0.0, "saturation": 0.0, "value": 0.0 } },
+	"fade":         { "shader": "res://resources/shaders/fade.gdshader",                       "params": { "amount": 0.0 } },
+	"fade_global":  { "shader": "res://resources/shaders/fade_global.gdshader",                "params": { "amount": 0.0 } },
+	"gray_wave":    { "shader": "res://resources/shaders/gray_wave.gdshader",                  "params": { "wave_amount": 0.5 } },
+	"water":        { "shader": "res://resources/shaders/water.gdshader",                      "params": { "intensity": 0.3 } },
+	"ripple_move":  { "shader": "res://resources/shaders/ripple_move.gdshader",                "params": { "intensity": 0.3 } },
+	"roll":         { "shader": "res://resources/shaders/roll.gdshader",                       "params": { "angle": 0.0 } },
 }
 
 const TRANSITION_EFFECTS := {
-	"dissolve": { "shader": "res://resources/shaders/dissolve.gdshader", "param": "threshold", "from": 0.0, "to": 1.0 },
-	"wipe":     { "shader": "res://resources/shaders/wipe.gdshader",     "param": "progress",  "from": 0.0, "to": 1.0 },
+	"dissolve":           { "shader": "res://resources/shaders/dissolve.gdshader",      "param": "threshold", "from": 0.0, "to": 1.0 },
+	"wipe":               { "shader": "res://resources/shaders/wipe.gdshader",          "param": "progress",  "from": 0.0, "to": 1.0 },
+	"fade":               { "shader": "res://resources/shaders/fade.gdshader",          "param": "amount",    "from": 0.0, "to": 1.0 },
+	"flip_grid":          { "shader": "res://resources/shaders/flip_grid.gdshader",     "param": "progress",  "from": 0.0, "to": 1.0 },
+	"roll":               { "shader": "res://resources/shaders/roll.gdshader",          "param": "angle",     "from": 0.0, "to": 1.0 },
+	"fade_radial_blur":   { "shader": "res://resources/shaders/fade_radial_blur.gdshader", "param": "amount", "from": 0.0, "to": 1.0 },
 }
 
 const MAX_STACK_DEPTH := 3
@@ -738,6 +792,58 @@ func _normalize_effect_name(effect_name: String) -> String:
 			return "edge_detect"
 		"negative", "reverse_color", "reverse":
 			return "invert"
+		"fisheye", "distortion":
+			return "barrel"
+		"hyperfisheye", "extreme_fisheye":
+			return "barrel_hyper"
+		"bloom", "luminescence":
+			return "glow"
+		"overexposure", "superbloom", "hyperbloom":
+			return "overglow"
+		"screen", "texture_overlay":
+			return "overlay"
+		"raindrop", "storm":
+			return "rain"
+		"wobble", "shake_x":
+			return "wiggle"
+		"page_flip", "page_curl":
+			return "flip_grid"
+		"gaussian", "gs_blur":
+			return "gaussian_blur"
+		"dof", "bokeh", "depth_of_field":
+			return "lens_blur"
+		"motionblur", "velocity_blur", "directional_blur":
+			return "motion_blur"
+		"circular_blur", "spin_blur":
+			return "rotation_blur"
+		"sharp", "unsharp", "unsharp_mask":
+			return "sharpen"
+		"camerashake", "screenshake":
+			return "shake"
+		"random_roll", "drift", "random_scroll":
+			return "rand_roll"
+		"flash", "strobe", "flicker":
+			return "blink"
+		"crt", "tv_effect", "television":
+			return "broken_tv"
+		"hsv", "hue_shift", "color_adjust":
+			return "color"
+		"desaturate":
+			return "colorless"
+		"darken", "brighten", "screen_fade":
+			return "fade"
+		"global_fade", "full_fade":
+			return "fade_global"
+		"radial_fade", "zoom_fade":
+			return "fade_radial_blur"
+		"wave_grayscale", "desaturate_wave":
+			return "gray_wave"
+		"underwater", "liquid", "ocean":
+			return "water"
+		"moving_ripple", "travel_ripple":
+			return "ripple_move"
+		"rotate", "barrel_roll":
+			return "roll"
 		"color":
 			return ""
 		_:

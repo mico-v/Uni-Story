@@ -1,0 +1,20 @@
+{
+  "name": "lens_blur",
+  "template": "res://resources/shaders/lens_blur.gdshader",
+  "variants": [
+    {
+      "suffix": "_narrow",
+      "replacements": {
+        "size : hint_range(0.0, 10.0) = 3.0": "size : hint_range(0.0, 10.0) = 1.5",
+        "bokeh : hint_range(0.0, 1.0) = 0.5": "bokeh : hint_range(0.0, 1.0) = 0.3"
+      }
+    },
+    {
+      "suffix": "_wide",
+      "replacements": {
+        "size : hint_range(0.0, 10.0) = 3.0": "size : hint_range(0.0, 10.0) = 6.0",
+        "bokeh : hint_range(0.0, 1.0) = 0.5": "bokeh : hint_range(0.0, 1.0) = 0.8"
+      }
+    }
+  ]
+}
