@@ -126,9 +126,10 @@ func _test_build_hooks() -> void:
 	_test("BuildHooks.run_lint has exit_code", lint_result.has("exit_code"))
 	_test("BuildHooks.run_lint has output", lint_result.has("output"))
 
-	var test_result := BuildHooks.run_tests()
-	_test("BuildHooks.run_tests returns dict", test_result is Dictionary)
-	_test("BuildHooks.run_tests has exit_code", test_result.has("exit_code"))
+	# NOTE: run_tests() invokes the headless suite which includes this file;
+	# calling it here would cause infinite recursion, so we only verify the method exists.
+	_test("BuildHooks.run_tests is callable", BuildHooks.has_method("run_tests"))
+	_test("BuildHooks.pre_export_quality_gate is callable", BuildHooks.has_method("pre_export_quality_gate"))
 
 
 # ── 17.4: Standing Editor Enhancement Checks ──
