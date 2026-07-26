@@ -192,8 +192,8 @@ func _test_inspector_plugins() -> void:
 	# Main editor plugin
 	_test("uni_story_editor_plugin.gd exists", ResourceLoader.exists("res://addons/uni_story_editor_suite/uni_story_editor_plugin.gd"))
 
-	# plugin.cfg
-	_test("plugin.cfg exists", ResourceLoader.exists("res://addons/uni_story_editor_suite/plugin.cfg"))
+	# plugin.cfg is not a Godot resource → use FileAccess.file_exists
+	_test("plugin.cfg exists", FileAccess.file_exists("res://addons/uni_story_editor_suite/plugin.cfg"))
 
 	# Resource files exist
 	_test("image_entry.gd exists", ResourceLoader.exists("res://scripts/resources/image_entry.gd"))
