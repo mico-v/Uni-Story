@@ -41,9 +41,9 @@ func _ready() -> void:
 	print("-".repeat(60))
 
 	if _fails > 0:
-		OS.exit(1)
+		get_tree().quit(1)
 	else:
-		OS.exit(0)
+		get_tree().quit(0)
 
 
 func _test(msg: String, condition: bool) -> void:
@@ -140,7 +140,7 @@ func _test_standing_editor_enhancements() -> void:
 	_test("standing_edit_panel.gd loads", script != null)
 
 	if script:
-		var source := script.source_code
+		var source: String = (script as GDScript).source_code
 		_test("Has _move_layer_up", "_move_layer_up" in source)
 		_test("Has _move_layer_down", "_move_layer_down" in source)
 		_test("Has _toggle_dual_preview", "_toggle_dual_preview" in source)
