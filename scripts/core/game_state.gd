@@ -6,7 +6,7 @@ class_name GameState extends RefCounted
 signal dialogue_changed(speaker: String, text: String)
 signal dialogue_processed(character_name: String, speaker: String, text: String, audible: bool)
 signal dialogue_advanced()                 # fired after each dialogue display (for auto-save)
-signal branch_requested(options: Array)        # Array[{dest, text, mode, cond, image, enabled}]
+signal branch_requested(options: Array[Dictionary])        # Array[{dest, text, mode, cond, image, enabled}]
 signal game_ended()
 signal chapter_started()                 # fired for CHAPTER-type nodes (UI auto-advances)
 signal ending_reached(ending_name: String)  # fired when a named END node is reached
@@ -30,7 +30,7 @@ var pending_jump: StringName = &""
 
 ## Cache for _eval_condition results. Keyed by trimmed condition string.
 ## Cleared on restore() and start_node() since variables may differ.
-var _cond_cache: Dictionary = {}
+var _cond_cache: Dictionary[String, bool] = {}
 const _COND_CACHE_MAX := 64
 
 
@@ -285,7 +285,7 @@ func _on_node_exhausted() -> bool:
 	is_waiting_branch = false
 	current_end_name = ""
 	if not current_node.branches.is_empty():
-		var opts: Array = []
+		var opts: Array[Dictionary] = []
 		for b in current_node.branches:
 			if not (b is Dictionary):
 				continue

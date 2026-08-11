@@ -919,6 +919,35 @@ func _deactivate_modes() -> void:
 		_skip_gen += 1
 
 
+## Force the auto mode on/off from an external caller (Nova compat helpers).
+## Mirrors the in-UI auto toggle so any running auto-advance loop is invalidated
+## via the _auto_gen counter. Turning auto ON also disables skip, matching the UI.
+func set_auto_mode(active: bool) -> void:
+	_is_auto = active
+	if _auto_btn:
+		_auto_btn.button_pressed = active
+	if _is_auto:
+		_is_skip = false
+		if _skip_btn:
+			_skip_btn.button_pressed = false
+	if not _is_auto:
+		_auto_gen += 1
+
+
+## Force the skip mode on/off from an external caller (Nova compat helpers).
+## Mirrors the in-UI skip toggle so any running skip loop is invalidated.
+func set_skip_mode(active: bool) -> void:
+	_is_skip = active
+	if _skip_btn:
+		_skip_btn.button_pressed = active
+	if _is_skip:
+		_is_auto = false
+		if _auto_btn:
+			_auto_btn.button_pressed = false
+	if not _is_skip:
+		_skip_gen += 1
+
+
 @warning_ignore("unused_parameter")
 func _on_auto_advance(gen: int) -> void:
 	if gen != _auto_gen or not _is_auto:

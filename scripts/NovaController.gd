@@ -86,7 +86,7 @@ var animation: AnimationSystem
 var composer: SpriteComposer
 var avatar: AvatarSystem
 var audio: AudioSystem
-var auto_voice
+var auto_voice: AutoVoiceSystem
 var camera: CameraSystem
 var transition: TransitionSystem
 var dialogue_box: DialogueBoxSystem
@@ -100,12 +100,12 @@ var dialog_system: DialogSystem
 var preload_system: PreloadSystem
 var engine_context: EngineContext
 var restorables: RestorableRegistry
-var checkpoint_manager: RefCounted
-var gallery_coordinator: RefCounted
-var settings_coordinator: RefCounted
+var checkpoint_manager: CheckpointManager
+var gallery_coordinator: GalleryCoordinator
+var settings_coordinator: SettingsCoordinator
 var mobile_ui_support: MobileUiSupport
-var interrupt_manager: RefCounted
-var theme_manager: RefCounted
+var interrupt_manager: InterruptManager
+var theme_manager: ThemeManager
 
 # ── View management ─────────────────────────────────────────────────
 var view_manager: ViewManager
@@ -117,8 +117,8 @@ var _settings_vc: SettingsViewController
 var _cg_vc: CgGalleryController
 var _music_vc: MusicGalleryController
 var _save_load_vc: SaveLoadController
-var _chapter_select_vc: Control
-var _help_vc: Control
+var _chapter_select_vc: ChapterSelectViewController
+var _help_vc: HelpViewController
 
 # ── Settings return tracking ──────────────────────────────────────────
 var _settings_return_to := "title"
@@ -300,12 +300,12 @@ func _bind_view_controllers() -> void:
 		if _save_load_vc:
 			_save_load_vc.setup(self)
 	var chapter_node := get_node_or_null("ChapterSelectView")
-	if chapter_node is Control and chapter_node.has_method("setup"):
-		_chapter_select_vc = chapter_node as Control
-		_chapter_select_vc.call("setup", self)
+	if chapter_node is ChapterSelectViewController:
+		_chapter_select_vc = chapter_node as ChapterSelectViewController
+		_chapter_select_vc.setup(self)
 	var help_node := get_node_or_null("HelpView")
-	if help_node is Control:
-		_help_vc = help_node as Control
+	if help_node is HelpViewController:
+		_help_vc = help_node as HelpViewController
 
 
 # ── ViewManager initialization ──────────────────────────────────────
@@ -393,11 +393,11 @@ func _connect_model_signals() -> void:
 		_title_vc.quit_requested.connect(_on_quit)
 	# ChapterSelectVC → navigation.
 	if _chapter_select_vc:
-		_chapter_select_vc.connect("chapter_selected", Callable(self, "_on_chapter_selected"))
-		_chapter_select_vc.connect("back_requested", func() -> void: view_manager.switch_to("title"))
+		_chapter_select_vc.chapter_selected.connect(_on_chapter_selected)
+		_chapter_select_vc.back_requested.connect(func() -> void: view_manager.switch_to("title"))
 	# HelpVC → back.
 	if _help_vc:
-		_help_vc.connect("back_requested", func() -> void:
+		_help_vc.back_requested.connect(func() -> void:
 			view_manager.switch_to("title")
 			_show_title_hints()
 		)
@@ -429,16 +429,16 @@ func _apply_i18n() -> void:
 	if _save_load_vc:
 		_save_load_vc.apply_i18n(i18n)
 	if _chapter_select_vc:
-		_chapter_select_vc.call("apply_i18n", i18n)
+		_chapter_select_vc.apply_i18n(i18n)
 	if _help_vc:
-		_help_vc.call("apply_i18n", i18n)
+		_help_vc.apply_i18n(i18n)
 
 
 # ── Navigation handlers ─────────────────────────────────────────────
 
 func _on_title_new_game() -> void:
 	if _chapter_select_vc:
-		if bool(_chapter_select_vc.call("show_or_start_first")):
+		if _chapter_select_vc.show_or_start_first():
 			return
 		view_manager.switch_to("chapter_select")
 		return
@@ -455,7 +455,7 @@ func _on_title_new_game() -> void:
 
 func _on_title_chapter_select() -> void:
 	if _chapter_select_vc:
-		_chapter_select_vc.call("refresh")
+		_chapter_select_vc.refresh()
 		view_manager.switch_to("chapter_select")
 		return
 	_on_title_new_game()
@@ -672,7 +672,7 @@ func show_once_hint(key: String, text_key: String, fallback: String, duration: f
 func _has_multiple_reached_chapters() -> bool:
 	if _chapter_select_vc == null:
 		return false
-	var unlocked = _chapter_select_vc.call("get_unlocked_nodes")
+	var unlocked := _chapter_select_vc.get_unlocked_nodes()
 	return unlocked is Array and unlocked.size() > 1
 
 
@@ -703,18 +703,12 @@ func _t(key: String, fallback: String = "") -> String:
 
 func deactivate_auto_mode() -> void:
 	if _game_vc:
-		_game_vc._is_auto = false
-		_game_vc._auto_gen += 1
-		if _game_vc._auto_btn:
-			_game_vc._auto_btn.button_pressed = false
+		_game_vc.set_auto_mode(false)
 
 
 func deactivate_skip_mode() -> void:
 	if _game_vc:
-		_game_vc._is_skip = false
-		_game_vc._skip_gen += 1
-		if _game_vc._skip_btn:
-			_game_vc._skip_btn.button_pressed = false
+		_game_vc.set_skip_mode(false)
 
 
 func set_input_enabled(enabled: bool) -> void:
