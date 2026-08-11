@@ -31,3 +31,7 @@ Nova/
 
 # Local IDE / tool config (CodeBuddy plugins, per-machine)
 .codebuddy/
+
+# CNB (cnb.cool) CI — migrated to GitHub Actions
+.cnb.yml
+.cnb/

@@ -107,7 +107,7 @@ godot --headless --path . --export-release "Android" ./build/android/Uni-Story.a
 
 ## 三、一键构建（CI/CD）
 
-项目已包含 CI 流水线（`.cnb.yml`），运行以下步骤：
+项目已包含 GitHub Actions CI/CD 流水线（`.github/workflows/ci.yml` 与 `release.yml`），运行以下步骤：
 
 1. **Lint 门禁**：`scenario_lint.py` → errors=0
 2. **测试门禁**：全量 headless 测试通过

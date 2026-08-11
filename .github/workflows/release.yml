@@ -216,7 +216,12 @@ jobs:
           echo "ANDROID_KEY_PASSWORD=${{ secrets.ANDROID_KEY_PASSWORD }}" >> $GITHUB_ENV
 
       - name: Import project
-        run: godot --headless --import
+        run: |
+          godot --headless --import
+          # Android build template hygiene: prevent Godot from scanning the
+          # extracted android/build template and leaving corrupting .import files.
+          touch android/build/.gdignore
+          find android/build -name "*.import" -delete 2>/dev/null || true
 
       - name: Export Android APK
         run: |

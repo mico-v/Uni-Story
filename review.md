@@ -49,7 +49,7 @@ Uni-Story 已完成 Godot 版 Nova 风格运行时的主要骨架：脚本解析
 | **自动化测试** | 1 个 C# 测试（TestParser）+ Lua 测试脚本 | 32 个 headless 测试 + `run_headless_suite.py` | 3200% |
 | **生产工具链** | 27 个 Python 工具（Scenarios 18 + Standings 4 + Resources 3 + Build 2） | 25 个 Python 工具（25/27，93% 覆盖率）+ Godot 分析 IR | 93% |
 | **Editor 工具** | 31 个 Editor C# | 17 个 editor GDScript | 55% |
-| **CI/CD** | 无（仓库未见 CI workflow） | `.cnb.yml` (295 行) + `.github/workflows/` | ∞ |
+| **CI/CD** | 无（仓库未见 CI workflow） | `.github/workflows/`（ci.yml + release.yml） | ∞ |
 | **文档** | README (113 行) + GitHub Wiki + Doxyfile | README (340 行) + CLAUDE.md (393 行) + PLAN (380 行) + Setup (200 行) + 5 个 docs/*.md | — |
 | **版权/许可** | MIT License | MIT License（继承自 Nova2） | ✅ |
 

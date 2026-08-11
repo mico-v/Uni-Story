@@ -132,7 +132,7 @@ def build_mapping_table(project_root: Path, locales: list[str]) -> dict:
     for locale in locales:
         for pp in parsed.get(locale, []):
             # Check if a corresponding file exists
-            # pp = "LocalizedResources/English/Scenarios/ch1"
+            # pp = "LocalizedResources/English/scenarios/ch1"
             # Look for files starting with this prefix
             matches = []
             for f in scanned.get(locale, {}).get("files", []):
