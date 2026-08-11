@@ -60,6 +60,7 @@ grow_horizontal = 2
 
 [node name="DialogueBox" parent="Hud/DialogueLayer" unique_id=89621010 instance=ExtResource("DialogueBoxRes")]
 layout_mode = 1
+grow_vertical = 0
 
 [node name="Controls" type="HBoxContainer" parent="Hud/DialogueLayer" unique_id=846297658]
 layout_direction = 2
@@ -210,3 +211,13 @@ color = Color(0, 0, 0, 0.4)
 visible = false
 layout_mode = 0
 anchors_preset = 0
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 0.0
+anchor_bottom = 0.0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 400.0
+offset_bottom = 200.0
+grow_horizontal = 1
+grow_vertical = 1

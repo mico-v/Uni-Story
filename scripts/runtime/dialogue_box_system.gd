@@ -4,8 +4,8 @@ class_name DialogueBoxSystem extends RefCounted
 ## presets. The box Control is registered in ObjectManager under "default_box".
 
 const PRESETS := {
-	"bottom":  [0.06, 0.94, 0.55, 0.97],
-	"default": [0.06, 0.94, 0.55, 0.97],
+	"bottom":  [0.0, 1.0, 1.0, 1.0],
+	"default": [0.0, 1.0, 1.0, 1.0],
 	"top":     [0.06, 0.94, 0.03, 0.42],
 	"center":  [0.06, 0.94, 0.40, 0.68],
 	"left":    [0.02, 0.48, 0.55, 0.97],
@@ -61,6 +61,12 @@ func reflow() -> void:
 
 
 func _apply_preset(box: Control, key: String) -> void:
+	# bottom/default follow the dialogue_box.tscn component layout (anchors +
+	# offsets as authored in the editor). Only the other presets are applied
+	# from code so that script-driven set_box("center"/"left"/...) keeps
+	# Nova-compatible semantics without fighting the scene file.
+	if key == "bottom" or key == "default":
+		return
 	var a: Array = PRESETS.get(key, PRESETS["bottom"])
 	box.anchor_left = a[0]
 	box.anchor_right = a[1]
