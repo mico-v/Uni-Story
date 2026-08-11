@@ -1,7 +1,7 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene format=3]
 
-[ext_resource type="PackedScene" uid="uid://basemenu_unistory" path="res://scene/ui/base_menu_view.tscn" id="1_base"]
-[ext_resource type="Script" uid="uid://bjjgn68plr1es" path="res://scripts/ui/settings_view_controller.gd" id="1_vc"]
+[ext_resource type="PackedScene" path="res://scene/ui/base_menu_view.tscn" id="1_base"]
+[ext_resource type="Script" path="res://scripts/ui/settings_view_controller.gd" id="1_vc"]
 
 [node name="SettingsView" instance=ExtResource("1_base")]
 script = ExtResource("1_vc")

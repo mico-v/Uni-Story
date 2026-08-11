@@ -1,10 +1,4 @@
-[gd_resource type="Theme" load_steps=19 format=3 uid="uid://btheme_base_unistory"]
-
-; Base structural theme for Uni-Story.
-; Defines layout geometry ONLY:
-;   content_margin, corner_radius, border_width, shadow_size, separation
-; No colors, no font references — those belong in work-specific themes.
-; Work themes set base_theme to this file and override colors/fonts.
+[gd_resource type="Theme" format=3]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_disabled"]
 content_margin_left = 12.0
@@ -168,48 +162,33 @@ corner_radius_bottom_left = 8
 shadow_size = 8
 
 [resource]
-; ── Button ──
 Button/styles/disabled = SubResource("StyleBoxFlat_btn_disabled")
 Button/styles/focus = SubResource("StyleBoxFlat_btn_focus")
 Button/styles/hover = SubResource("StyleBoxFlat_btn_hover")
 Button/styles/normal = SubResource("StyleBoxFlat_btn_normal")
 Button/styles/pressed = SubResource("StyleBoxFlat_btn_pressed")
-
-; ── CheckButton ──
 CheckButton/styles/disabled = SubResource("StyleBoxFlat_checkbtn_track_off")
 CheckButton/styles/hover = SubResource("StyleBoxFlat_checkbtn_track_off")
 CheckButton/styles/hover_pressed = SubResource("StyleBoxFlat_checkbtn_track_on")
 CheckButton/styles/normal = SubResource("StyleBoxFlat_checkbtn_track_off")
 CheckButton/styles/pressed = SubResource("StyleBoxFlat_checkbtn_track_on")
-
-; ── ScrollBar ──
 HScrollBar/styles/grabber = SubResource("StyleBoxFlat_scroll_grabber")
 HScrollBar/styles/grabber_highlight = SubResource("StyleBoxFlat_scroll_grabber_hover")
 HScrollBar/styles/grabber_pressed = SubResource("StyleBoxFlat_scroll_grabber_pressed")
 HScrollBar/styles/scroll = SubResource("StyleBoxFlat_scroll_bg")
-VScrollBar/styles/grabber = SubResource("StyleBoxFlat_scroll_grabber")
-VScrollBar/styles/grabber_highlight = SubResource("StyleBoxFlat_scroll_grabber_hover")
-VScrollBar/styles/grabber_pressed = SubResource("StyleBoxFlat_scroll_grabber_pressed")
-VScrollBar/styles/scroll = SubResource("StyleBoxFlat_scroll_bg")
-
-; ── Separator ──
 HSeparator/styles/separator = SubResource("StyleBoxFlat_separator")
-
-; ── Slider ──
 HSlider/styles/grabber_area = SubResource("StyleBoxFlat_slider_grabber")
 HSlider/styles/grabber_area_highlight = SubResource("StyleBoxFlat_slider_grabber_hover")
 HSlider/styles/slider = SubResource("StyleBoxFlat_slider_slider")
-
-; ── OptionButton ──
 OptionButton/styles/disabled = SubResource("StyleBoxFlat_btn_disabled")
 OptionButton/styles/focus = SubResource("StyleBoxFlat_btn_focus")
 OptionButton/styles/hover = SubResource("StyleBoxFlat_btn_hover")
 OptionButton/styles/normal = SubResource("StyleBoxFlat_btn_normal")
 OptionButton/styles/pressed = SubResource("StyleBoxFlat_btn_pressed")
-
-; ── Panel / PanelContainer ──
 Panel/styles/panel = SubResource("StyleBoxFlat_panel")
 PanelContainer/styles/panel = SubResource("StyleBoxFlat_panel")
-
-; ── PopupMenu ──
 PopupMenu/styles/panel = SubResource("StyleBoxFlat_popup")
+VScrollBar/styles/grabber = SubResource("StyleBoxFlat_scroll_grabber")
+VScrollBar/styles/grabber_highlight = SubResource("StyleBoxFlat_scroll_grabber_hover")
+VScrollBar/styles/grabber_pressed = SubResource("StyleBoxFlat_scroll_grabber_pressed")
+VScrollBar/styles/scroll = SubResource("StyleBoxFlat_scroll_bg")

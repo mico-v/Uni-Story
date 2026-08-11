@@ -1,15 +1,15 @@
-[gd_scene format=3 uid="uid://bc4sqnqyin56v"]
+[gd_scene format=3]
 
 [ext_resource type="PackedScene" path="res://scene/view/cg_gallery_view.tscn" id="CgGalleryRes"]
 [ext_resource type="PackedScene" path="res://scene/view/chapter_select_view.tscn" id="ChapterSelectRes"]
-[ext_resource type="Script" uid="uid://b4fukuskbf86u" path="res://scripts/ui/game_view_controller.gd" id="GameVCScript"]
-[ext_resource type="PackedScene" uid="uid://dyuv51hoh1kf6" path="res://scene/view/game_view.tscn" id="GameViewRes"]
+[ext_resource type="Script" path="res://scripts/ui/game_view_controller.gd" id="GameVCScript"]
+[ext_resource type="PackedScene" path="res://scene/view/game_view.tscn" id="GameViewRes"]
 [ext_resource type="PackedScene" path="res://scene/view/help_view.tscn" id="HelpViewRes"]
 [ext_resource type="PackedScene" path="res://scene/view/music_gallery_view.tscn" id="MusicGalleryRes"]
-[ext_resource type="Script" uid="uid://cyslqjc711hg5" path="res://scripts/NovaController.gd" id="NovaScript"]
+[ext_resource type="Script" path="res://scripts/NovaController.gd" id="NovaScript"]
 [ext_resource type="PackedScene" path="res://scene/view/save_load_view.tscn" id="SaveLoadRes"]
 [ext_resource type="PackedScene" path="res://scene/view/settings_view.tscn" id="SettingsViewRes"]
-[ext_resource type="PackedScene" uid="uid://cqdghibhuyigy" path="res://scene/view/title_view.tscn" id="TitleViewRes"]
+[ext_resource type="PackedScene" path="res://scene/view/title_view.tscn" id="TitleViewRes"]
 
 [node name="GameRoot" type="Node" unique_id=1070618249]
 script = ExtResource("NovaScript")

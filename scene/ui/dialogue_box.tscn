@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://c1wreimnd32j2"]
+[gd_scene format=3]
 
 [node name="DialogueBox" type="Panel" unique_id=1770077016]
 anchors_preset = -1

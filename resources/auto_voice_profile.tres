@@ -1,15 +1,13 @@
-[gd_resource type="Resource" script_class="AutoVoiceProfile" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="AutoVoiceProfile" format=3]
 
 [ext_resource type="Script" path="res://scripts/runtime/auto_voice_profile.gd" id="1_auto_voice_profile"]
 
 [resource]
 script = ExtResource("1_auto_voice_profile")
-pad_width = 6
-extension = ".ogg"
 characters = {
-"王二宫": {
-"aliases": ["ergong", "Ergong"],
-"directory": "Voices/Ergong",
+"孙西本": {
+"aliases": ["xiben", "Xiben"],
+"directory": "Voices/Xiben",
 "prefix": ""
 },
 "张浅野": {
@@ -17,9 +15,9 @@ characters = {
 "directory": "Voices/Qianye",
 "prefix": ""
 },
-"孙西本": {
-"aliases": ["xiben", "Xiben"],
-"directory": "Voices/Xiben",
+"王二宫": {
+"aliases": ["ergong", "Ergong"],
+"directory": "Voices/Ergong",
 "prefix": ""
 },
 "陈高天": {

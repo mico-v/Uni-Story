@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://toast_unistory"]
+[gd_scene format=3]
 
 [node name="Toast" type="ColorRect"]
 visible = false

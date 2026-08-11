@@ -1,6 +1,6 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene format=3]
 
-[ext_resource type="PackedScene" uid="uid://basemenu_unistory" path="res://scene/ui/base_menu_view.tscn" id="1_base"]
+[ext_resource type="PackedScene" path="res://scene/ui/base_menu_view.tscn" id="1_base"]
 [ext_resource type="Script" path="res://scripts/ui/cg_gallery_controller.gd" id="1_vc"]
 
 [node name="CgGalleryView" instance=ExtResource("1_base")]

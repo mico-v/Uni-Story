@@ -1,76 +1,74 @@
-[gd_resource type="Theme" load_steps=8 format=3 uid="uid://default_theme_unistory"]
+[gd_resource type="Theme" format=3]
 
-[ext_resource type="Theme" uid="uid://btheme_base_unistory" path="res://resources/themes/base_theme.tres" id="2_base"]
 [ext_resource type="FontFile" path="res://resources/fonts/NotoSansSC-Regular.ttf" id="1_noto"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_normal"]
+content_margin_left = 12.0
+content_margin_top = 8.0
+content_margin_right = 12.0
+content_margin_bottom = 8.0
 bg_color = Color(0.15, 0.15, 0.18, 0.92)
-border_color = Color(0.3, 0.3, 0.35, 0.6)
 border_width_bottom = 2
-corner_radius_bottom_left = 6
-corner_radius_bottom_right = 6
+border_color = Color(0.3, 0.3, 0.35, 0.6)
 corner_radius_top_left = 6
 corner_radius_top_right = 6
-content_margin_bottom = 8.0
-content_margin_left = 12.0
-content_margin_right = 12.0
-content_margin_top = 8.0
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_hover"]
+content_margin_left = 12.0
+content_margin_top = 8.0
+content_margin_right = 12.0
+content_margin_bottom = 8.0
 bg_color = Color(0.22, 0.22, 0.26, 0.95)
-border_color = Color(0.85, 0.75, 0.9, 1)
 border_width_bottom = 2
-corner_radius_bottom_left = 6
-corner_radius_bottom_right = 6
+border_color = Color(0.85, 0.75, 0.9, 1)
 corner_radius_top_left = 6
 corner_radius_top_right = 6
-content_margin_bottom = 8.0
-content_margin_left = 12.0
-content_margin_right = 12.0
-content_margin_top = 8.0
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_pressed"]
+content_margin_left = 12.0
+content_margin_top = 8.0
+content_margin_right = 12.0
+content_margin_bottom = 8.0
 bg_color = Color(0.08, 0.08, 0.1, 0.95)
-border_color = Color(0.85, 0.75, 0.9, 1)
 border_width_bottom = 2
-corner_radius_bottom_left = 6
-corner_radius_bottom_right = 6
+border_color = Color(0.85, 0.75, 0.9, 1)
 corner_radius_top_left = 6
 corner_radius_top_right = 6
-content_margin_bottom = 8.0
-content_margin_left = 12.0
-content_margin_right = 12.0
-content_margin_top = 8.0
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
-bg_color = Color(0.15, 0.15, 0.18, 0.92)
-border_color = Color(0.3, 0.3, 0.35, 0.6)
-border_width_bottom = 1
-border_width_left = 1
-border_width_right = 1
-border_width_top = 1
-corner_radius_bottom_left = 8
-corner_radius_bottom_right = 8
-corner_radius_top_left = 8
-corner_radius_top_right = 8
-content_margin_bottom = 16.0
-content_margin_left = 16.0
-content_margin_right = 16.0
-content_margin_top = 16.0
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_slider"]
+content_margin_left = 4.0
+content_margin_top = 4.0
+content_margin_right = 4.0
+content_margin_bottom = 4.0
 bg_color = Color(0.85, 0.75, 0.9, 1)
-corner_radius_bottom_left = 6
-corner_radius_bottom_right = 6
 corner_radius_top_left = 6
 corner_radius_top_right = 6
-content_margin_bottom = 4.0
-content_margin_left = 4.0
-content_margin_right = 4.0
-content_margin_top = 4.0
+corner_radius_bottom_right = 6
+corner_radius_bottom_left = 6
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+content_margin_left = 16.0
+content_margin_top = 16.0
+content_margin_right = 16.0
+content_margin_bottom = 16.0
+bg_color = Color(0.15, 0.15, 0.18, 0.92)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.3, 0.3, 0.35, 0.6)
+corner_radius_top_left = 8
+corner_radius_top_right = 8
+corner_radius_bottom_right = 8
+corner_radius_bottom_left = 8
 
 [resource]
-base_theme = ExtResource("2_base")
 default_font = ExtResource("1_noto")
 Button/colors/font_color = Color(0.95, 0.95, 0.97, 1)
 Button/colors/font_disabled_color = Color(0.7, 0.7, 0.75, 1)

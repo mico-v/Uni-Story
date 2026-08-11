@@ -1,7 +1,7 @@
-[gd_scene format=3 uid="uid://dyuv51hoh1kf6"]
+[gd_scene format=3]
 
-[ext_resource type="Script" uid="uid://b88co7xg1k50b" path="res://scripts/ui/choice_list_controller.gd" id="2_cyfmi"]
-[ext_resource type="PackedScene" uid="uid://c1wreimnd32j2" path="res://scene/ui/dialogue_box.tscn" id="DialogueBoxRes"]
+[ext_resource type="Script" path="res://scripts/ui/choice_list_controller.gd" id="2_cyfmi"]
+[ext_resource type="PackedScene" path="res://scene/ui/dialogue_box.tscn" id="DialogueBoxRes"]
 
 [node name="GameView" type="Control" unique_id=1849883982]
 layout_mode = 3

@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://slotrow_unistory"]
+[gd_scene format=3]
 
 [node name="SlotRow" type="HBoxContainer"]
 size_flags_horizontal = 3

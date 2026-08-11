@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://buvpgq5nhm3du"]
+[gd_scene format=3]
 
 [node name="AlertView" type="Control" unique_id=748915866]
 visible = false

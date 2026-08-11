@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://cgpreview_unistory"]
+[gd_scene format=3]
 
 [node name="CGPreviewOverlay" type="ColorRect"]
 anchors_preset = 15

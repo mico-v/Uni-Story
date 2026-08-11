@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://notificationview_unistory"]
+[gd_scene format=3]
 
 [node name="NotificationView" type="PanelContainer"]
 visible = false
