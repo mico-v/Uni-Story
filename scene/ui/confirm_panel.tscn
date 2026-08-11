@@ -1,0 +1,41 @@
+[gd_scene format=3 uid="uid://bl2oirrpyc20n"]
+
+[node name="ConfirmPanel" type="PanelContainer" unique_id=1664766377]
+custom_minimum_size = Vector2(400, 200)
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -100.0
+offset_right = 200.0
+offset_bottom = 100.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBox" type="VBoxContainer" parent="." unique_id=795027092]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Title" type="Label" parent="VBox" unique_id=1695142970]
+layout_mode = 2
+horizontal_alignment = 1
+
+[node name="Message" type="Label" parent="VBox" unique_id=2121493461]
+layout_mode = 2
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="Buttons" type="HBoxContainer" parent="VBox" unique_id=1609031829]
+layout_mode = 2
+theme_override_constants/separation = 20
+alignment = 1
+
+[node name="OK" type="Button" parent="VBox/Buttons" unique_id=221649820]
+custom_minimum_size = Vector2(120, 40)
+layout_mode = 2
+
+[node name="Cancel" type="Button" parent="VBox/Buttons" unique_id=764316419]
+custom_minimum_size = Vector2(120, 40)
+layout_mode = 2

@@ -66,9 +66,10 @@ func _run() -> void:
 			var control_layer := game_view.get_node_or_null("Hud/ControlLayer") as Control
 			var modal_layer := game_view.get_node_or_null("Hud/ModalLayer") as Control
 			_expect(dialogue_layer != null, "GameView should expose DialogueLayer")
-			_expect(control_layer != null, "GameView should expose ControlLayer")
 			_expect(modal_layer != null, "GameView should expose ModalLayer")
-			var controls := game_view.get_node_or_null("Hud/ControlLayer/Controls") as Control
+			var controls := game_view.get_node_or_null("Hud/DialogueLayer/Controls") as Control
+			if controls == null and control_layer:
+				controls = control_layer.get_node_or_null("Controls") as Control
 			var dbox := game_view.get_node_or_null("Hud/DialogueLayer/DialogueBox") as Control
 			_expect(controls != null, "GameView controls should be present")
 			if controls:

@@ -14,7 +14,8 @@ const PRESETS := {
 }
 
 var _ctx: Node
-var _current_preset: String = "bottom"
+## Empty = no explicit set_box() yet: follow the scene's own (tscn) anchors.
+var _current_preset: String = ""
 var _gradient_overlay: ColorRect
 
 
@@ -25,6 +26,16 @@ func _init(ctx: Node) -> void:
 func _box() -> Control:
 	var b = _ctx.object_manager.objects.get("default_box")
 	return b if b is Control else null
+
+
+## Show the box without overriding its scene anchors (tscn layout wins).
+func show_default() -> void:
+	var box := _box()
+	if box == null:
+		return
+	box.visible = true
+	_current_preset = ""
+	_ensure_gradient_overlay(box)
 
 
 func set_box(pos_name: Variant = "bottom") -> void:
@@ -44,7 +55,7 @@ func set_box(pos_name: Variant = "bottom") -> void:
 
 func reflow() -> void:
 	var box := _box()
-	if box == null or _current_preset == "hide":
+	if box == null or _current_preset == "" or _current_preset == "hide":
 		return
 	_apply_preset(box, _current_preset)
 
@@ -97,5 +108,8 @@ func snapshot() -> Dictionary:
 
 
 func restore(data: Dictionary) -> void:
-	var preset: String = str(data.get("preset", "bottom"))
+	var preset: String = str(data.get("preset", ""))
+	if preset == "":
+		show_default()
+		return
 	set_box(preset)

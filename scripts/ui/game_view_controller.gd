@@ -134,7 +134,9 @@ func _bind_nodes() -> void:
 		_choice_list = _dialogue_layer.get_node_or_null("ChoiceList") as VBoxContainer
 		if _choice_list is ChoiceListController:
 			_choice_list_controller = _choice_list as ChoiceListController
-		_controls = _control_layer.get_node_or_null("Controls") as HBoxContainer
+		_controls = _dialogue_layer.get_node_or_null("Controls") as HBoxContainer
+		if _controls == null:
+			_controls = _control_layer.get_node_or_null("Controls") as HBoxContainer
 		_restart_btn = _controls.get_node_or_null("Restart") as Button if _controls else null
 		_save_btn = _controls.get_node_or_null("Save") as Button if _controls else null
 		_load_btn = _controls.get_node_or_null("Load") as Button if _controls else null
@@ -376,7 +378,7 @@ func _unhandled_input(event: InputEvent) -> void:
 func enter_game(node_name: StringName) -> void:
 	reset_world()
 	if _ctx.dialogue_box:
-		_ctx.dialogue_box.set_box("bottom")
+		_ctx.dialogue_box.show_default()
 	if _dbox:
 		_dbox.visible = true
 	if _restart_btn:

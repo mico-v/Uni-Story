@@ -1,8 +1,9 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://cee0poindmqnw"]
 
-[ext_resource type="Script" path="res://scripts/ui/choice_list_controller.gd" id="2_cyfmi"]
-[ext_resource type="PackedScene" path="res://scene/ui/dialogue_box.tscn" id="DialogueBoxRes"]
+[ext_resource type="Script" uid="uid://b88co7xg1k50b" path="res://scripts/ui/choice_list_controller.gd" id="2_cyfmi"]
+[ext_resource type="PackedScene" uid="uid://bl2oirrpyc20n" path="res://scene/ui/confirm_panel.tscn" id="4_15dru"]
 [ext_resource type="PackedScene" path="res://scene/ui/backlog_panel.tscn" id="BacklogPanelRes"]
+[ext_resource type="PackedScene" path="res://scene/ui/dialogue_box.tscn" id="DialogueBoxRes"]
 
 [node name="GameView" type="Control" unique_id=1849883982]
 layout_mode = 3
@@ -59,12 +60,79 @@ grow_horizontal = 2
 
 [node name="DialogueBox" parent="Hud/DialogueLayer" unique_id=89621010 instance=ExtResource("DialogueBoxRes")]
 layout_mode = 1
-anchor_left = 0.06
-anchor_top = 0.55
-anchor_right = 0.94
-anchor_bottom = 0.97
+anchors_preset = 12
+anchor_left = 0.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -225.0
 grow_horizontal = 2
 grow_vertical = 0
+
+[node name="Controls" type="HBoxContainer" parent="Hud/DialogueLayer" unique_id=846297658]
+layout_direction = 2
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -724.0
+offset_top = -44.0
+grow_horizontal = 0
+grow_vertical = 0
+alignment = 2
+
+[node name="Skip" type="Button" parent="Hud/DialogueLayer/Controls" unique_id=1138895797]
+custom_minimum_size = Vector2(100, 44)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 8
+toggle_mode = true
+text = "快进"
+
+[node name="Auto" type="Button" parent="Hud/DialogueLayer/Controls" unique_id=710982097]
+custom_minimum_size = Vector2(100, 44)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 8
+toggle_mode = true
+text = "自动"
+
+[node name="Backlog" type="Button" parent="Hud/DialogueLayer/Controls" unique_id=2093469893]
+custom_minimum_size = Vector2(100, 44)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 8
+text = "回顾"
+
+[node name="Save" type="Button" parent="Hud/DialogueLayer/Controls" unique_id=1440843677]
+custom_minimum_size = Vector2(100, 44)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 8
+text = "存档"
+
+[node name="Load" type="Button" parent="Hud/DialogueLayer/Controls" unique_id=1802674086]
+custom_minimum_size = Vector2(100, 44)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 8
+text = "读档"
+
+[node name="Restart" type="Button" parent="Hud/DialogueLayer/Controls" unique_id=2113566389]
+custom_minimum_size = Vector2(100, 44)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 8
+text = "重开"
+
+[node name="Quit" type="Button" parent="Hud/DialogueLayer/Controls" unique_id=1878893336]
+custom_minimum_size = Vector2(100, 44)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 8
+text = "标题"
 
 [node name="ChoiceList" type="VBoxContainer" parent="Hud/DialogueLayer" unique_id=1227660917]
 custom_minimum_size = Vector2(100, 100)
@@ -78,82 +146,6 @@ grow_horizontal = 2
 grow_vertical = 2
 alignment = 1
 script = ExtResource("2_cyfmi")
-
-[node name="ControlLayer" type="Control" parent="Hud" unique_id=1947522916]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-
-[node name="Controls" type="HBoxContainer" parent="Hud/ControlLayer" unique_id=846297658]
-layout_direction = 2
-layout_mode = 1
-anchors_preset = -1
-anchor_left = 1.0
-anchor_top = 0.97
-anchor_right = 1.0
-anchor_bottom = 0.97
-offset_left = -808.0
-offset_top = -60.0
-offset_right = -48.0
-offset_bottom = -16.0
-grow_horizontal = 0
-grow_vertical = 0
-alignment = 2
-
-[node name="Skip" type="Button" parent="Hud/ControlLayer/Controls" unique_id=1138895797]
-custom_minimum_size = Vector2(100, 44)
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 8
-toggle_mode = true
-text = "快进"
-
-[node name="Auto" type="Button" parent="Hud/ControlLayer/Controls" unique_id=710982097]
-custom_minimum_size = Vector2(100, 44)
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 8
-toggle_mode = true
-text = "自动"
-
-[node name="Backlog" type="Button" parent="Hud/ControlLayer/Controls" unique_id=2093469893]
-custom_minimum_size = Vector2(100, 44)
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 8
-text = "回顾"
-
-[node name="Save" type="Button" parent="Hud/ControlLayer/Controls" unique_id=1440843677]
-custom_minimum_size = Vector2(100, 44)
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 8
-text = "存档"
-
-[node name="Load" type="Button" parent="Hud/ControlLayer/Controls" unique_id=1802674086]
-custom_minimum_size = Vector2(100, 44)
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 8
-text = "读档"
-
-[node name="Restart" type="Button" parent="Hud/ControlLayer/Controls" unique_id=2113566389]
-custom_minimum_size = Vector2(100, 44)
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 8
-text = "重开"
-
-[node name="Quit" type="Button" parent="Hud/ControlLayer/Controls" unique_id=1878893336]
-custom_minimum_size = Vector2(100, 44)
-layout_mode = 2
-size_flags_horizontal = 4
-size_flags_vertical = 8
-text = "标题"
 
 [node name="ModalLayer" type="Control" parent="Hud" unique_id=166876048]
 layout_mode = 1
@@ -222,43 +214,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 0, 0, 0.4)
 
-[node name="ConfirmPanel" type="PanelContainer" parent="Hud/ModalLayer" unique_id=930876383]
-custom_minimum_size = Vector2(400, 200)
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -200.0
-offset_top = -100.0
-offset_right = 200.0
-offset_bottom = 100.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="VBox" type="VBoxContainer" parent="Hud/ModalLayer/ConfirmPanel" unique_id=435222107]
-layout_mode = 2
-theme_override_constants/separation = 12
-
-[node name="Title" type="Label" parent="Hud/ModalLayer/ConfirmPanel/VBox" unique_id=357454364]
-layout_mode = 2
-horizontal_alignment = 1
-
-[node name="Message" type="Label" parent="Hud/ModalLayer/ConfirmPanel/VBox" unique_id=271248002]
-layout_mode = 2
-horizontal_alignment = 1
-autowrap_mode = 2
-
-[node name="Buttons" type="HBoxContainer" parent="Hud/ModalLayer/ConfirmPanel/VBox" unique_id=1474392218]
-layout_mode = 2
-theme_override_constants/separation = 20
-alignment = 1
-
-[node name="OK" type="Button" parent="Hud/ModalLayer/ConfirmPanel/VBox/Buttons" unique_id=1022531230]
-custom_minimum_size = Vector2(120, 40)
-layout_mode = 2
-
-[node name="Cancel" type="Button" parent="Hud/ModalLayer/ConfirmPanel/VBox/Buttons" unique_id=1727092101]
-custom_minimum_size = Vector2(120, 40)
-layout_mode = 2
+[node name="ConfirmPanel" parent="Hud/ModalLayer" unique_id=1664766377 instance=ExtResource("4_15dru")]
+visible = false
+layout_mode = 0
+anchors_preset = 0
