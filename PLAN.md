@@ -54,7 +54,7 @@ Uni-Story 的目标不是简单复刻 Nova 的 Unity 实现，而是在 Godot/GD
 - Scenario visualize 已提供 text/JSON/DOT/Mermaid 输出，消费共享 IR，21 项 smoke test 覆盖。
 - 资源列表工具 `list_resources.py` 支持 12 种类别输出。
 - shaderproto 生成器 `shaderproto_gen.py` 支持 JSON 模板生成 .gdshader 变体。
-- 31 个 headless 测试通过（约 55 秒），由 `scripts/tests/run_headless_suite.py` 聚合执行。
+- 32 个 headless 测试通过（约 55 秒），由 `scripts/tests/run_headless_suite.py` 聚合执行。
 - CI 与 Release workflow 均先执行 Scenario lint（warning 默认不阻断）和 headless quality gate，通过后才允许 Windows/Linux/Android 导出。
 - Godot export presets + GitHub Actions 发布基础。
 - 性能基线 headless 测试覆盖解析/场景加载/存档/恢复/回跳耗时。

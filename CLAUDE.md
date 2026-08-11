@@ -25,7 +25,7 @@ python scripts/tools/scenario_lint.py --godot godot
 # Inventory dialogue/source statistics without executing eager code
 python scripts/tools/scenario_stat.py --godot godot --top 0
 
-# Run all 31 tests
+# Run all 32 tests
 python scripts/tests/run_headless_suite.py --godot godot --timeout 180
 
 # Filter or inspect the suite
@@ -58,6 +58,7 @@ The complete suite contains:
 - `sample_work_playback_smoke_test.gd`
 - `sample_work_save_load_test.gd`
 - `save_system_smoke_test.gd`
+- `save_viewer_smoke_test.gd`
 - `scenario_linter_smoke_test.gd`
 - `scenario_resource_scan_test.gd`
 - `scenario_stat_smoke_test.gd`
@@ -67,7 +68,7 @@ The complete suite contains:
 - `theme_manager_smoke_test.gd`
 - `vfx_stack_smoke_test.gd`
 
-Import first with `godot --headless --path . --import`. The current complete suite is 31/31 PASS in about 55 seconds. Both CI and release workflows run Scenario lint with `--fail-on error` and then `run_headless_suite.py`; warnings remain visible but do not block Windows, Linux, or Android jobs. Strict resource scanning includes `say(speaker, id)` and currently reports `referenced=369`, `found=367`, `virtual=2`, `missing=0`.
+Import first with `godot --headless --path . --import`. The current complete suite is 32/32 PASS in about 55 seconds. Both CI and release workflows run Scenario lint with `--fail-on error` and then `run_headless_suite.py`; warnings remain visible but do not block Windows, Linux, or Android jobs. Strict resource scanning includes `say(speaker, id)` and currently reports `referenced=369`, `found=367`, `virtual=2`, `missing=0`.
 
 The public linter entry point is `python scripts/tools/scenario_lint.py`. It accepts `--godot`, `--project`, `--format text|json`, `--output`, `--fail-on error|warning|never`, and optional file/directory paths. Diagnostics are stable `path:line:column: severity [rule] message` records; exits are 0 (threshold not reached), 1 (lint findings reached the threshold), and 2 (invocation/infrastructure failure). The default 28-scenario corpus currently reports `errors=0`, `warnings=133`, `referenced=372`, `found=370`, `virtual=2`, `missing=0`; the extra references come from branch-image lint coverage.
 
@@ -182,7 +183,7 @@ OBJECT (per-node) and POST (fullscreen) effects use registries. Transition shade
 - Scenario changes should pass `python scripts/tools/scenario_lint.py`; linter rule/CLI changes require `scenario_linter_smoke_test.gd`
 - Scenario corpus changes should also run `python scripts/tools/scenario_stat.py --top 0`; analysis IR, normalization, schema, ordering, or stat CLI changes require `scenario_stat_smoke_test.gd`
 - Modifying sprite composition requires running `sprite_composer_smoke_test.gd`
-- CI on push to `main`/`dev` and release builds must pass error-level Scenario lint plus the 31-test headless quality gate before Windows, Linux, or Android export jobs run
+- CI on push to `main`/`dev` and release builds must pass error-level Scenario lint plus the 32-test headless quality gate before Windows, Linux, or Android export jobs run
 
 ## Reference Docs
 

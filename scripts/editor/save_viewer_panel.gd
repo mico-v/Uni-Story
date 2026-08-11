@@ -131,7 +131,7 @@ func _scan_slots() -> void:
 			if f:
 				var text := f.get_as_text()
 				f.close()
-				var parsed = JSON.parse_string(text)
+				var parsed: Variant = JSON.parse_string(text)
 				if parsed is Dictionary:
 					var slot_match := RegEx.new()
 					if slot_match.compile("slot_(\\d+)\\.json") == OK:
@@ -141,7 +141,7 @@ func _scan_slots() -> void:
 							_slot_data[slot_idx] = parsed
 
 							# Build display label
-							var bookmark := parsed.get("bookmark", {})
+							var bookmark: Variant = parsed.get("bookmark", {})
 							var chapter := ""
 							var display := ""
 							if bookmark is Dictionary:
@@ -203,7 +203,7 @@ func _display_metadata(data: Dictionary) -> void:
 		vl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		_meta_grid.add_child(vl)
 
-	var bookmark := data.get("bookmark", {})
+	var bookmark: Variant = data.get("bookmark", {})
 	if bookmark is Dictionary:
 		_add_row.call("Format", str(data.get("format", "bookmark")))
 		_add_row.call("Version", str(data.get("version", "?")))
@@ -220,11 +220,11 @@ func _display_metadata(data: Dictionary) -> void:
 		_add_row.call("Screenshot", str(bookmark.get("screenshot_path", "(none)")).replace("user:/", "user://"))
 
 		# Checkpoint summary
-		var checkpoint := bookmark.get("checkpoint", {})
+		var checkpoint: Variant = bookmark.get("checkpoint", {})
 		if not (checkpoint is Dictionary):
 			checkpoint = data.get("checkpoint", {})
 		if checkpoint is Dictionary:
-			var state := checkpoint.get("state", {})
+			var state: Variant = checkpoint.get("state", {})
 			if state is Dictionary:
 				_add_row.call("---", "")
 				_add_row.call("Checkpoint state keys", str(state.keys()))
@@ -244,7 +244,7 @@ func _display_metadata(data: Dictionary) -> void:
 		_add_row.call("Format", str(data.get("format", "snapshot")))
 		_add_row.call("Version", str(data.get("version", "?")))
 		_add_row.call("Chapter", str(data.get("chapter", "")))
-		var state := data.get("state", {})
+		var state: Variant = data.get("state", {})
 		if state is Dictionary:
 			_add_row.call("State Index", str(state.get("index", "?")))
 
@@ -281,7 +281,7 @@ func _export_current_slot() -> void:
 	if not _slot_data.has(slot_idx):
 		return
 
-	var data := _slot_data[slot_idx]
+	var data: Variant = _slot_data[slot_idx]
 	var formatted := JSON.stringify(data, "\t")
 
 	var dialog := EditorFileDialog.new()

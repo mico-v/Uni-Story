@@ -13,7 +13,7 @@
 | 架构合理性 | ✅ 优秀。清晰的 Composition Root + 分层（core / runtime / ui / tools），依赖注入（`new(self)`）+ 类型化 `EngineContext` 门面，快照/恢复存档模型解耦良好 |
 | Godot 规范符合度 | ✅ 基本符合。类 PascalCase、方法/变量 snake_case、信号过去时、typed container、无 `yield`/`.instance()`/`load()` 反模式 |
 | 配置与工程卫生 | ⚠️ `.editorconfig` 与代码实际缩进冲突；两份内部文档对 `:=` 表述矛盾 |
-| 可继续开发/维护 | ✅ 良好。文档齐全（README/PLAN/CLAUDE/CodingStandards/docs）、31 个 headless 测试 + lint/stat 工具 + CI 门禁 |
+| 可继续开发/维护 | ✅ 良好。文档齐全（README/PLAN/CLAUDE/CodingStandards/docs）、32 个 headless 测试 + lint/stat 工具 + CI 门禁 |
 | 易用性（复用为引擎） | ⚠️ 剧本清单硬编码进组合根（已 `@export`，可配置），未来可改为“目录扫描/配置资源” |
 
 ---
@@ -68,7 +68,7 @@
 
 | 扫描结论 | 实际 | 处置 |
 |----------|------|------|
-| TAB 缩进“违反风格指南、解析器拒收” | Godot 官方**默认即 Tabs**，解析器接受纯 TAB；项目能跑（与 31/31 测试一致） | 修 `.editorconfig`（P1）即可 |
+| TAB 缩进“违反风格指南、解析器拒收” | Godot 官方**默认即 Tabs**，解析器接受纯 TAB；项目能跑（与 32/32 测试一致） | 修 `.editorconfig`（P1）即可 |
 | 文件名 snake_case“违反 PascalCase 约定” | 多个 Godot GDScript 风格指南**推荐 snake_case 文件名** | 非问题，保持 |
 | `:=` “应避免” | 官方风格指南**推荐 `:=`** | 修 `CodingStandards.md`（P2）即可 |
 

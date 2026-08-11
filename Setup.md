@@ -145,7 +145,7 @@ python scripts/tools/scenario_stat.py --godot godot --top 0
 
 ## 自动化测试
 
-项目包含 31 个 headless 测试脚本（`scripts/tests/`），当前完整套件为 31/31 PASS（约 55 秒），由跨平台 Python runner 统一执行：
+项目包含 32 个 headless 测试脚本（`scripts/tests/`），当前完整套件为 32/32 PASS（约 55 秒），由跨平台 Python runner 统一执行：
 
 | 测试 | 覆盖范围 |
 |------|----------|
@@ -153,6 +153,7 @@ python scripts/tools/scenario_stat.py --godot godot --top 0
 | `parse_scenarios_test.gd` | 28 个 Nova 剧本解析 + 流程图构建 |
 | `game_state_smoke_test.gd` | 对话推进、分支选择、变量跳转、结局 |
 | `save_system_smoke_test.gd` | 可配置槽位、bookmark 存档、restorable 恢复 |
+| `save_viewer_smoke_test.gd` | SaveViewer 面板扫描/解析 ≥3 个存档槽、坏档跳过、元数据/JSON 渲染 |
 | `checkpoint_manager_smoke_test.gd` | Position checkpoint、replay 恢复 |
 | `nova_compat_smoke_test.gd` | NovaScript 兼容层（l_ label、v_/gv_、branch tuple） |
 | `sprite_composer_smoke_test.gd` | StandingProfile 驱动立绘合成 |

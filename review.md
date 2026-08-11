@@ -46,7 +46,7 @@ Uni-Story 已完成 Godot 版 Nova 风格运行时的主要骨架：脚本解析
 | **Shader** | 162 个 `.shader`（37 个 shaderproto 生成） | 84 个 `.gdshader`（49 个 `.shaderproto`） | 52%（shader 数量），132%（shaderproto 模板数） |
 | **剧本** | 28 个中文 `.txt` + 4 个英文副本 | 28 个 Nova 中文剧本（已直接导入） | 100% |
 | **剧本总行数** | 2,705 行 | 同源 | 100% |
-| **自动化测试** | 1 个 C# 测试（TestParser）+ Lua 测试脚本 | 31 个 headless 测试 + `run_headless_suite.py` | 3100% |
+| **自动化测试** | 1 个 C# 测试（TestParser）+ Lua 测试脚本 | 32 个 headless 测试 + `run_headless_suite.py` | 3200% |
 | **生产工具链** | 27 个 Python 工具（Scenarios 18 + Standings 4 + Resources 3 + Build 2） | 25 个 Python 工具（25/27，93% 覆盖率）+ Godot 分析 IR | 93% |
 | **Editor 工具** | 31 个 Editor C# | 17 个 editor GDScript | 55% |
 | **CI/CD** | 无（仓库未见 CI workflow） | `.cnb.yml` (295 行) + `.github/workflows/` | ∞ |
@@ -123,7 +123,7 @@ Nova 的工具链是其最大的差异化优势，也是 Uni-Story 当前差距�
 
 | 维度 | Nova | Uni-Story | 优势方 |
 |------|------|-----------|--------|
-| 自动化测试 | 1 个 C# 测试 | 31 个 headless 测试 + runner | **Uni-Story** |
+| 自动化测试 | 1 个 C# 测试 | 32 个 headless 测试 + runner | **Uni-Story** |
 | CI/CD | 无 | 完整 CI + Release pipeline | **Uni-Story** |
 | 开发者文档 | 仅 README + Wiki | README + CLAUDE + PLAN + review + 5 docs | **Uni-Story** |
 | 架构清晰度 | 分散在 MonoBehaviour/Lua | 单一 Composition Root | **Uni-Story** |
@@ -198,7 +198,7 @@ Uni-Story 代码成熟度：███████████████░░�
 
 ### 3.8 测试、lint/stat 与参考工程
 
-- 31 个 `scripts/tests/*_test.gd` 由 `scripts/tests/run_headless_suite.py` 分进程执行；当前 31/31 PASS，约 55 秒；非零退出码、超时或 Godot `SCRIPT ERROR` 都会使 suite 失败。
+- 32 个 `scripts/tests/*_test.gd` 由 `scripts/tests/run_headless_suite.py` 分进程执行；当前 32/32 PASS，约 55 秒；非零退出码、超时或 Godot `SCRIPT ERROR` 都会使 suite 失败。
 - 公共 Scenario lint 命令为 `python scripts/tools/scenario_lint.py`，支持 text/JSON、输出文件、失败阈值与文件/目录参数。默认 28 个主剧本结果为 `errors=0`、`warnings=133`、`referenced=372`、`found=370`、`virtual=2`、`missing=0`。
 - lint 诊断稳定输出 `path:line:column: severity [rule] message`，退出码为 0/1/2。CI 与 release 使用 `--fail-on error`，因此 warning 默认不阻断导出。
 - 公共 Scenario stat 命令为 `python scripts/tools/scenario_stat.py`。它基于不执行 eager code 的共享 IR 做 source inventory，支持 text/JSON、输出文件、`--top` 和文件/目录参数，退出码为 0/2。默认结果为 360 blocks（106 eager/254 lazy）、53 nodes、731 dialogues、111 spoken、620 narration、15434 characters、23 jumps、24 branch options、1 silent entry。

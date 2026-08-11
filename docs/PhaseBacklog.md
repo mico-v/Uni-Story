@@ -2,7 +2,7 @@
 
 本文把 `PLAN.md` 中的各阶段拆成 issue/commit 粒度，作为开发时的提交边界参考。单个提交应能运行主场景或对应 headless test。
 
-> 最后同步：2026-07-25（新增 Phase 15-18 任务）
+> 最后同步：2026-08-11（save_viewer 冒烟测试完成；同步 Phase 5/12/15/18 实际状态）
 
 状态标记：✅ 已完成 / 🔄 核心完成、仍有明确缺口 / 🔲 未完成
 
@@ -35,7 +35,7 @@
 - ✅ `backlog-product-polish`：回顾支持语音重播、跳转确认、未来文本过滤。
 - ✅ `gameview-pause-resume`：切出 GameView 时暂停打字机、语音、动画域，切回时恢复。
 - ✅ `ui-theme-base-work`：ThemeManager + base/work 两层核心主题架构，结构样式与作品配色/字体可分层覆盖。
-- 🔲 `debug-theme-layer`：增加 debug theme 资源、调试模式切换和对应视觉验收。
+- ✅ `debug-theme-layer`：debug theme 资源、调试模式切换和视觉验收（已完成，2026-07-24 归档）
 
 ## Phase 6：动画系统升级
 
@@ -92,7 +92,7 @@
 
 ## Phase 10：平台、质量与发布
 
-- ✅ `headless-regression-suite`：31 个 `*_test.gd` 纳入自动发现，当前 31/31 PASS（约 55 秒），覆盖 parser、flow graph、Scenario lint/stat、共享静态 IR、AutoVoice、save/restore、checkpoint replay、资源扫描、主题、预加载、Prefab 与 VFX 等路径。
+- ✅ `headless-regression-suite`：32 个 `*_test.gd` 纳入自动发现，当前 32/32 PASS（约 55 秒），覆盖 parser、flow graph、Scenario lint/stat、共享静态 IR、AutoVoice、save/restore、checkpoint replay、资源扫描、主题、预加载、Prefab、SaveViewer 与 VFX 等路径。
 - ✅ `headless-suite-runner`：新增 `scripts/tests/run_headless_suite.py`，逐个隔离执行 Godot 测试，汇总退出码、超时和脚本错误。
 - ✅ `ci-release-quality-gate`：CI 与 Release workflow 均先以 `--fail-on error` 运行 Scenario lint，再运行 headless suite；warning 默认不阻断，Windows/Linux/Android 导出 job 依赖 quality job。
 - ✅ `scene-navigation-smoke`：MainSceneSmokeTest 覆盖主场景加载、所有视图注册和子系统初始化。
@@ -123,8 +123,8 @@
 - ✅ `save-viewer`：新增 `scripts/editor/save_viewer.gd` + `save_viewer_panel.gd`，Editor 中查看存档 JSON，显示 bookmark 元数据和 checkpoint 状态。
 - ✅ `resource-dashboard`：新增 `scripts/editor/resource_dashboard.gd` + `resource_dashboard_panel.gd`，Editor 面板聚合资源扫描结果，缺失项可跳转。
 - ✅ `standing-tool-tests`：新增 `scripts/tests/phase12_standing_tools_smoke_test.py`，覆盖 PSD 导出、合并、Pose 排序全链路（34/34 PASS）。
-- 🔲 `save-viewer-test`：新增 `save_viewer_smoke_test.gd`，验证解析至少 3 个存档文件。
-- 🔲 `phase12-docs`：更新 `PLAN.md`、`review.md`、`PhaseBacklog.md`。
+- ✅ `save-viewer-test`：新增 `save_viewer_smoke_test.gd`，验证 SaveViewer 解析至少 3 个存档文件（含坏档跳过、元数据/JSON 渲染路径）
+- ✅ `phase12-docs`：PLAN/review/PhaseBacklog 已同步（2026-08-11）
 
 ## Phase 13：示例作品与 I18n 内容
 
@@ -164,10 +164,10 @@
 - ✅ `linter-whitelist-cleanup`：从 scenario_linter 白名单移除所有已实现 API
 - ✅ `nova-lua-compat-test`：新增 nova_lua_compat_smoke_test.gd（20+ 项编译+运行时验证）
 - ✅ `device-checklist`：创建 docs/DeviceTestChecklist.md
-- ✅ `device-smoke-test`：新增 device_smoke_test.gd 自动化验证
-- ✅ `device-windows`：Windows 真机验证
-- ✅ `device-linux`：Linux 真机验证
-- ✅ `device-android`：Android 真机验证
+- 🔲 `device-smoke-test`：device_smoke_test.gd 尚未创建（自动化设备验证待做）
+- 🔲 `device-windows`：Windows 真机验证（需手动执行，见 docs/DeviceTestChecklist.md）
+- 🔲 `device-linux`：Linux 真机验证（需手动执行）
+- 🔲 `device-android`：Android 真机验证（需手动执行）
 - ✅ `perf-warm-compile`：ScriptLoader._warm_compile_cache() 编译缓存预热
 - ✅ `perf-scene-load`：减少 autoload 初始化开销
 - ✅ `perf-save-restore`：增量 snapshot 替代全量序列化
@@ -221,7 +221,7 @@
 - ✅ `vscode-extension-skeleton`：VS Code 扩展基础文件
 - ✅ `full-regression`：全量 smoke test 回归（30+ 项）
 - ✅ `scenario-lint-warning-reduce`：Scenario lint warnings < 100
-- ✅ `triple-platform-export`：三平台导出产物验证
+- 🔲 `triple-platform-export`：三平台导出产物验证（需 CI/真机，见 PLAN 18.4）
 - ✅ `version-bump-v1`：项目标记 v1.0.0-rc1
 - ✅ `phase18-docs`：更新 PLAN/review/PhaseBacklog/CHANGELOG
 
