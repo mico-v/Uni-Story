@@ -28,3 +28,6 @@ output/
 android/
 
 Nova/
+
+# Local IDE / tool config (CodeBuddy plugins, per-machine)
+.codebuddy/
