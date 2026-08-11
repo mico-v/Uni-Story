@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Uni-Story is a Godot 4.6 visual novel engine written in GDScript on the `dev` branch. It parses NovaScript-format scenarios, compiles presentation blocks into GDScript classes, and drives a full VN runtime with graphics, animation, audio, save/load, and UI. The reference architecture is Nova (Unity/C#/Lua), while this repository uses standard Godot 4.6 and does not require a .NET toolchain or embed a Lua VM.
+Uni-Story is a Godot 4.6 visual novel engine written in GDScript on the `main` branch (CI also runs on `dev`). It parses NovaScript-format scenarios, compiles presentation blocks into GDScript classes, and drives a full VN runtime with graphics, animation, audio, save/load, and UI. The reference architecture is Nova (Unity/C#/Lua), while this repository uses standard Godot 4.6 and does not require a .NET toolchain or embed a Lua VM.
+
+The `Nova/` submodule at the repo root is the upstream Unity/C# reference project — architecture reference only, not part of the Godot build. Fetch it with `git submodule update --init Nova`; it can be ignored during normal development.
 
 ## Build & Test Commands
 
@@ -161,8 +163,8 @@ OBJECT (per-node) and POST (fullscreen) effects use registries. Transition shade
 ## Coding Conventions
 
 - **GDScript-first**: no C#, no Lua VM; all runtime logic in GDScript
-- **`class_name` on core scripts**; explicit type annotations; **no `:=` inferred declarations**
-- **JSON-serializable data** for save/checkpoint payloads: only Dictionary, Array, String, float, int, bool, null
+- **`class_name` on core scripts**; explicit type annotations on the public API surface. `:=` type inference is permitted (and preferred for literals/preloads) wherever the type is unambiguous; the important rule is *no untyped* `var x =` or untyped function return types in committed code. Note: `docs/CodingStandards.md` carries an older, stricter "avoid `:=`" rule; the codebase uses `:=` widely (101 files, including `scripts/core/`), so follow this rule rather than the CodingStandards prohibition.
+- **Typed containers**: every `Array`/`Dictionary` that crosses an API boundary or holds save/checkpoint data must declare its element type (e.g. `Array[StringName]`, `Dictionary`). Save/restore payloads are JSON-serializable only: Dictionary, Array, String, float, int, bool, null.
 - **4-space indentation**, LF line endings, UTF-8 (see `.editorconfig`)
 - **`snapshot() -> Dictionary` / `restore(data: Dictionary)`** for any subsystem that participates in save/load; return `bool` only when the caller needs a success result
 - **`EngineLog` categories** (parse, runtime, save, asset, config, restore, ui) instead of raw `push_warning` for new subsystems
@@ -181,3 +183,11 @@ OBJECT (per-node) and POST (fullscreen) effects use registries. Transition shade
 - Scenario corpus changes should also run `python scripts/tools/scenario_stat.py --top 0`; analysis IR, normalization, schema, ordering, or stat CLI changes require `scenario_stat_smoke_test.gd`
 - Modifying sprite composition requires running `sprite_composer_smoke_test.gd`
 - CI on push to `main`/`dev` and release builds must pass error-level Scenario lint plus the 31-test headless quality gate before Windows, Linux, or Android export jobs run
+
+## Reference Docs
+
+- `docs/NovaScript.md` — the NovaScript script API (what compiled `BaseBlock` subclasses can call)
+- `docs/CodingStandards.md` — engineering conventions and memory rules (note the `:=` conflict above)
+- `docs/ProjectTerms.md` — terminology glossary
+- `docs/ReleaseGuide.md` and `PLAN.md` — release process and roadmap
+- `README.md` and `Setup.md` — Chinese-language overview and quick start
