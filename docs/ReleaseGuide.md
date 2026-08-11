@@ -165,7 +165,6 @@ godot --headless --path . --export-release "Android" ./build/android/Uni-Story.a
 - [ ] Android 触控操作流畅
 - [ ] 所有场景（ch1-ch4）可完整播放
 - [ ] 中英文切换正常
-- [ ] CHANGELOG 已更新
 - [ ] 版本号已更新（`export_presets.cfg` + `project.godot`）
 
 ---
@@ -190,8 +189,8 @@ A: 运行 `python scripts/tools/list_bg.py --details` 检查资源文件是否�
 
 | 文档 | 用途 |
 |------|------|
-| `Setup.md` | 开发环境搭建 |
-| `PLAN.md` | 路线图和开发计划 |
+| `Setup.md` | 开发环境搭建与架构概览 |
+| `README.md` | 项目概览与快速开始 |
 | `docs/NovaScript.md` | 剧本语法完整参考 |
 | `docs/StandingImportGuide.md` | 立绘导入教程 |
 | `docs/DeviceTestChecklist.md` | 三平台设备测试清单 |

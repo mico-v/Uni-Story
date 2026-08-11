@@ -203,11 +203,10 @@ godot --headless --path . --script res://scripts/tests/<test>.gd
 
 ## 更多信息
 
-- 开发计划与路线图：[PLAN.md](PLAN.md)
-- Nova 对比与阶段复盘：[review.md](review.md)
+- 项目概览：[README.md](README.md)
+- 架构参考：[AGENT.md](AGENT.md)
 - NovaScript 语法手册：[docs/NovaScript.md](docs/NovaScript.md)
 - 编码规范：[docs/CodingStandards.md](docs/CodingStandards.md)
 - 术语表：[docs/ProjectTerms.md](docs/ProjectTerms.md)
 - 发布指南：[docs/ReleaseGuide.md](docs/ReleaseGuide.md)
 - 设备测试清单：[docs/DeviceTestChecklist.md](docs/DeviceTestChecklist.md)
-- 版本发布日志：[CHANGELOG.md](CHANGELOG.md)

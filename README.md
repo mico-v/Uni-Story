@@ -146,7 +146,7 @@ resources/
 
 ## 剧本 API
 
-演出脚本块继承 `BaseBlock`，可使用下列运行时 API。完整说明见 [docs/NovaScript.md](docs/NovaScript.md)，开发计划见 [PLAN.md](PLAN.md)。
+演出脚本块继承 `BaseBlock`，可使用下列运行时 API。完整说明见 [docs/NovaScript.md](docs/NovaScript.md)。
 
 - 流程：`label`、`jump_to`、`jump_if`、`branch`、`is_start`、`is_end`
 - 图像：`show`、`hide`、`move`、`tint`
@@ -179,7 +179,7 @@ resources/
 
 下一步：三平台（Windows/Linux/Android）真机验证后发布 v1.0.0。
 
-更完整的路线图与执行记录请查看 [PLAN.md](PLAN.md)。发布流程请查看 [docs/ReleaseGuide.md](docs/ReleaseGuide.md)。
+更详细的能力与架构说明请查看 [Setup.md](Setup.md)。发布流程请查看 [docs/ReleaseGuide.md](docs/ReleaseGuide.md)。
 
 ## 许可
 

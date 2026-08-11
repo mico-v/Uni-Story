@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENT.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to coding agents when working with code in this repository.
 
 ## Project Overview
 
@@ -190,5 +190,5 @@ OBJECT (per-node), POST (fullscreen), and TRANSITION effects all use registries 
 - `docs/NovaScript.md` — the NovaScript script API (what compiled `BaseBlock` subclasses can call)
 - `docs/CodingStandards.md` — engineering conventions and memory rules (note the `:=` conflict above)
 - `docs/ProjectTerms.md` — terminology glossary
-- `docs/ReleaseGuide.md` and `PLAN.md` — release process and roadmap
+- `docs/ReleaseGuide.md` — release process and export guide
 - `README.md` and `Setup.md` — Chinese-language overview and quick start
