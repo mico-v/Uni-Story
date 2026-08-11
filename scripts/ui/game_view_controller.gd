@@ -632,10 +632,11 @@ func apply_responsive_layout() -> void:
 		var controls_metrics := _apply_controls_metrics(content_size, margin_x)
 		var toolbar_width: float = controls_metrics.x
 		var toolbar_height: float = controls_metrics.y
+		var dbox_bottom: float = _dbox.anchor_bottom if _dbox else 0.97
 		_controls.anchor_left = 1.0
-		_controls.anchor_top = 1.0
+		_controls.anchor_top = dbox_bottom
 		_controls.anchor_right = 1.0
-		_controls.anchor_bottom = 1.0
+		_controls.anchor_bottom = dbox_bottom
 		_controls.offset_left = -toolbar_width - margin_x
 		_controls.offset_top = -margin_y * 0.35 - toolbar_height
 		_controls.offset_right = -margin_x

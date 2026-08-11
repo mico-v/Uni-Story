@@ -4,12 +4,12 @@ class_name DialogueBoxSystem extends RefCounted
 ## presets. The box Control is registered in ObjectManager under "default_box".
 
 const PRESETS := {
-	"bottom":  [0.1, 0.9, 0.72, 0.96],
-	"default": [0.1, 0.9, 0.72, 0.96],
-	"top":     [0.1, 0.9, 0.05, 0.32],
-	"center":  [0.1, 0.9, 0.40, 0.66],
-	"left":    [0.02, 0.46, 0.72, 0.96],
-	"right":   [0.54, 0.98, 0.72, 0.96],
+	"bottom":  [0.06, 0.94, 0.55, 0.97],
+	"default": [0.06, 0.94, 0.55, 0.97],
+	"top":     [0.06, 0.94, 0.03, 0.42],
+	"center":  [0.06, 0.94, 0.40, 0.68],
+	"left":    [0.02, 0.48, 0.55, 0.97],
+	"right":   [0.52, 0.98, 0.55, 0.97],
 	"full":    [0.05, 0.95, 0.10, 0.95],
 }
 

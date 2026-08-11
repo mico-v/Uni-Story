@@ -72,7 +72,9 @@ func _run() -> void:
 			var dbox := game_view.get_node_or_null("Hud/DialogueLayer/DialogueBox") as Control
 			_expect(controls != null, "GameView controls should be present")
 			if controls:
-				_expect(controls.anchor_left == 1.0 and controls.anchor_top == 1.0 and controls.anchor_right == 1.0 and controls.anchor_bottom == 1.0, "GameView controls should anchor to the bottom-right")
+				_expect(controls.anchor_left == 1.0 and controls.anchor_right == 1.0, "GameView controls should anchor to the right edge")
+				_expect(controls.anchor_top == controls.anchor_bottom, "GameView controls should anchor to a single horizontal band")
+				_expect(controls.anchor_top > 0.5, "GameView controls should sit at the dialogue box bottom edge")
 				_expect(controls.offset_left < controls.offset_right and controls.offset_right <= 0.0, "GameView controls should stay inside the right edge")
 				_expect(controls.offset_top < controls.offset_bottom and controls.offset_bottom <= 0.0, "GameView controls should stay inside the bottom edge")
 				var button_order: Array[String] = []
