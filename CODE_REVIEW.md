@@ -3,6 +3,7 @@
 > 评审对象：`V:\github.com\mico-v\Uni-Story`（Godot 4.6 + GDScript 视觉小说引擎）
 > 评审范围：`project.godot`、`.editorconfig`/`.gitignore`、架构（`NovaController` 组合根 + `EngineContext` 门面）、核心模型/运行时/UI 脚本、场景、测试与工具链
 > 结论：**架构合理、符合 Godot 主流规范、可维护性良好**。存在少量需修正项，绝大多数是“内部文档/配置与官方规范、与代码实际”不一致，而非架构缺陷。
+> 状态追踪：2026-08-11 回归 — P1 ✅ 已修复、P2 ✅ 已修复、P3/P4/P5 仍开放、P6 已验证。
 
 ---
 
@@ -25,7 +26,7 @@
 3. **存档模型解耦优雅**：`RestorableRegistry` 用 duck-typed `snapshot/restore` 统一编排；`GameState` 只管模型态，其余 restorable 由组合根按层恢复，避免 replay 与表现态互相覆盖。这是成熟 VN 引擎的正确做法。
 4. **配置外置到位**：可调参数全部 `@export`；角色/立绘/视觉/主题均走 `.tres`（`StandingProfile`/`VisualProfile`/`AutoVoiceProfile`/themes），无内容配置硬编码进运行时脚本——符合 `CodingStandards.md` 的前端规则。
 5. **工程卫生正确**：`.gitignore` 正确排除 `.godot/`、`*.import`、`Nova/`（参考 Unity 子模块）、`android/`、`release/`；`Nova/` 作为 git 子模块隔离，不污染主仓库。
-6. **编辑器插件安全**：`addons/` 下无 `@tool` 关键字（grep 0 命中），headless 导入不会被编辑器脚本拖慢或打断。
+6. ~~**编辑器插件安全**：`addons/` 下无 `@tool` 关键字（grep 0 命中）~~ —— 2026-08-11 复核：Phase 17 引入的 12 个 editor 脚本全部为 `@tool`（EditorPlugin 必需），headless 导入与测试不受影响（CI 32/32 通过），原声明已过期。
 7. **`project.godot` 规范**：`config_version=5`、主场景、`features=PackedStringArray("4.6","Mobile")`、stretch `canvas_items`/`expand`、输入映射带 deadzone、移动端 VRAM 压缩 `import_etc2_astc=true`——都很到位。
 8. **无反模式**：全仓无 `yield(`、无 `.instance()`（均为 `.instantiate()`）、无 `class_name` 重名冲突。
 
@@ -33,15 +34,15 @@
 
 ## 三、需要改进的点（按优先级）
 
-### P1 — `.editorconfig` 与实际代码冲突（LOW，但应立刻修）
-- 现象：`.editorconfig` 写 `indent_style=space`，但 `scripts/` 下 **115/115** 个 `.gd` 文件实际用 **TAB** 缩进。
+### P1 — `.editorconfig` 与实际代码冲突 ✅ 已修复（2026-08-11）
+- 现象：`.editorconfig` 写 `indent_style=space`，但 `scripts/` 下 **116/116** 个 `.gd` 文件实际用 **TAB** 缩进。
 - 澄清：**TAB 缩进本身符合 Godot 官方风格指南**（官方默认即 Tabs）。问题不在代码，而在 `.editorconfig` 与 Godot 默认、与代码现实不一致。
-- 建议：把 `.editorconfig` 改为 `indent_style=tab`（或在 `[*.gd]` 段单独设 `indent_style=tab`）。一行改动即可消除“配置与代码打架”的风险（否则用空格编辑器的协作者可能引入 tab/space 混排，触发解析错误）。
+- 修复：`.editorconfig` 新增 `[*.gd]` 段 `indent_style=tab`，消除“配置与代码打架”的风险；`.cs` 保持空格。
 
-### P2 — 两份内部文档对 `:=` 表述矛盾（LOW，文档对齐）
+### P2 — 两份内部文档对 `:=` 表述矛盾 ✅ 已修复（2026-08-11）
 - 现象：`CLAUDE.md` 说 `:=` “preferred”；`docs/CodingStandards.md` 说“**避免使用 `:=` 类型推导式**”。代码实际大量使用 `:=`。
 - 澄清：Godot 官方风格指南**推荐使用 `:=`** 做类型推导。代码是对的，`CodingStandards.md` 这条与官方规范、与代码现实都冲突。
-- 建议：以 `CLAUDE.md` 为准，更新 `CodingStandards.md` 第 20 行，改为“公开 API 与跨边界数据用显式类型；局部字面量/ `preload` 可用 `:=`”——与 Godot 习惯和代码一致。
+- 修复：`docs/CodingStandards.md` 改为“公开 API 与跨边界数据用显式类型；局部字面量/ `preload` 可用 `:=`”，并补充 TAB 缩进约定；`CLAUDE.md` 移除“CodingStandards 仍禁止 `:=`”的旧注记。
 
 ### P3 — 绕过类型化门面，使用字符串化 `_ctx.get("x")` / `call("get", ...)`（MED，渐进重构）
 - 位置：`scripts/runtime/base_block.gd`（`_ctx.call("get", "game_view_controller")`、`_ctx.get("composer")` 等）、`chapter_select_view_controller.gd:175,184,191`、`view_manager.gd:224`。
@@ -56,9 +57,9 @@
 - 位置：`NovaController.gd:16-45` 的 `scenario_files: Array[String]`（27 条 `res://resources/scenarios/*.txt`）。
 - 说明：已用 `@export`，可在 Inspector 改，对“示例/样例引擎”可接受。但若要作为可复用引擎分发，建议改为**目录扫描**（读 `resources/scenarios/` 下所有 `.txt`）或用一个 `ScenarioManifest` 资源配置，避免引擎与示例内容耦合。
 
-### P6 — 待确认的 minor 项（LOW，验证即可）
-- `android/` 被 `.gitignore` 忽略：确认其仅为导出产物/模板（Godot Android 导出会重新生成），而非运行时必需的源码配置。
-- `addons/.../build_hooks.gd`：确认只在**导出时**执行重逻辑，不在导入期跑（否则可能影响 headless import 速度/稳定性）。目前无 `@tool`，风险低。
+### P6 — 验证项（LOW，已确认）
+- ✅ `android/` 被 `.gitignore` 忽略：确认为 Godot Android 导出模板（`android/build/` 下为模板源码与 `src/instrumented/assets/main.tscn`），非运行时必需源码；CI Android job 每次重新解压模板并清理 `.import` 文件。
+- ✅ `addons/` 下 12 个 `.gd` 全部声明 `@tool`（EditorPlugin 必需），headless `--import` 与 32/32 测试在 CI 均通过，未见编辑器脚本拖慢导入或影响测试（原报告"addons 无 @tool"声明已过期）。`build_hooks.gd` 为 `RefCounted`，重逻辑只在编辑器内调用，不在导入期执行。
 
 ---
 
@@ -76,14 +77,14 @@
 
 ---
 
-## 五、优先级行动清单
+## 五、优先级行动清单（2026-08-11 状态）
 
-1. **（立即可做）** 改 `.editorconfig`：`indent_style=space` → `tab`（仅一行，消除配置/代码冲突）。
-2. **（文档）** 对齐 `CodingStandards.md` 与 `CLAUDE.md` / Godot 官方：明确 `:=` 可用、TAB 合规。
-3. **（渐进重构）** 将 `GameViewController` 纳入 `EngineContext`，替换 hot path 里的 `_ctx.get("x")` / `call("get", ...)`。
-4. **（健壮性）** 场景稳定引用改用唯一节点名 `%`，替换字符串 `get_node`。
-5. **（未来）** 评估剧本“目录扫描 / ScenarioManifest”以解耦引擎与示例内容。
-6. **（验证）** 确认 `android/` 忽略策略与 `build_hooks` 仅导出期执行。
+1. ~~**（立即可做）** 改 `.editorconfig`：`indent_style=space` → `tab`~~ ✅ 已修复
+2. ~~**（文档）** 对齐 `CodingStandards.md` 与 `CLAUDE.md` / Godot 官方：明确 `:=` 可用、TAB 合规。~~ ✅ 已修复
+3. **（渐进重构）** 将 `GameViewController` 纳入 `EngineContext`，替换 hot path 里的 `_ctx.get("x")` / `call("get", ...)`。🔲 仍开放（base_block.gd 等 8 个文件，低风险渐进）
+4. **（健壮性）** 场景稳定引用改用唯一节点名 `%`，替换字符串 `get_node`。🔲 仍开放
+5. **（未来）** 评估剧本“目录扫描 / ScenarioManifest”以解耦引擎与示例内容。🔲 仍开放
+6. ~~**（验证）** 确认 `android/` 忽略策略与 `build_hooks` 仅导出期执行。~~ ✅ 已验证
 
 ---
 

@@ -68,7 +68,7 @@ The complete suite contains:
 - `theme_manager_smoke_test.gd`
 - `vfx_stack_smoke_test.gd`
 
-Import first with `godot --headless --path . --import`. The current complete suite is 32/32 PASS in about 55 seconds. Both CI and release workflows run Scenario lint with `--fail-on error` and then `run_headless_suite.py`; warnings remain visible but do not block Windows, Linux, or Android jobs. Strict resource scanning includes `say(speaker, id)` and currently reports `referenced=369`, `found=367`, `virtual=2`, `missing=0`.
+Import first with `godot --headless --path . --import`. The current complete suite is 32/32 PASS in about 55 seconds (Linux CI ~93 s). CI on push/PR runs Scenario lint with `--fail-on error` and then `run_headless_suite.py`; warnings remain visible but do not block. Windows/Linux/Android export jobs are triggered manually via `workflow_dispatch` (they depend on the quality job); the release workflow runs on `v*` tags or manual dispatch. Strict resource scanning includes `say(speaker, id)` and currently reports `referenced=369`, `found=367`, `virtual=2`, `missing=0`.
 
 The public linter entry point is `python scripts/tools/scenario_lint.py`. It accepts `--godot`, `--project`, `--format text|json`, `--output`, `--fail-on error|warning|never`, and optional file/directory paths. Diagnostics are stable `path:line:column: severity [rule] message` records; exits are 0 (threshold not reached), 1 (lint findings reached the threshold), and 2 (invocation/infrastructure failure). The default 28-scenario corpus currently reports `errors=0`, `warnings=133`, `referenced=372`, `found=370`, `virtual=2`, `missing=0`; the extra references come from branch-image lint coverage.
 
@@ -157,16 +157,16 @@ Views are registered by name with a transition type (FADE, SLIDE_LEFT, INSTANT).
 
 ### VFX System
 
-OBJECT (per-node) and POST (fullscreen) effects use registries. Transition shaders are still selected by `match`; a dedicated TRANSITION registry remains TODO. The repository contains 12 `.gdshader` files, including separate object/post variants where needed.
+OBJECT (per-node), POST (fullscreen), and TRANSITION effects all use registries (40 / 37 / 6 entries). The repository contains 84 `.gdshader` files + 49 `.shaderproto` templates, including separate object/post variants where needed.
 
-`VFXSystem` records up to three active object effects per target, supports snapshot/restore and `clear_effect()`, and exposes `capture_screen()`. This is currently a state stack rather than true rendering composition: only the top effect's `ShaderMaterial` is assigned to the node. True SubViewport/multi-pass composition and a transition shader that actually consumes the captured texture remain TODO.
+`VFXSystem` records up to three active object effects per target, supports snapshot/restore and `clear_effect()`, and exposes `capture_screen()`. Multi-pass post-processing is composited through a SubViewport chain (`_post_viewports`), and `transition_with_capture()` binds the captured texture to dissolve/wipe transition shaders' `capture_texture` uniform.
 
 ## Coding Conventions
 
 - **GDScript-first**: no C#, no Lua VM; all runtime logic in GDScript
-- **`class_name` on core scripts**; explicit type annotations on the public API surface. `:=` type inference is permitted (and preferred for literals/preloads) wherever the type is unambiguous; the important rule is *no untyped* `var x =` or untyped function return types in committed code. Note: `docs/CodingStandards.md` carries an older, stricter "avoid `:=`" rule; the codebase uses `:=` widely (101 files, including `scripts/core/`), so follow this rule rather than the CodingStandards prohibition.
+- **`class_name` on core scripts**; explicit type annotations on the public API surface. `:=` type inference is permitted (and preferred for literals/preloads) wherever the type is unambiguous; the important rule is *no untyped* `var x =` or untyped function return types in committed code. `docs/CodingStandards.md` is aligned on this rule (it previously carried a stricter "avoid `:=`" statement).
 - **Typed containers**: every `Array`/`Dictionary` that crosses an API boundary or holds save/checkpoint data must declare its element type (e.g. `Array[StringName]`, `Dictionary`). Save/restore payloads are JSON-serializable only: Dictionary, Array, String, float, int, bool, null.
-- **4-space indentation**, LF line endings, UTF-8 (see `.editorconfig`)
+- **TAB indentation** (Godot official default; see `.editorconfig` `[*.gd]`), LF line endings, UTF-8
 - **`snapshot() -> Dictionary` / `restore(data: Dictionary)`** for any subsystem that participates in save/load; return `bool` only when the caller needs a success result
 - **`EngineLog` categories** (parse, runtime, save, asset, config, restore, ui) instead of raw `push_warning` for new subsystems
 - **Comments**: explain non-obvious constraints, restore order, compatibility strategies, or complex flow — not self-documenting code
@@ -183,7 +183,7 @@ OBJECT (per-node) and POST (fullscreen) effects use registries. Transition shade
 - Scenario changes should pass `python scripts/tools/scenario_lint.py`; linter rule/CLI changes require `scenario_linter_smoke_test.gd`
 - Scenario corpus changes should also run `python scripts/tools/scenario_stat.py --top 0`; analysis IR, normalization, schema, ordering, or stat CLI changes require `scenario_stat_smoke_test.gd`
 - Modifying sprite composition requires running `sprite_composer_smoke_test.gd`
-- CI on push to `main`/`dev` and release builds must pass error-level Scenario lint plus the 32-test headless quality gate before Windows, Linux, or Android export jobs run
+- CI on push to `main`/`dev` runs error-level Scenario lint plus the 32-test headless quality gate; Windows, Linux, or Android export jobs are manual (`workflow_dispatch`) and depend on the quality gate. Release builds (tag push or manual) run the same gate before exporting.
 
 ## Reference Docs
 

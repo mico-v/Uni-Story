@@ -17,7 +17,8 @@
 
 ## GDScript 风格
 
-- 核心脚本尽量提供 `class_name`、明确返回值和关键变量类型；遇到 Godot 静态推断不稳定时显式标注类型。**避免使用 `:=` 类型推导式**
+- 核心脚本尽量提供 `class_name`、明确返回值和关键变量类型；遇到 Godot 静态推断不稳定时显式标注类型。**公开 API 与跨边界数据用显式类型；局部字面量/ `preload` 可用 `:=` 类型推导**（与 Godot 官方风格一致）
+- 缩进使用 **TAB**（Godot 官方默认，见 `.editorconfig` 的 `[*.gd]` 段）；LF 行尾、UTF-8 编码。
 - 保存数据、checkpoint、配置数据必须保持 JSON 可序列化：只使用 Dictionary、Array、String、float、int、bool 和 null。
 - 代码默认使用 ASCII；中文主要用于文档、UI 文案和已有中文资源。
 - 注释只解释非显然约束、恢复顺序、兼容策略或复杂流程，不写重复代码含义的空注释。

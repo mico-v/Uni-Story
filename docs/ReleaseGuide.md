@@ -1,7 +1,7 @@
 # Uni-Story 发布指南
 
 > 目标：从源代码构建、导出并在 Windows/Linux/Android 上发布 Uni-Story 视觉小说游戏。  
-> 最后更新：2026-07-26（Phase 18）
+> 最后更新：2026-08-11（对齐 GitHub Actions 新策略与文档回归）
 
 ---
 
@@ -107,14 +107,17 @@ godot --headless --path . --export-release "Android" ./build/android/Uni-Story.a
 
 ## 三、一键构建（CI/CD）
 
-项目已包含 GitHub Actions CI/CD 流水线（`.github/workflows/ci.yml` 与 `release.yml`），运行以下步骤：
+项目已包含 GitHub Actions CI/CD 流水线（`.github/workflows/ci.yml` 与 `release.yml`）：
 
-1. **Lint 门禁**：`scenario_lint.py` → errors=0
+**CI（`ci.yml`）— push/PR 自动**：
+
+1. **Lint 门禁**：`scenario_lint.py --fail-on error` → errors=0
 2. **测试门禁**：全量 headless 测试通过
-3. **导出**：并行导出 Windows/Linux/Android
-4. **产出物**：在 Release 页面下载
+3. push/PR 到此结束；**三端编译（Windows/Linux/Android 导出）需手动触发**：仓库 Actions 页面 → CI workflow → Run workflow（`workflow_dispatch`），导出产物以 artifact 形式保留 7 天。
 
-你也可以通过 Editor 的 **Build Panel**（`UniStory Editor Suite` 插件）一键触发。
+**Release（`release.yml`）— 打 `v*` tag 或手动触发**：执行同一 lint + 测试门禁，导出三端产物并创建 GitHub Release（Windows zip / Linux tar.gz / Android APK）。
+
+也可以通过 Editor 的 **Build Panel**（`UniStory Editor Suite` 插件）一键触发本地导出。
 
 ---
 

@@ -3,7 +3,7 @@
 ## 环境要求
 
 - Godot 4.6（标准版即可，无需 .NET）
-- 当前开发分支：`dev`
+- 当前开发分支：`main`
 
 ## 打开项目
 
@@ -48,7 +48,7 @@ git submodule update --init Nova
 | `CameraSystem` | 逻辑相机移动/缩放/旋转 |
 | `TransitionSystem` | 屏幕转场（fade/flash/shader transition） |
 | `DialogueBoxSystem` | 对话框位置/样式管理 |
-| `VFXSystem` | 对象/后处理/转场 VFX、效果状态栈、屏幕捕获与震动；当前只显示栈顶材质 |
+| `VFXSystem` | 对象/后处理/转场 VFX、效果状态栈、SubViewport 多 pass 合成、屏幕捕获与震动 |
 | `PrefabLoader` | WORLD/UI/PERSISTENT 三分类 .tscn 生命周期管理 |
 | `VideoSystem` | 视频播放 |
 | `PreloadSystem` | image/audio/prefab/other 分类型 LRU、优先级、取消与进度 |
@@ -62,7 +62,7 @@ git submodule update --init Nova
 | `SettingsCoordinator` | 设置读取、应用与持久化协调 |
 | `MobileUiSupport` | 移动端横屏、触控与安全区适配 |
 
-VFX 的“栈”当前是可快照、可按名称清除的效果状态栈。节点实际只绑定栈顶 `ShaderMaterial`；真正的 SubViewport/多 pass 合成，以及把 `capture_screen()` 结果传给转场 shader，仍属于后续任务。
+VFX 的效果状态栈可快照、可按名称清除。节点实际绑定的是 SubViewport 链式合成的最终结果：多 pass 后处理通过 `_post_viewports` 串联，`capture_screen()` 捕获屏幕后可由 `transition_with_capture()` 把纹理绑定到 dissolve/wipe 等转场 shader 参与合成。
 
 场景树由代码与 `.tscn` 文件混合构建：
 
@@ -199,7 +199,7 @@ python scripts/tests/run_headless_suite.py --godot godot --timeout 180
 godot --headless --path . --script res://scripts/tests/<test>.gd
 ```
 
-`scripts/tests/run_headless_suite.py` 会自动发现全部 `*_test.gd`，检测非零退出码、超时和 Godot 脚本错误。CI 与 release workflow 会先以 `--fail-on error` 运行 Scenario lint，再运行完整 headless 门禁；只有两者通过后才开始 Windows、Linux 和 Android 构建。
+`scripts/tests/run_headless_suite.py` 会自动发现全部 `*_test.gd`，检测非零退出码、超时和 Godot 脚本错误。CI 的 push/PR 会先以 `--fail-on error` 运行 Scenario lint，再运行完整 headless 门禁；Windows/Linux/Android 三端导出由 `workflow_dispatch` 手动触发（依赖 quality job 通过），release workflow 在打 tag 或手动触发时执行完整发布。
 
 ## 更多信息
 
@@ -208,4 +208,6 @@ godot --headless --path . --script res://scripts/tests/<test>.gd
 - NovaScript 语法手册：[docs/NovaScript.md](docs/NovaScript.md)
 - 编码规范：[docs/CodingStandards.md](docs/CodingStandards.md)
 - 术语表：[docs/ProjectTerms.md](docs/ProjectTerms.md)
-- Phase 任务清单：[docs/PhaseBacklog.md](docs/PhaseBacklog.md)
+- 发布指南：[docs/ReleaseGuide.md](docs/ReleaseGuide.md)
+- 设备测试清单：[docs/DeviceTestChecklist.md](docs/DeviceTestChecklist.md)
+- 版本发布日志：[CHANGELOG.md](CHANGELOG.md)

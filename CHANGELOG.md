@@ -1,5 +1,16 @@
 # Changelog
 
+## 2026-08-11 — 测试补全、CI 迁移与文档回归 ✅
+
+- ✅ **save-viewer 冒烟测试**：新增 `save_viewer_smoke_test.gd`（32 项测试），并修复 `save_viewer_panel.gd` 7 处 `:=` 潜伏编译错误
+- ✅ **CI 迁移**：移除 cnb 流水线（`.cnb.yml`、`.cnb/`、`Dockerfile.ci`），测试门禁同步到 GitHub Actions；修复英文剧本目录大小写（`Scenarios/` → `scenarios/`），解决 Linux 上 i18n 加载失败（本机 31/32 通过、CI 2 项失败的根因）
+- ✅ **CI 策略**：push/PR 仅运行 lint + headless 测试门禁；Windows/Linux/Android 三端导出改为 `workflow_dispatch` 手动触发（CI 已验证三端导出全部成功）
+- ✅ **Android 导出加固**：导入后 `touch android/build/.gdignore` + 清理模板 `.import` 文件
+- ✅ **文档回归**：全量核对代码与文档事实（32 测试、116 GDScript + 27 Python、84 shader、23 tscn、17 editor 脚本、TAB 缩进、VFX 多 pass/capture 已实现）；`docs/PhaseBacklog.md` 已完成记录删除；PLAN.md 精简已完成 Phase 清单；review.md 删除过期章节；README/Setup/ReleaseGuide/DeviceTestChecklist/CLAUDE.md 对齐
+- ✅ **评审项修复**：CODE_REVIEW P1（`.editorconfig` `[*.gd]` → tab）✅、P2（CodingStandards `:=` 表述）✅、P6（android/ 与 build_hooks 验证）✅
+- 📏 测试：31 → **32**
+- 📏 项目状态：v1.0.0-rc1（剩余待办：三平台真机验证）
+
 ## 2026-07-26 — Phase 18 工具链补完、文档与发布成熟化 ✅ — v1.0.0-rc1 🎉
 
 - ✅ **9 个新 Python 工具**，工具链覆盖率 67% → **93%**（25/27）：

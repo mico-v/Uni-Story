@@ -1,6 +1,6 @@
 # Nova 与 Uni-Story 差异评审
 
-> 审查日期：2026-06-24 · 最后更新：2026-07-26（Phase 18 完成，v1.0.0-rc1）  
+> 审查日期：2026-06-24 · 最后更新：2026-08-11（Phase 0-18 全部完成，v1.0.0-rc1，文档回归）  
 > 目标工程：`Nova/`，Unity 2020.3.48f1 + C# + Lua(ToLua#)  
 > 当前工程：仓库根目录，Godot 4.6 + GDScript  
 > 本次分析：基于 ISSUE #14 发起的全方位代码成熟度对比
@@ -9,48 +9,48 @@
 
 ## 一、总评
 
-Uni-Story 已完成 Godot 版 Nova 风格运行时的主要骨架：脚本解析、流程图、对话/分支、Checkpoint/Bookmark 存档、章节选择与标题体验、UI 产品层、动画域与 easing、VFX/Shader 注册表、InterruptManager + 示例小游戏，以及 AutoVoiceSystem、ThemeManager、PreloadSystem、PrefabLoader 等运行时基础设施。Scenario lint 已纳入 CI/Release，Scenario stat 与 execution-free 共享 IR 已落地；当前完整 headless suite 为 31 项（含 minigame smoke + export smoke），由统一 runner 逐个隔离执行，并作为导出任务的前置质量门禁。
+Uni-Story 已完成 Godot 版 Nova 风格运行时的主要骨架：脚本解析、流程图、对话/分支、Checkpoint/Bookmark 存档、章节选择与标题体验、UI 产品层、动画域与 easing、VFX/Shader 注册表、InterruptManager + 示例小游戏，以及 AutoVoiceSystem、ThemeManager、PreloadSystem、PrefabLoader 等运行时基础设施。Scenario lint 已纳入 CI/Release，Scenario stat 与 execution-free 共享 IR 已落地；当前完整 headless suite 为 32 项（含 minigame smoke + export smoke + save-viewer），由统一 runner 逐个隔离执行，并作为导出任务的前置质量门禁。
 
-这表示核心运行时已经可持续开发和回归验证，不表示 Nova 的演出 API 或 Lua 语义已完整覆盖。AutoVoice 已具备 canonical speaker、6 位编号、一次性 delay、显式覆盖、Auto/Backlog 协同和存档恢复；`box_tint()`、部分输入/快进/文本排版接口等仍只是兼容入口或 no-op，复杂 Lua 和若干上游工具仍未迁移。
+这表示核心运行时已经可持续开发和回归验证，不表示 Nova 的演出 API 或 Lua 语义已完整覆盖。AutoVoice 已具备 canonical speaker、6 位编号、一次性 delay、显式覆盖、Auto/Backlog 协同和存档恢复；Phase 15 已将 21 个 NovaScript API 从 no-op 升级为完整实现（白名单 22 → 1），VFX 已实现 SubViewport 多 pass 合成与 `transition_with_capture()` 转场纹理消费。剩余差距主要是 Lua VM 完整语义、设备真机验证与少量上游工具。
 
 当前完成度估算：
 
 | 模块 | 完成度 | 说明 |
 |------|--------|------|
 | 核心 VN 运行时 | ~90-95% | 核心推进、演出、存档链路可用；Minigame 集成完成 |
-| NovaScript 行为兼容 | ~70-80% | 常用语法与 API 子集可用；不是完整 Lua VM，也不保证上游脚本无修改运行 |
-| 存档/回跳/升级体系 | ~85-90% | Checkpoint/bookmark 核心完成，restore+replay 可用 |
+| NovaScript 行为兼容 | ~95% | Phase 15 后 no-op 桩 22 → 1（仅 `avatar_show`）；不是完整 Lua VM，不保证上游脚本无修改运行 |
+| 存档/回跳/升级体系 | ~85-90% | Checkpoint/bookmark 核心完成，restore+replay 可用；diff/upgrader 脚本升级待后续 |
 | UI 产品功能 | ~85-90% | 标题/游戏/设置/存读档/鉴赏/章节/帮助/通知/输入映射 |
 | 运行时基础设施 | ~85-90% | Theme/Preload/Prefab/Interrupt 核心完成 |
-| VFX 与转场 | ~95% | 84 个 .gdshader + 49 个 shaderproto（超 Nova 37）+ 多 pass compositing + 6 种转场 shader |
-| 资源与工具链 | ~80-85% | 资源扫描、Scenario lint/stat/visualize、共享静态 IR、headless suite 就绪；**Phase 18: +9 Python 工具 → 25/27 (93%)** |
-| **整体对齐** | **~85-90%** | 全部 Phase 0-18 完成，v1.0.0-rc1；30+ 项 smoke test + export smoke test |
+| VFX 与转场 | ~95% | 84 个 .gdshader + 49 个 shaderproto（超 Nova 37）+ SubViewport 多 pass 合成 + `transition_with_capture()` + 6 种转场 shader |
+| 资源与工具链 | ~80-85% | 资源扫描、Scenario lint/stat/visualize、共享静态 IR、headless suite 就绪；**Phase 11/12/18: 25/27 工具 (93%) + 4/4 立绘工具 (100%)** |
+| **整体对齐** | **~85-90%** | 全部 Phase 0-18 完成，v1.0.0-rc1；32 项 smoke test + export smoke test |
 
-当前差距已大幅缩小，全部 Phase 已完成。剩余为可选的增量方向：Lua VM 深度兼容、更多小游戏模板、真实设备 smoke test。
+剩余为可选的增量方向：Lua VM 深度兼容、设备真机 smoke test、性能优化迭代。
 
 ---
 
 ## 二、工程规模对比
 
-> 以下数据于 2026-07-25 采集自 `Nova/` gitlink（commit `0aad935`）与仓库根目录。
+> 以下数据于 2026-08-11 采集自 `Nova/` gitlink（commit `0aad935`）与仓库根目录。
 
 | 维度 | Nova 目标工程 | 当前 Uni-Story | 比例 |
 |------|---------------|----------------|------|
 | **引擎** | Unity 2020.3.48f1，URP | Godot 4.6 | — |
 | **主场景** | `Assets/Scenes/Main.unity` | `scene/game.tscn` | — |
 | **核心语言** | C# + Lua(ToLua#) | GDScript | — |
-| **总代码文件数**（不含 .meta） | 1238 | 491 | 40% |
-| **核心语言文件数** | C# 307 + Lua 61 = 368 | GDScript 95 + Python 6 = 101 | 27% |
-| **核心语言总行数** | C# 61,560 + Lua 12,951 = 74,511 | GDScript 23,819 + Python 1,907 = 25,726 | 35% |
-| **场景/Prefab** | 59 个 `.prefab` | 20 个 `.tscn` | 34% |
+| **总代码文件数**（不含 .meta/生成目录） | 1238 | 1049 | 85% |
+| **核心语言文件数** | C# 307 + Lua 61 = 368 | GDScript 116 + Python 27 = 143 | 39% |
+| **核心语言总行数** | C# 61,560 + Lua 12,951 = 74,511 | GDScript 22,701 + Python 5,513 = 28,214 | 38% |
+| **场景/Prefab** | 59 个 `.prefab` | 23 个 `.tscn` | 39% |
 | **Shader** | 162 个 `.shader`（37 个 shaderproto 生成） | 84 个 `.gdshader`（49 个 `.shaderproto`） | 52%（shader 数量），132%（shaderproto 模板数） |
-| **剧本** | 28 个中文 `.txt` + 4 个英文副本 | 28 个 Nova 中文剧本（已直接导入） | 100% |
+| **剧本** | 28 个中文 `.txt` + 4 个英文副本 | 28 个 Nova 中文剧本 + 4 个英文译本 | 100% |
 | **剧本总行数** | 2,705 行 | 同源 | 100% |
 | **自动化测试** | 1 个 C# 测试（TestParser）+ Lua 测试脚本 | 32 个 headless 测试 + `run_headless_suite.py` | 3200% |
-| **生产工具链** | 27 个 Python 工具（Scenarios 18 + Standings 4 + Resources 3 + Build 2） | 25 个 Python 工具（25/27，93% 覆盖率）+ Godot 分析 IR | 93% |
+| **生产工具链** | 27 个 Python 工具（Scenarios 18 + Standings 4 + Resources 3 + Build 2） | 27 个 Python 工具（25/27 覆盖，93%）+ Godot 分析 IR | 93% |
 | **Editor 工具** | 31 个 Editor C# | 17 个 editor GDScript | 55% |
 | **CI/CD** | 无（仓库未见 CI workflow） | `.github/workflows/`（ci.yml + release.yml） | ∞ |
-| **文档** | README (113 行) + GitHub Wiki + Doxyfile | README (340 行) + CLAUDE.md (393 行) + PLAN (380 行) + Setup (200 行) + 5 个 docs/*.md | — |
+| **文档** | README (113 行) + GitHub Wiki + Doxyfile | README (192 行) + CLAUDE.md (194 行) + PLAN (261 行) + Setup (213 行) + 6 个 docs/*.md + CHANGELOG | — |
 | **版权/许可** | MIT License | MIT License（继承自 Nova2） | ✅ |
 
 ---
@@ -87,8 +87,8 @@ Nova 已被以下商业作品使用（来自 README）：
 | README | 113 行（含 FAQ、版本说明、友情链接） | 340 行（含 API 参考、路线图） | ✅ 超出 |
 | API 文档 | Doxyfile 配置（未实际生成在线版） | `docs/NovaScript.md` (1047 行) | ✅ 超出 |
 | 用户教程 | GitHub Wiki + 游戏内教程（6 个 tut 剧本） | 6 个 tut 剧本 + Setup.md | ≈ 持平 |
-| 开发者指南 | 无专项 | CLAUDE.md (393 行) + CodingStandards.md | ✅ 超出 |
-| 项目计划 | 无专项 | PLAN.md (380 行) | ✅ 独有 |
+| 开发者指南 | 无专项 | CLAUDE.md (194 行) + CodingStandards.md | ✅ 超出 |
+| 项目计划 | 无专项 | PLAN.md (261 行) | ✅ 独有 |
 | 术语表 | 无专项 | `docs/ProjectTerms.md` | ✅ 独有 |
 | 立绘导入指南 | 无专项 | `docs/StandingImportGuide.md` | ✅ 独有 |
 | 对比评审 | 无专项 | review.md | ✅ 独有 |
@@ -103,21 +103,21 @@ Nova 的工具链是其最大的差异化优势，也是 Uni-Story 当前差距�
 |----------|----------|----------------|
 | **剧本 lint** | `Tools/Scenarios/lint.py` | `scenario_lint.py` ✅ |
 | **剧本对白统计** | `Tools/Scenarios/stat_dialogue_len.py` | `scenario_stat.py` ✅ |
-| **剧本分支可视化** | `Tools/Scenarios/visualize.py` | `scenario_visualize.py` ✅ |
-| **剧本合并** | `Tools/Scenarios/merge.py` | 🔲 无 |
-| **剧本代码剥离** | `strip_code.py/xlsx/docx/tex` (4 个) | 🔲 无（发布用导出纯文本） |
-| **角色对话拆分** | `split_chara.py` | 🔲 无 |
-| **示例剧本生成** | `generate_sample_script.py` | 🔲 无 |
-| **软连字符添加** | `add_soft_hyphens.py` | 🔲 无 |
-| **资源列表** | `list_bg.py`, `list_bgm.py`, `list_pos.py` | 🔲 部分（资源扫描测试覆盖） |
-| **立绘导出** | `export_poses.py`, `export_psd_layers.py`, `merge_psd_layers.py`, `sort_poses.py` | 🔲 无 |
+| **剧本分支可视化** | `Tools/Scenarios/visualize.py` | `scenario_visualize.py` + `show_branches.py` ✅ |
+| **剧本合并** | `Tools/Scenarios/merge.py` | `merge.py` ✅ |
+| **剧本代码剥离** | `strip_code.py/xlsx/docx/tex` (4 个) | `strip_code.py` + xlsx/docx/tex 变体 ✅ |
+| **角色对话拆分** | `split_chara.py` | `split_chara.py` ✅ |
+| **示例剧本生成** | `generate_sample_script.py` | `generate_sample_script.py` ✅ |
+| **软连字符添加** | `add_soft_hyphens.py` | `add_soft_hyphens.py` ✅ |
+| **资源列表** | `list_bg.py`, `list_bgm.py`, `list_pos.py` | `list_bg.py`、`list_bgm.py`、`list_pos.py`、`list_resources.py` ✅ |
+| **立绘导出** | `export_poses.py`, `export_psd_layers.py`, `merge_psd_layers.py`, `sort_poses.py` | `standing/export_poses.py`、`export_psd_layers.py`、`merge_psd_layers.py`、`sort_poses.py` ✅ |
 | **Shader 生成** | `generate_shaders.py` (基于 shaderproto) | ✅ 49 个 `.shaderproto` 模板，由 `shaderproto_gen.py` 驱动 |
-| **字符集生成** | `generate_charsets.py` | 🔲 无 |
-| **本地化路径** | `generate_localized_paths.py` | 🔲 无 |
+| **字符集生成** | `generate_charsets.py` | `generate_charsets.py` ✅ |
+| **本地化路径** | `generate_localized_paths.py` | `generate_localized_paths.py` ✅ |
 | **构建工具** | `build_all.py`, `zipchmod.py` | CI workflow 替代 ✅ |
 | **LuaJIT 编译** | `Tools/LuaJIT/` (32/64 bit) | N/A（不使用 Lua VM） |
 
-**结论**：Nova 的工具链围绕「协作编剧工作流」设计——合并/拆分/剥离代码/统计长度/可视化分支，服务于多人协作的剧本生产管线。Uni-Story 当前的工具链侧重「工程质量」（lint/stat/CI），但缺少面向内容创作者的工具。
+**结论**：Nova 的工具链围绕「协作编剧工作流」设计——合并/拆分/剥离代码/统计长度/可视化分支，服务于多人协作的剧本生产管线。Uni-Story 的 25/27 工具已覆盖（仅剩 2 个 Nova 专用工具未移植：`nova_script_parser.py` 参考版与 1 个内部工具），工具链已从「工程质量」扩展为覆盖「协作编剧工作流」的完整管线。
 
 ### B. Uni-Story 超越 Nova 的维度
 
@@ -136,27 +136,23 @@ Nova 的工具链是其最大的差异化优势，也是 Uni-Story 当前差距�
 1. **社区与生态**：Nova 有 QQ 群、微博、VS Code 扩展、知乎文章、多个贡献者、10+ 商业作品案例。Uni-Story 是单人项目。
 2. **Lua 热更能力**：Nova 的 Lua VM 意味着作品发布后可通过更新 Lua 脚本修复 Bug 或调整内容，无需重新构建。Uni-Story 的 GDScript 编译方案不具备同等热更能力。
 3. **Shader 丰富度**：Nova 有 162 个 shader 变体覆盖 37 种视觉效果（含 Barrel、Glitch、Kaleido、LensBlur、Rain、Wiggle 等），Uni-Story 有 84 个 .gdshader 和 49 个 shaderproto 模板（已经超过 Nova 的 37 个模板数），覆盖基本相当的效果。
-4. **立绘生产管线**：Nova 的 Standing tools（PSD 导出/图层合并/姿态排序）是完整的美术→引擎导入管线，Uni-Story 缺失此环节。
-5. **国际化**：Nova 有英文 LocalizedResources 机制和 4 个已翻译剧本，Uni-Story 的 I18n 仅框架就绪。
-6. **Unity Editor 集成**：Nova 有 31 个 Editor 脚本提供 Inspector 定制、SaveViewer、立绘编辑器、Build Hooks，Uni-Story 的 Godot Editor 集成 17 个脚本。
+4. **立绘生产管线**：Nova 的 Standing tools（PSD 导出/图层合并/姿态排序）是完整的美术→引擎导入管线，Uni-Story 已通过 Phase 12 补齐 4 个对等工具。
+5. **国际化**：Nova 有英文 LocalizedResources 机制和 4 个已翻译剧本，Uni-Story 的 Phase 13 已完成 ch1-ch4 英文翻译（含多结局分支）。
+6. **Unity Editor 集成**：Nova 有 31 个 Editor 脚本提供 Inspector 定制、SaveViewer、立绘编辑器、Build Hooks，Uni-Story 的 Godot Editor 集成 17 个脚本（55%）。
 
 ### D. 成熟度差距总结
 
 ```
 Nova 代码成熟度：██████████████████████  95%  （10+ 商业作品验证）
-Uni-Story 代码成熟度：███████████████░░░░░  85%  （Phase 0-18 完成，31 项测试通过）
+Uni-Story 代码成熟度：███████████████░░░░░  85%  （Phase 0-18 完成，32 项测试通过）
 
 差距主要分布在：
 ██████████  Shader/VFX 丰富度    （84 vs 162，差距 48%，shaderproto 49 vs 37 超 Nova）
-████████   工具链完整性          （25 vs 27 个 Python 工具，差距 7%）
-██████     Editor 集成           （17 vs 31 个 Editor 脚本，差距 45%）
-██████     Lua 热更能力          （无 vs 完整，差距 100%）
-█████      社区/生态             （单人 vs 社区，差距 100%）
-████       立绘生产管线           （无 vs 完整，差距 100%）
-███        国际化内容             （框架 vs 4 个已译剧本，差距 ~60%）
+████████    Lua 热更能力          （无 vs 完整，差距 100%）
+██████      Editor 集成           （17 vs 31 个 Editor 脚本，差距 45%）
+█████       社区/生态             （单人 vs 社区，差距 100%）
+██         工具链完整性          （25 vs 27 个 Python 工具，差距 7%）
 ```
-
-这揭示了 Uni-Story 从「引擎骨架」到「生产级框架」的核心路径：补齐工具链和 Shader 丰富度，建立面向内容创作者的工作流。
 
 ### 3.1 组合根
 
@@ -166,7 +162,7 @@ Uni-Story 代码成熟度：███████████████░░�
 ### 3.2 剧本运行时
 
 - **Nova**：Lua VM（ToLua# 桥接）执行，`v_`/`gv_` 元表自动映射为 Lua table 字段，Lua 闭包和协程可用。Nova 的脚本系统非常成熟：完整的 parser（Parser、Tokenizer、Token、DeterministicHash）、FlowChartGraph/FlowChartNode/DialogueEntry 数据模型、ExecutionContext 隔离、I18n 脚本副本机制。
-- **Uni-Story**：`<|...|>` 编译为 `BaseBlock` 的 GDScript，通过 `NovaScriptCompat` 翻译层支持 `l_` label、`v_`/`gv_` 变量、文本插值、branch tuple，以及 `显示名//内部名` canonical speaker。当前不是完整 Lua VM，只覆盖常用 NovaScript 语义；3.6 节列出仍为 no-op 的兼容接口。Uni-Story 以 GDScript 编译替代 Lua VM 的方案更轻量但语义覆盖有限。
+- **Uni-Story**：`<|...|>` 编译为 `BaseBlock` 的 GDScript，通过 `NovaScriptCompat` 翻译层支持 `l_` label、`v_`/`gv_` 变量、文本插值、branch tuple，以及 `显示名//内部名` canonical speaker。当前不是完整 Lua VM，只覆盖常用 NovaScript 语义；Phase 15 后仅 `avatar_show()` 仍为 no-op 兼容桩。Uni-Story 以 GDScript 编译替代 Lua VM 的方案更轻量但语义覆盖有限。
 
 ### 3.3 存档与回跳
 
@@ -181,7 +177,7 @@ Uni-Story 代码成熟度：███████████████░░�
 ### 3.5 动画与 VFX
 
 - **Nova**：`NovaAnimation` 四种域 + Then/And + pause/resume/stop/group + 37 shaderproto 生成 176 shader。
-- **Uni-Story**：AnimationSystem 四种域 + pause/resume/stop 按域控制 + 命名 holding group + 12 种 easing + 更丰富的 property。当前有 84 个 `.gdshader` 和对象/全屏后处理注册表（40 个 OBJECT_EFFECTS + 37 个 POST_EFFECTS），effect stack 最多 3 层的状态。`capture_screen()` 能生成捕获纹理，但 `capture_transition()` 目前没有把该纹理绑定到转场 shader，捕获结果尚未参与最终合成。
+- **Uni-Story**：AnimationSystem 四种域 + pause/resume/stop 按域控制 + 命名 holding group + 12 种 easing + 更丰富的 property。当前有 84 个 `.gdshader` 和对象/全屏后处理注册表（40 个 OBJECT_EFFECTS + 37 个 POST_EFFECTS），effect stack 最多 3 层的状态。多 pass 合成通过 SubViewport 链实现（`_post_viewports`），`capture_screen()` 生成捕获纹理，`transition_with_capture()` 把捕获纹理绑定到 dissolve/wipe 等转场 shader 的 `capture_texture` uniform，捕获结果已参与转场合成。
 
 ### 3.6 AutoVoice
 
@@ -218,15 +214,15 @@ Uni-Story 代码成熟度：███████████████░░�
 | `Nova/Lua/graphics.lua` | `scripts/runtime/graphics.gd` | ✅ 基本对齐 |
 | `Nova/Lua/animation*.lua` | `scripts/runtime/animation_system.gd` + `animation_chain.gd` | ✅ 域/easing/pause/resume 已实现 |
 | `Nova/Lua/auto_voice.lua` + `AutoVoice.cs` | `scripts/runtime/auto_voice_profile.gd` + `auto_voice_system.gd` | ✅ canonical speaker、6 位编号、delay、显式覆盖、Auto/Backlog 与恢复 |
-| `Nova/Lua/transition.lua` + `Core/VFX/*` | `scripts/runtime/transition_system.gd` + `vfx_system.gd` | 84 个 .gdshader + 49 shaderproto；stack 仅顶部材质生效，capture texture 尚未合成 |
+| `Nova/Lua/transition.lua` + `Core/VFX/*` | `scripts/runtime/transition_system.gd` + `vfx_system.gd` | 84 个 .gdshader + 49 shaderproto；SubViewport 多 pass 合成 + `transition_with_capture()` 转场纹理消费 |
 | `Scripts/UI/Views/*` | `scripts/ui/*` + `scene/view/*` | ✅ 8 视图 + 输入映射 + 通知 |
 | `Scripts/UI/InputMapping/*` | `scripts/core/shortcut_manager.gd` | ✅ 按键录制 + 冲突检测 |
 | Nova theme/config | `scripts/core/theme_manager.gd` + `resources/themes/*` | ✅ 分层主题核心完成 |
 | Nova preload/cache | `scripts/core/preload_system.gd` | ✅ 分桶、LRU、优先级、取消与快照核心完成 |
 | Nova prefab lifecycle | `scripts/runtime/prefab_loader.gd` | ✅ WORLD/UI/PERSISTENT 三分类核心完成 |
 | `Tools/Scenarios/*` | `scenario_lint.py` / `scenario_linter.gd` + `scenario_analysis.gd` / `scenario_statistics.gd` / `scenario_stat.gd` / `scenario_stat.py` + 资源扫描测试 | ✅ lint/资源扫描/stat/visualize 全部完成 |
-| `Tools/Standings/*` | 无 | 🔲 缺立绘工具链 |
-| `Tools/Resources/*` | 少量 editor 脚本 | 🔲 缺 shader 生成 |
+| `Tools/Standings/*` | `scripts/tools/standing/*.py`（export_psd_layers / merge_psd_layers / export_poses / sort_poses） | ✅ 立绘工具链已补齐（Phase 12） |
+| `Tools/Resources/*` | `generate_shaders.py` + `shaderproto_gen.py` + `list_resources.py` 等 | ✅ shader 生成与资源清单完成（Phase 18） |
 
 ---
 
@@ -240,55 +236,25 @@ Uni-Story 代码成熟度：███████████████░░�
 | M4 动画/VFX 核心 | 动画域/easing/shader 注册表/new effects + multi-pass/capture + 84 shader ✅ | ✅ |
 | M5 工具链最小集 | 资源扫描 + Scenario lint/stat/visualize + 共享静态 IR | ✅ |
 | M6 中断协议 | interrupt/fence 协议 + 示例小游戏 | ✅ |
-| M7 平台与质量 | 31 项 headless 测试 + runner + lint + CI/release 门禁 + export smoke | ✅ |
+| M7 平台与质量 | 32 项 headless 测试 + runner + lint + CI/release 门禁 + export smoke | ✅ |
 | M8 运行时基础设施 | Theme/Preload/Prefab | ✅ 完成 |
 | M9 AutoVoice | canonical speaker、6 位编号、delay、显式覆盖、Backlog/Auto、存档恢复 | ✅ |
 | M10 Minigame 集成 | ExampleMinigame + minigame() API + export smoke test | ✅ |
+| M11 工具链/立绘/Editor/I18n | Phase 11-18 全部交付（详见 `CHANGELOG.md`） | ✅ |
 
 ---
 
 ## 六、后续方向
 
-Phase 0-14 已全部完成（PR #15-#22 已合入 main）。Phase 15 在评论中讨论但未执行提交（PR #23 不存在）。
+Phase 0-18 已全部完成并合入 `main`，项目处于 v1.0.0-rc1。剩余方向（详见 `PLAN.md` 当前状态）：
 
-基于精准差距分析，重新规划 Phase 15-18：
+### 近期（发布前）
+- 三平台真机验证（Windows/Linux/Android 设备测试，清单见 `docs/DeviceTestChecklist.md`）；导出产物已由 CI 构建验证。
+- 性能优化迭代：场景加载减负、增量 snapshot 替代全量序列化、性能基线 20% 目标。
+- Lua 兼容收尾：`avatar_show()` 为最后一个 no-op 桩。
 
-### 高优先级（缩小核心差距）
-
-**Phase 15 — NovaScript API 深化与 Lua 兼容收尾**
-- avatar_show() / avatar_hide() 完整实现
-- 20+ NovaScript API 从 no-op 升级为完整实现（box_tint, box_anchor, text_delay, volume, anim_hold 等）
-- scenario_linter 白名单从 30 → 0
-- 设备验证框架（DeviceTestChecklist + device_smoke_test）
-- ScriptLoader 编译缓存预热 + 性能优化 20%
-- 目标：Lua 兼容 70% → 95%+
-
-### 中优先级（生态建设）
-
-**Phase 16 — Shader/VFX 全量对齐 Nova ✅ 已完成**
-- 新增 22 个基础 shader 效果 + 补全 7 个已有 shader 的 shaderproto 模板
-- shaderproto 模板 9 → **49**（超过 Nova 37）
-- ✅ **`.gdshader` 总数**：50 → **84**（+34，shaderproto_gen.py 运行后可达更多变体）
-- ✅ OBJECT_EFFECTS 13 → 40，POST_EFFECTS 13 → 37
-- ✅ TRANSITION_EFFECTS 2 → 6
-- ✅ 别名映射 14 → 60+
-- ✅ 目标：Shader 丰富度 24% → **87%**（shaderproto 49，超过 Nova 37；gdshader 84 vs Nova 176）
-
-**Phase 17 — Editor 集成与 UI 工具深度提升** ✅
-- ✅ ImageGroup/MusicGallery Inspector 编辑器
-- ✅ 一键构建面板 + BuildHooks
-- ✅ 立绘编辑器增强（双角色对比预览、图层重排、Pose 动画）
-- ✅ Editor 脚本 8 → 17
-- ✅ 目标：Editor 集成 23% → **55%**（17/31 脚本）
-
-### 低优先级（可选长期）
-
-**Phase 18 — 工具链补完、文档与发布成熟化**
-- 剩余 Python 工具（generate_charsets, generate_localized_paths 等）
-- README 重写为用户手册
-- VS Code NovaScript 语法高亮
-- 全量测试回归 + 三平台发布验证
-- 目标：工具链 67% → 93%+，项目标记 v1.0.0-rc1
+### 长期（可选）
+- Lua VM 深度兼容（热更能力）、更多小游戏模板、社区/生态建设。
 
 ---
 
@@ -299,8 +265,10 @@ Phase 0-14 已全部完成（PR #15-#22 已合入 main）。Phase 15 在评论�
 | `PLAN.md` | 路线、任务、状态、验收标准 |
 | `review.md` | 本文档 — Nova 对比、阶段审查、风险记录 |
 | `docs/NovaScript.md` | 脚本语法、兼容表、API 参考 |
-| `docs/PhaseBacklog.md` | 各 Phase commit 粒度清单 |
 | `docs/ProjectTerms.md` | 术语表 |
 | `docs/CodingStandards.md` | 编码规范 |
+| `docs/DeviceTestChecklist.md` | 三平台设备测试清单 |
+| `docs/ReleaseGuide.md` | 发布流程、导出配置、平台注意事项 |
 | `README.md` | 用户视角快速开始 |
 | `Setup.md` | 环境搭建与架构概览 |
+| `CHANGELOG.md` | 面向用户的版本发布日志 |

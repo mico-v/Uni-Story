@@ -10,9 +10,9 @@
 | 项目 | 值 |
 |------|-----|
 | 引擎版本 | Godot 4.6 |
-| Uni-Story 版本 | Phase 15 (dev) |
+| Uni-Story 版本 | v1.0.0-rc1 (main) |
 | 测试剧本 | ch1 → ch4（4 章完整叙事含分支/结局） |
-| CI 构建 | Windows/Linux/Android export |
+| CI 构建 | Windows/Linux/Android export（2026-08-11 已 CI 验证，待真机执行） |
 
 ---
 

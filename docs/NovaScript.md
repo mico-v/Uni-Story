@@ -565,7 +565,7 @@ trans("flash", 0.3)
 
 #### `capture_transition(effect_name, duration = 0.5)`
 
-实验性捕获转场，目前接受 `"dissolve"` 或 `"wipe"`。当前实现会先调用 `capture_screen()`，但捕获纹理尚未绑定到转场 shader，也没有参与最终画面合成；非 headless 环境中实际播放的仍是普通 overlay shader 进度动画，不能把它视为已完成的前后帧转场。
+捕获转场，接受 `"dissolve"` 或 `"wipe"`。实现为先调用 `capture_screen()` 获取当前画面，再由 `VFXSystem.transition_with_capture()` 把捕获纹理绑定到转场 shader 的 `capture_texture` uniform（`use_capture=1.0`），使转场 shader 以真实前后帧画面播放。headless renderer 中 `capture_screen()` 可能返回 `null`，此时退化为普通 overlay 转场。
 
 ```
 <|

@@ -8,7 +8,7 @@ Uni-Story 是从 Nova2 项目继续开发而来的 Godot 视觉小说运行时/�
 
 - 引擎：Godot 4.6
 - 主场景：`res://scene/game.tscn`
-- 当前开发分支：`dev`
+- 当前开发分支：`main`
 - 运行时路线：标准版 Godot 4.6 + GDScript，不需要 .NET 工具链
 - 剧本路线：保留 NovaScript 格式，将 `<|...|>` / `@<|...|>` 演出块包装为 `BaseBlock` 子类并在运行时编译执行
 - 开发阶段：全部 18 个 Phase 任务全部完成（Phase 0-18 ✅），项目达到 v1.0.0-rc1 里程碑
@@ -26,7 +26,7 @@ Uni-Story 是从 Nova2 项目继续开发而来的 Godot 视觉小说运行时/�
 - 剧本解析：将 NovaScript 剧本切分为 eager、lazy 和 text 块。
 - 流程图：构建章节、节点、跳转和选项。
 - 剧本静态检查：`scripts/tools/scenario_lint.py` 检查结构/属性、GDScript 编译、label/start/jump/branch/reachability、资源、canonical speaker 与常见内容/兼容陷阱，支持 text/JSON 报告和可配置失败阈值。
-- 剧本静态分析与统计：`scripts/tools/scenario_stat.py` 基于不执行 eager code 的共享 IR，按文件、节点和 canonical speaker 汇总对白长度、最长对白与流程结构；同一 IR 将供后续分支可视化复用。
+- 剧本静态分析与统计：`scripts/tools/scenario_stat.py` 基于不执行 eager code 的共享 IR，按文件、节点和 canonical speaker 汇总对白长度、最长对白与流程结构；`scenario_visualize.py` 消费同一 IR 输出 text/JSON/DOT/Mermaid 分支可视化。
 - 对话系统：支持说话人、逐字显示、对话框位置预设和文本回顾。
 - 图片与立绘：支持图片显示/隐藏/移动/染色，多图层立绘合成和头像切换。
 - 动画系统：支持 `o.anim` 链式动画，区分 per_dialogue/holding/ui/text 动画域，支持 pause/resume/stop，命名 holding 动画组，Nova 风格 easing 解析器。
@@ -44,10 +44,10 @@ Uni-Story 是从 Nova2 项目继续开发而来的 Godot 视觉小说运行时/�
 - UI 产品层：GALGAME 主菜单（开始/章节选择/继续/读取/设置/CG/音乐/帮助/退出），存读档界面（缩略图 + 章节名 + 位置 + 时间），回顾面板（语音重播 + 跳转确认），统一 Toast 通知和 Confirm 确认框。
 - 设置界面：文字速度、自动模式速度、全局/BGM/SE/语音音量、全屏、字体大小、语言切换、对话框透明度、点击停止动画/语音、快进未读文本。
 - 鉴赏界面：CG 图片鉴赏（缩略图网格 + 全屏预览）和音乐鉴赏（曲目列表 + 播放控制 + 多种播放模式）。
-- VFX/Shader：对象特效（blur、grayscale、dissolve、glitch、ripple）、后处理特效（chromatic、vignette、grayscale、blur、glitch）、屏幕震动和 shader 转场。系统维护最多三层效果状态栈并支持按名称移除，但当前渲染只把栈顶材质应用到节点；真正的多 pass 合成和使用 captured texture 的转场仍待实现。
+- VFX/Shader：84 个 `.gdshader`（49 个 shaderproto 模板）+ 40 个 OBJECT / 37 个 POST / 6 个 TRANSITION 注册表。多 pass 合成通过 SubViewport 链实现；`capture_screen()` 捕获屏幕，`transition_with_capture()` 把捕获纹理绑定到 dissolve/wipe 等转场 shader。系统维护最多三层效果状态栈并支持按名称移除、快照恢复。
 - 中断/小游戏：InterruptManager 支持 begin/end_interrupt 协议，中断期间暂停对话推进，结束后自动 checkpoint。
 - 移动端：安卓/移动端强制横屏/全屏，viewport expand 自适应布局，背景/CG cover fit，触控操作和长按菜单。
-- 自动化测试：32/32 个 headless 测试通过（约 55 秒），由 `scripts/tests/run_headless_suite.py` 统一发现和执行；CI 与 release 均先运行 Scenario lint 和完整套件，再构建 Windows、Linux、Android 产物。
+- 自动化测试：32/32 个 headless 测试通过（约 55 秒），由 `scripts/tests/run_headless_suite.py` 统一发现和执行；CI 的 push/PR 先运行 Scenario lint 和完整套件，Windows/Linux/Android 三端导出由手动触发执行。
 - 资源扫描：`scenario_resource_scan_test.gd` 覆盖 `say(speaker, id)` 等剧本资源引用；当前 `referenced=369`、`found=367`、`virtual=2`、`missing=0`。
 
 ## 剧本静态检查
@@ -133,7 +133,7 @@ scripts/
   runtime/                   # 演出脚本运行时、图像、动画、音频、镜头、转场、VFX 等系统
   ui/                        # 视图控制器（标题/游戏/设置/鉴赏/存读档/回顾/帮助）
   tests/                     # 32 个 Headless 测试 + run_headless_suite.py
-  tools/                     # Scenario lint + stat + visualize + 9 个资源工具 + shaderproto_gen + vscode/
+  tools/                     # Scenario lint + stat + visualize + 协作编剧/立绘/资源工具 + vscode/
 resources/
   auto_voice_profile.tres    # canonical speaker、角色语音目录、6 位编号规则
   Voices/                    # 按角色目录存放的自动/手动语音资源
@@ -141,7 +141,7 @@ resources/
   characters/                # 示例角色素材
   demo_media/                # 示例演示素材
   prefabs/                   # 运行时可加载的预制体场景（.tscn）
-  shaders/                   # 12 个 Godot shader（含对象版、后处理版和转场）
+  shaders/                   # 84 个 Godot shader + 49 个 shaderproto（含对象版、后处理版和转场）
 ```
 
 ## 剧本 API
